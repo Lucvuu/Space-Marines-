@@ -16,7 +16,12 @@
     "percolation_mm_day": 3,
     "salinity_threshold_ece_dsm": 3.0,
     "heat_threshold_c": 35.0,
-    "source": "FAO-56 Table 23; FAO-56 Ch.7 / CROPWAT rice, cần kiểm chứng",
+    "source": {
+      "kc": "FAO-56 Table 11 & 12",
+      "salinity": "FAO-56 Table 23",
+      "heat": "TODO: cần nguồn",
+      "water_extra": "FAO-56 Ch.7 / CROPWAT rice, cần kiểm chứng"
+    },
     "verified": false
   },
   "soybean": {
@@ -36,7 +41,12 @@
     "percolation_mm_day": null,
     "salinity_threshold_ece_dsm": 5.0,
     "heat_threshold_c": 35.0,
-    "source": "FAO-56 Table 23",
+    "source": {
+      "kc": "FAO-56 Table 11 & 12",
+      "salinity": "FAO-56 Table 23",
+      "heat": "TODO: cần nguồn",
+      "water_extra": "N/A (cây cạn, null)"
+    },
     "verified": false
   },
   "maize": {
@@ -56,7 +66,12 @@
     "percolation_mm_day": null,
     "salinity_threshold_ece_dsm": 1.7,
     "heat_threshold_c": 36.0,
-    "source": "FAO-56 Table 23",
+    "source": {
+      "kc": "FAO-56 Table 11 & 12",
+      "salinity": "FAO-56 Table 23",
+      "heat": "TODO: cần nguồn",
+      "water_extra": "N/A (cây cạn, null)"
+    },
     "verified": false
   },
   "rice_shrimp": {
@@ -71,7 +86,12 @@
     "percolation_mm_day": null,
     "salinity_threshold_ece_dsm": null,
     "heat_threshold_c": 35.0,
-    "source": "TODO: Tôm không có Kc và ECe thực vật, cần chuyên gia địa phương",
+    "source": {
+      "kc": "TODO: Tôm không có Kc thực vật, cần chuyên gia địa phương",
+      "salinity": "TODO: Tôm không có ECe thực vật, cần chuyên gia địa phương",
+      "heat": "TODO: cần nguồn",
+      "water_extra": "TODO: cần chuyên gia địa phương"
+    },
     "verified": false
   },
   "coffee": {
@@ -91,7 +111,12 @@
     "percolation_mm_day": null,
     "salinity_threshold_ece_dsm": null,
     "heat_threshold_c": 33.0,
-    "source": "FAO-56 Table 12 (Coffee, bare ground)",
+    "source": {
+      "kc": "FAO-56 Table 12 (Coffee, bare ground)",
+      "salinity": "N/A (vùng cao nguyên không nhiễm mặn)",
+      "heat": "TODO: cần nguồn",
+      "water_extra": "N/A (cây cạn, null)"
+    },
     "verified": false
   },
   "coffee_cover_crop": {
@@ -111,7 +136,12 @@
     "percolation_mm_day": null,
     "salinity_threshold_ece_dsm": null,
     "heat_threshold_c": 33.0,
-    "source": "FAO-56 Table 12 (Coffee, with weeds)",
+    "source": {
+      "kc": "FAO-56 Table 12 (Coffee, with weeds)",
+      "salinity": "N/A (vùng cao nguyên không nhiễm mặn)",
+      "heat": "TODO: cần nguồn",
+      "water_extra": "N/A (cây cạn, null)"
+    },
     "verified": false
   }
 }

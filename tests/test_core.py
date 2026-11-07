@@ -232,18 +232,23 @@ class TestAeroAgriStep3(unittest.TestCase):
         self.assertTrue(data["coffee_cover_crop"]["perennial"])
         self.assertFalse(data["rice"]["perennial"])
 
-        # Lúa - tôm: kc_* = null và source có TODO
+        # Lúa - tôm: kc_* = null và source["kc"] có TODO
         rs = data["rice_shrimp"]
         self.assertIsNone(rs["kc_ini"])
         self.assertIsNone(rs["kc_mid"])
         self.assertIsNone(rs["kc_end"])
-        self.assertIn("TODO", rs["source"])
+        self.assertIsInstance(rs["source"], dict)
+        self.assertIn("TODO", rs["source"]["kc"])
 
-        # Kiểm tra đủ các trường cơ bản
+        # Kiểm tra đủ các trường cơ bản và cấu trúc source dict
         for cname, cinfo in data.items():
             self.assertIn("name_vi", cinfo)
             self.assertIn("heat_threshold_c", cinfo)
             self.assertIn("source", cinfo)
+            self.assertIsInstance(cinfo["source"], dict)
+            for k in ["kc", "salinity", "heat", "water_extra"]:
+                self.assertIn(k, cinfo["source"])
+            self.assertEqual(cinfo["source"]["heat"], "TODO: cần nguồn")
             self.assertIn("verified", cinfo)
 
     def test_step3_config_scoring(self):
