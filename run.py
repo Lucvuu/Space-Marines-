@@ -5,6 +5,9 @@ AERO-AGRI One-Command Runner
 """
 import os
 import sys
+for s in (sys.stdout, sys.stderr):
+    if hasattr(s, "reconfigure"):
+        s.reconfigure(encoding="utf-8", errors="replace")
 import time
 import threading
 import webbrowser

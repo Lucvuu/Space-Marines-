@@ -5,6 +5,9 @@ In bảng trạng thái nguồn dữ liệu x từng vùng quan trắc.
 """
 import os
 import sys
+for s in (sys.stdout, sys.stderr):
+    if hasattr(s, "reconfigure"):
+        s.reconfigure(encoding="utf-8", errors="replace")
 
 AERO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, AERO_ROOT)

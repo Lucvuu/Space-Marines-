@@ -6,6 +6,9 @@ Tuân thủ: đổi YYYYMMDD sang YYYY-MM-DD, lỗi mạng thì in lỗi và tho
 """
 import os
 import sys
+for s in (sys.stdout, sys.stderr):
+    if hasattr(s, "reconfigure"):
+        s.reconfigure(encoding="utf-8", errors="replace")
 import requests
 import pandas as pd
 from datetime import datetime
@@ -74,6 +77,9 @@ def fetch_power_for_region(region_id, start="20150101", end="20251231"):
     return True
 
 def main():
+    if "--help" in sys.argv or "-h" in sys.argv:
+        print("Sử dụng: python core/power_fetch.py — Tải dữ liệu NASA POWER hàng ngày cho Bến Tre và Đắk Lắk.")
+        sys.exit(0)
     success = True
     for region_id in PILOT_COORDINATES:
         ok = fetch_power_for_region(region_id)

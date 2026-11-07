@@ -8,6 +8,9 @@ Khí hậu 2 vùng khác nhau rõ rệt; chỉ sinh salinity cho Bến Tre.
 """
 import os
 import sys
+for s in (sys.stdout, sys.stderr):
+    if hasattr(s, "reconfigure"):
+        s.reconfigure(encoding="utf-8", errors="replace")
 import numpy as np
 import pandas as pd
 from datetime import datetime

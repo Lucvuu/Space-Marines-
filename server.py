@@ -9,6 +9,9 @@ Tuân thủ:
 """
 import os
 import sys
+for s in (sys.stdout, sys.stderr):
+    if hasattr(s, "reconfigure"):
+        s.reconfigure(encoding="utf-8", errors="replace")
 import json
 import socket
 import urllib.parse
