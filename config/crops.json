@@ -14,9 +14,9 @@
     "kc_end": 0.75,
     "land_prep_mm": 200,
     "percolation_mm_day": 3,
-    "salinity_threshold_ppt": 1.5,
+    "salinity_threshold_ece_dsm": 3.0,
     "heat_threshold_c": 35.0,
-    "source": "FAO-56 Table 11 & 12; FAO-56 Ch.7 / CROPWAT rice, cần kiểm chứng",
+    "source": "FAO-56 Table 23; FAO-56 Ch.7 / CROPWAT rice, cần kiểm chứng",
     "verified": false
   },
   "soybean": {
@@ -34,9 +34,9 @@
     "kc_end": 0.50,
     "land_prep_mm": null,
     "percolation_mm_day": null,
-    "salinity_threshold_ppt": 2.5,
+    "salinity_threshold_ece_dsm": 5.0,
     "heat_threshold_c": 35.0,
-    "source": "FAO-56 Table 12",
+    "source": "FAO-56 Table 23",
     "verified": false
   },
   "maize": {
@@ -54,9 +54,9 @@
     "kc_end": 0.35,
     "land_prep_mm": null,
     "percolation_mm_day": null,
-    "salinity_threshold_ppt": 1.7,
+    "salinity_threshold_ece_dsm": 1.7,
     "heat_threshold_c": 36.0,
-    "source": "FAO-56 Table 12",
+    "source": "FAO-56 Table 23",
     "verified": false
   },
   "rice_shrimp": {
@@ -69,9 +69,9 @@
     "kc_end": null,
     "land_prep_mm": null,
     "percolation_mm_day": null,
-    "salinity_threshold_ppt": 8.0,
+    "salinity_threshold_ece_dsm": null,
     "heat_threshold_c": 35.0,
-    "source": "TODO: Tôm không có Kc thực vật, cần chuyên gia địa phương",
+    "source": "TODO: Tôm không có Kc và ECe thực vật, cần chuyên gia địa phương",
     "verified": false
   },
   "coffee": {
@@ -89,7 +89,7 @@
     "kc_end": 1.00,
     "land_prep_mm": null,
     "percolation_mm_day": null,
-    "salinity_threshold_ppt": null,
+    "salinity_threshold_ece_dsm": null,
     "heat_threshold_c": 33.0,
     "source": "FAO-56 Table 12",
     "verified": false
@@ -109,7 +109,7 @@
     "kc_end": 0.95,
     "land_prep_mm": null,
     "percolation_mm_day": null,
-    "salinity_threshold_ppt": null,
+    "salinity_threshold_ece_dsm": null,
     "heat_threshold_c": 35.0,
     "source": "FAO-56 Table 12 (thảm phủ giảm bốc hơi)",
     "verified": false

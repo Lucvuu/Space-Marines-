@@ -380,6 +380,12 @@ class TestAeroAgriStep5(unittest.TestCase):
 
 
 class TestAeroAgriStep6(unittest.TestCase):
+    def test_step6_salinity_conversion(self):
+        """Kiểm tra đổi ECe sang ngưỡng nước tưới ppt: rice (3.0 dS/m) cho ra khoảng 1.28‰."""
+        from core.scoring import ece_to_water_salinity_ppt
+        rice_ppt = ece_to_water_salinity_ppt(3.0)
+        self.assertAlmostEqual(rice_ppt, 1.28, delta=0.01)
+
     def test_step6_scoring_missing_power(self):
         """Khi chưa có file POWER: trả available=False, không crash."""
         from core.scoring import evaluate_crop_suitability
