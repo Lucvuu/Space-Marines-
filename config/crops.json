@@ -1,0 +1,105 @@
+{
+  "rice": {
+    "name_vi": "Lúa thâm canh",
+    "perennial": false,
+    "season_days": 105,
+    "stages": {
+      "ini": 20,
+      "dev": 30,
+      "mid": 40,
+      "late": 15
+    },
+    "kc_ini": 1.05,
+    "kc_mid": 1.20,
+    "kc_end": 0.75,
+    "salinity_threshold_ppt": 1.5,
+    "heat_threshold_c": 35.0,
+    "source": "FAO-56 Table 11 & 12",
+    "verified": false
+  },
+  "soybean": {
+    "name_vi": "Đậu tương",
+    "perennial": false,
+    "season_days": 100,
+    "stages": {
+      "ini": 20,
+      "dev": 25,
+      "mid": 35,
+      "late": 20
+    },
+    "kc_ini": 0.40,
+    "kc_mid": 1.15,
+    "kc_end": 0.50,
+    "salinity_threshold_ppt": 2.5,
+    "heat_threshold_c": 35.0,
+    "source": "FAO-56 Table 12",
+    "verified": false
+  },
+  "maize": {
+    "name_vi": "Ngô sinh khối / ngô hạt",
+    "perennial": false,
+    "season_days": 100,
+    "stages": {
+      "ini": 20,
+      "dev": 30,
+      "mid": 35,
+      "late": 15
+    },
+    "kc_ini": 0.30,
+    "kc_mid": 1.20,
+    "kc_end": 0.35,
+    "salinity_threshold_ppt": 1.7,
+    "heat_threshold_c": 36.0,
+    "source": "FAO-56 Table 12",
+    "verified": false
+  },
+  "rice_shrimp": {
+    "name_vi": "Mô hình sinh thái Lúa - Tôm",
+    "perennial": false,
+    "season_days": 120,
+    "stages": null,
+    "kc_ini": null,
+    "kc_mid": null,
+    "kc_end": null,
+    "salinity_threshold_ppt": 8.0,
+    "heat_threshold_c": 35.0,
+    "source": "TODO: Tôm không có Kc thực vật, cần chuyên gia địa phương",
+    "verified": false
+  },
+  "coffee": {
+    "name_vi": "Cà phê Robusta độc canh",
+    "perennial": true,
+    "season_days": 120,
+    "stages": {
+      "ini": 30,
+      "dev": 30,
+      "mid": 30,
+      "late": 30
+    },
+    "kc_ini": 0.95,
+    "kc_mid": 1.00,
+    "kc_end": 1.00,
+    "salinity_threshold_ppt": null,
+    "heat_threshold_c": 33.0,
+    "source": "FAO-56 Table 12",
+    "verified": false
+  },
+  "coffee_cover_crop": {
+    "name_vi": "Cà phê xen cây họ đậu phủ đất",
+    "perennial": true,
+    "season_days": 120,
+    "stages": {
+      "ini": 30,
+      "dev": 30,
+      "mid": 30,
+      "late": 30
+    },
+    "kc_ini": 0.90,
+    "kc_mid": 0.95,
+    "kc_end": 0.95,
+    "salinity_threshold_ppt": null,
+    "heat_threshold_c": 35.0,
+    "source": "FAO-56 Table 12 (thảm phủ giảm bốc hơi)",
+    "verified": false
+  }
+}

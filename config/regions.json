@@ -1,0 +1,24 @@
+{
+  "Ben_Tre_DBSCL": {
+    "id": "Ben_Tre_DBSCL",
+    "name": "Bến Tre (Đồng bằng Sông Cửu Long)",
+    "lat": 10.2433,
+    "lon": 106.3758,
+    "elevation_m": 2.0,
+    "dry_season_months": [1, 2, 3, 4],
+    "candidate_crops": ["rice", "soybean", "maize", "rice_shrimp"],
+    "source": "NASA Space Apps Hanoi 2026 specs",
+    "verified": false
+  },
+  "Dak_Lak_Tay_Nguyen": {
+    "id": "Dak_Lak_Tay_Nguyen",
+    "name": "Đắk Lắk (Tây Nguyên)",
+    "lat": 12.6667,
+    "lon": 108.05,
+    "elevation_m": 530.0,
+    "dry_season_months": [1, 2, 3, 4],
+    "candidate_crops": ["coffee", "coffee_cover_crop", "maize"],
+    "source": "NASA Space Apps Hanoi 2026 specs",
+    "verified": false
+  }
+}

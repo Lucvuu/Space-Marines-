@@ -1,0 +1,15 @@
+{
+  "weights": {
+    "w_water": 0.5,
+    "w_salinity": 0.3,
+    "w_heat": 0.2
+  },
+  "risk_thresholds": {
+    "LOW": 80.0,
+    "MODERATE": 60.0,
+    "SEVERE": 40.0,
+    "CRITICAL": 0.0
+  },
+  "source": "AERO-AGRI default scoring specification",
+  "verified": false
+}

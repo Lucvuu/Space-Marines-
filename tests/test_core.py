@@ -197,5 +197,68 @@ class TestAeroAgriStep2(unittest.TestCase):
             files = [f for f in os.listdir(dir_path) if f != ".gitkeep"]
             self.assertEqual(len(files), 0, f"Dữ liệu test bị rò rỉ vào data/raw/{sub}")
 
+
+class TestAeroAgriStep3(unittest.TestCase):
+    def test_step3_config_regions(self):
+        """Kiểm tra cấu hình regions.json."""
+        path = os.path.join(AERO_ROOT, "config", "regions.json")
+        self.assertTrue(os.path.isfile(path))
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        self.assertIn("Ben_Tre_DBSCL", data)
+        self.assertIn("Dak_Lak_Tay_Nguyen", data)
+
+        bt = data["Ben_Tre_DBSCL"]
+        self.assertEqual(bt["dry_season_months"], [1, 2, 3, 4])
+        self.assertIn("rice", bt["candidate_crops"])
+        self.assertIn("rice_shrimp", bt["candidate_crops"])
+        self.assertIn("source", bt)
+        self.assertIn("verified", bt)
+
+        dl = data["Dak_Lak_Tay_Nguyen"]
+        self.assertEqual(dl["dry_season_months"], [1, 2, 3, 4])
+        self.assertIn("coffee", dl["candidate_crops"])
+        self.assertIn("coffee_cover_crop", dl["candidate_crops"])
+
+    def test_step3_config_crops(self):
+        """Kiểm tra cấu hình crops.json và cây đặc biệt (perennial, rice_shrimp null kc)."""
+        path = os.path.join(AERO_ROOT, "config", "crops.json")
+        self.assertTrue(os.path.isfile(path))
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        # Cây lâu năm
+        self.assertTrue(data["coffee"]["perennial"])
+        self.assertTrue(data["coffee_cover_crop"]["perennial"])
+        self.assertFalse(data["rice"]["perennial"])
+
+        # Lúa - tôm: kc_* = null và source có TODO
+        rs = data["rice_shrimp"]
+        self.assertIsNone(rs["kc_ini"])
+        self.assertIsNone(rs["kc_mid"])
+        self.assertIsNone(rs["kc_end"])
+        self.assertIn("TODO", rs["source"])
+
+        # Kiểm tra đủ các trường cơ bản
+        for cname, cinfo in data.items():
+            self.assertIn("name_vi", cinfo)
+            self.assertIn("heat_threshold_c", cinfo)
+            self.assertIn("source", cinfo)
+            self.assertIn("verified", cinfo)
+
+    def test_step3_config_scoring(self):
+        """Kiểm tra cấu hình scoring.json: tổng trọng số bằng 1.0 và đủ các ngưỡng."""
+        path = os.path.join(AERO_ROOT, "config", "scoring.json")
+        self.assertTrue(os.path.isfile(path))
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        w = data["weights"]
+        total_w = w["w_water"] + w["w_salinity"] + w["w_heat"]
+        self.assertAlmostEqual(total_w, 1.0, places=5)
+        self.assertIn("LOW", data["risk_thresholds"])
+        self.assertIn("CRITICAL", data["risk_thresholds"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
