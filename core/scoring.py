@@ -70,18 +70,14 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
             "error": "chưa có dữ liệu POWER cho vùng"
         }
 
-    # Đọc các nguồn dữ liệu phụ trợ
+    # Đọc nguồn độ mặn phụ trợ (nếu có để tính rủi ro mặn)
     sal_df, sal_meta = load_csv("salinity", region_id)
-    ndvi_df, ndvi_meta = load_csv("ndvi", region_id)
-    sm_df, sm_meta = load_csv("soil_moisture", region_id)
 
+    # data_used chỉ liệt kê nguồn THỰC SỰ tham gia vào phép tính điểm (POWER và Salinity)
+    # NDVI và SMAP chỉ hiển thị trên biểu đồ khí hậu, không đưa vào điểm
     data_used = [power_meta]
     if sal_df is not None:
         data_used.append(sal_meta)
-    if ndvi_df is not None:
-        data_used.append(ndvi_meta)
-    if sm_df is not None:
-        data_used.append(sm_meta)
 
     # 2. Xác định deficit của cây baseline (cây đầu tiên trong candidate_crops)
     baseline_crop_id = candidate_crops[0] if candidate_crops else None
