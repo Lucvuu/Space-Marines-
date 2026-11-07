@@ -1,1 +1,26 @@
-{}
+{
+  "power/Ben_Tre_DBSCL.csv": {
+    "source": "NASA POWER daily API, community=AG",
+    "url": "https://power.larc.nasa.gov",
+    "retrieved_at": "2026-11-07",
+    "is_synthetic": false
+  },
+  "power/Dak_Lak_Tay_Nguyen.csv": {
+    "source": "NASA POWER daily API, community=AG",
+    "url": "https://power.larc.nasa.gov",
+    "retrieved_at": "2026-11-07",
+    "is_synthetic": false
+  },
+  "ndvi/Ben_Tre_DBSCL.csv": {
+    "source": "NASA MODIS MOD13Q1 v061 (ORNL DAAC REST API, 250m 16-day NDVI)",
+    "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1",
+    "retrieved_at": "2026-11-07",
+    "is_synthetic": false
+  },
+  "ndvi/Dak_Lak_Tay_Nguyen.csv": {
+    "source": "NASA MODIS MOD13Q1 v061 (ORNL DAAC REST API, 250m 16-day NDVI)",
+    "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1",
+    "retrieved_at": "2026-11-07",
+    "is_synthetic": false
+  }
+}

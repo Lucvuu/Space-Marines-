@@ -53,8 +53,12 @@ class TestAeroAgriStep1(unittest.TestCase):
 
         for sub in ["power", "ndvi", "soil_moisture", "salinity"]:
             dir_path = os.path.join(AERO_ROOT, "data", "raw", sub)
+            self.assertTrue(os.path.isfile(os.path.join(dir_path, ".gitkeep")))
             files = [f for f in os.listdir(dir_path) if f != ".gitkeep"]
-            self.assertEqual(len(files), 0, f"data/raw/{sub} phải rỗng (chỉ chứa .gitkeep)")
+            for fname in files:
+                rel_k = f"{sub}/{fname}"
+                self.assertIn(rel_k, manifest, f"File {rel_k} trong data/raw chưa khai báo trong manifest.json")
+                self.assertFalse(manifest[rel_k].get("is_synthetic", True), f"File {rel_k} trong data/raw thật không được là dữ liệu synthetic")
 
     def test_step1_git_initialized(self):
         """Kiểm tra git repo đã được khởi tạo trong aero-agri."""
@@ -164,6 +168,11 @@ class TestAeroAgriStep2(unittest.TestCase):
         """Kiểm tra make_demo_data chạy trong thư mục tạm, không chạm vào data/raw thật."""
         from scripts.make_demo_data import generate_demo_dataset
 
+        before_raw = {
+            sub: set(os.listdir(os.path.join(AERO_ROOT, "data", "raw", sub)))
+            for sub in ["power", "ndvi", "soil_moisture", "salinity"]
+        }
+
         with tempfile.TemporaryDirectory() as tmp_dir:
             old_data_dir = os.environ.get("AERO_DATA_DIR")
             os.environ["AERO_DATA_DIR"] = tmp_dir
@@ -191,11 +200,21 @@ class TestAeroAgriStep2(unittest.TestCase):
                 else:
                     os.environ.pop("AERO_DATA_DIR", None)
 
-        # Đảm bảo data/raw thật của aero-agri vẫn rỗng (chỉ chứa .gitkeep)
+        # Đảm bảo data/raw thật của aero-agri không bị rò rỉ dữ liệu synthetic từ test
+        real_manifest_path = os.path.join(AERO_ROOT, "data", "manifest.json")
+        real_manifest = {}
+        if os.path.isfile(real_manifest_path):
+            with open(real_manifest_path, "r", encoding="utf-8") as f:
+                real_manifest = json.load(f)
         for sub in ["power", "ndvi", "soil_moisture", "salinity"]:
             dir_path = os.path.join(AERO_ROOT, "data", "raw", sub)
-            files = [f for f in os.listdir(dir_path) if f != ".gitkeep"]
-            self.assertEqual(len(files), 0, f"Dữ liệu test bị rò rỉ vào data/raw/{sub}")
+            after_files = set(os.listdir(dir_path))
+            self.assertEqual(after_files, before_raw[sub], f"Dữ liệu test bị rò rỉ vào data/raw/{sub}")
+            for fname in after_files:
+                if fname != ".gitkeep":
+                    rel_k = f"{sub}/{fname}"
+                    self.assertIn(rel_k, real_manifest)
+                    self.assertFalse(real_manifest[rel_k].get("is_synthetic", True))
 
 
 class TestAeroAgriStep3(unittest.TestCase):
@@ -413,6 +432,11 @@ class TestAeroAgriStep6(unittest.TestCase):
         from core.scoring import evaluate_crop_suitability
         from core.advisor import build_advice
 
+        before_raw = {
+            sub: set(os.listdir(os.path.join(AERO_ROOT, "data", "raw", sub)))
+            for sub in ["power", "ndvi", "soil_moisture", "salinity"]
+        }
+
         with tempfile.TemporaryDirectory() as tmp_dir:
             old_data_dir = os.environ.get("AERO_DATA_DIR")
             os.environ["AERO_DATA_DIR"] = tmp_dir
@@ -461,11 +485,11 @@ class TestAeroAgriStep6(unittest.TestCase):
                 else:
                     os.environ.pop("AERO_DATA_DIR", None)
 
-        # Đảm bảo data/raw thật của aero-agri vẫn chỉ chứa .gitkeep
+        # Đảm bảo data/raw thật của aero-agri không bị rò rỉ dữ liệu synthetic từ test
         for sub in ["power", "ndvi", "soil_moisture", "salinity"]:
             dir_path = os.path.join(AERO_ROOT, "data", "raw", sub)
-            files = [f for f in os.listdir(dir_path) if f != ".gitkeep"]
-            self.assertEqual(len(files), 0, f"Dữ liệu test bị rò rỉ vào data/raw/{sub}")
+            after_files = set(os.listdir(dir_path))
+            self.assertEqual(after_files, before_raw[sub], f"Dữ liệu test bị rò rỉ vào data/raw/{sub}")
 
 
 class TestAeroAgriStep7(unittest.TestCase):

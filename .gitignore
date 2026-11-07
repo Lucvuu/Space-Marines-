@@ -4,3 +4,4 @@ __pycache__/
 .pytest_cache/
 .venv/
 screenshot*.png
+data/raw/**/*.csv
