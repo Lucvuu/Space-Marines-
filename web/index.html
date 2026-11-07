@@ -2,9 +2,164 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>AERO-AGRI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AERO-AGRI | NASA Space Apps 2026</title>
+    <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <h1>AERO-AGRI: Khung Ra Quyết Định Chuyển Đổi Canh Tác Thích Ứng Khí Hậu</h1>
+
+    <header>
+        <div class="logo-area">
+            <div>
+                <div class="logo-title">🛰️ AERO-AGRI</div>
+                <div class="logo-sub">Hệ Thống Ra Quyết Định Chuyển Đổi Canh Tác (NASA Field Shift)</div>
+            </div>
+        </div>
+
+        <!-- 1. Thanh trạng thái dữ liệu trên cùng -->
+        <div class="status-bar" id="statusBar">
+            <span class="chip chip-missing" id="chip-power">POWER: Đang kiểm tra...</span>
+            <span class="chip chip-missing" id="chip-ndvi">NDVI: Đang kiểm tra...</span>
+            <span class="chip chip-missing" id="chip-sm">SMAP: Đang kiểm tra...</span>
+            <span class="chip chip-missing" id="chip-sal">Độ mặn: Đang kiểm tra...</span>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- Control Row: Vùng quan trắc -->
+        <div class="control-row">
+            <div class="region-selector">
+                <label for="regionSelect">Khu vực phân tích:</label>
+                <select id="regionSelect">
+                    <option value="Ben_Tre_DBSCL">Bến Tre (Đồng bằng Sông Cửu Long)</option>
+                    <option value="Dak_Lak_Tay_Nguyen">Đắk Lắk (Tây Nguyên)</option>
+                </select>
+            </div>
+            <div id="dataBadgeArea"></div>
+        </div>
+
+        <!-- Row 1: Bản đồ & Biểu đồ khí hậu -->
+        <div class="grid-2">
+            <!-- 2. Bản đồ Leaflet (dùng circleMarker tô màu theo risk_level) -->
+            <div class="card">
+                <div class="card-title">
+                    <span>Bản Đồ Quan Trắc Vùng Thí Điểm</span>
+                    <span style="font-size: 0.75rem; color: #94a3b8;">Click điểm để chọn vùng</span>
+                </div>
+                <div id="map"></div>
+            </div>
+
+            <!-- 3. Biểu đồ khí hậu theo tháng (mưa cột + ETo đường) -->
+            <div class="card">
+                <div class="card-title">
+                    <span>Chu Kỳ Khí Hậu & Bốc Thoát Hơi Nước</span>
+                    <span style="font-size: 0.75rem; color: #94a3b8;">FAO-56 Penman-Monteith</span>
+                </div>
+                <div class="chart-container" id="chartWrapper">
+                    <canvas id="climateChart"></canvas>
+                </div>
+                <div id="climateEmpty" class="empty-state" style="display: none;">
+                    Chưa có dữ liệu khí tượng. Thả file vào <code>data/raw/power/&lt;vùng&gt;.csv</code> rồi tải lại.
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 2: 4. Simulator biến đổi khí hậu & Bảng so sánh Score -->
+        <div class="simulator-panel">
+            <div class="card-title">
+                <span>Mô Phỏng Kịch Bản Biến Đổi Khí Hậu (Climate Simulator)</span>
+                <span style="font-size: 0.75rem; color: #38bdf8;">Debounce 300ms</span>
+            </div>
+
+            <div class="grid-2">
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span>Biến thiên nhiệt độ (Temperature Anomaly):</span>
+                        <strong id="valTemp" style="color: #f87171;">+0.0 °C</strong>
+                    </div>
+                    <input type="range" id="sliderTemp" min="-1.0" max="3.0" step="0.5" value="0.0">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: #64748b;">
+                        <span>-1.0 °C</span>
+                        <span>0.0 °C (Hiện tại)</span>
+                        <span>+3.0 °C (Khắc nghiệt)</span>
+                    </div>
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span>Biến thiên lượng mưa (Precipitation Anomaly):</span>
+                        <strong id="valRain" style="color: #38bdf8;">0%</strong>
+                    </div>
+                    <input type="range" id="sliderRain" min="-50" max="30" step="10" value="0">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: #64748b;">
+                        <span>-50% (Hạn hán cực đoan)</span>
+                        <span>0% (Bình thường)</span>
+                        <span>+30% (Mưa ẩm)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bảng kết quả thích nghi cây trồng -->
+            <div id="cropResultsArea">
+                <div id="cropTableWrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Cây trồng</th>
+                                <th>Điểm thích nghi (Score)</th>
+                                <th>Cấp rủi ro</th>
+                                <th>Thiếu hụt nước (mm)</th>
+                                <th>Stress nước (0-1)</th>
+                                <th>Stress nhiệt (0-1)</th>
+                                <th>Stress mặn (0-1)</th>
+                                <th>So với Baseline</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cropTableBody"></tbody>
+                    </table>
+                </div>
+                <div id="evaluateEmpty" class="empty-state" style="display: none;">
+                    Chưa có dữ liệu để đánh giá thích nghi. Thả file vào <code>data/raw/power/&lt;vùng&gt;.csv</code> rồi tải lại.
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 3: 5. Chat & Khuyến nghị Cố vấn Nông nghiệp -->
+        <div class="card chat-container">
+            <div class="card-title">
+                <span>Trợ Lý Cố Vấn Chuyển Đổi Mùa Vụ (AI Advisor)</span>
+                <span style="font-size: 0.75rem; color: #94a3b8;">Số liệu thực chứng</span>
+            </div>
+
+            <div class="quick-prompts">
+                <span style="font-size: 0.8rem; color: #94a3b8; align-self: center;">Gợi ý câu hỏi:</span>
+                <button class="prompt-btn" data-q="Vụ khô tới tôi có nên tiếp tục gieo sạ lúa không?">🌾 Có nên gieo lúa vụ khô tới?</button>
+                <button class="prompt-btn" data-q="Nếu chuyển sang trồng đậu tương thì tiết kiệm được bao nhiêu nước?">🔄 Lợi ích khi đổi sang đậu tương?</button>
+                <button class="prompt-btn" data-q="Cây nào có mức độ rủi ro thấp nhất dưới thời tiết nắng nóng?">☀️ Cây chịu nhiệt tốt nhất?</button>
+            </div>
+
+            <div class="chat-input-row">
+                <input type="text" id="chatInput" placeholder="Nhập câu hỏi của bà con nông dân...">
+                <button id="btnAsk">Hỏi Cố Vấn</button>
+            </div>
+
+            <div class="chat-output" id="chatOutput">
+                Nhấn vào câu hỏi gợi ý hoặc nhập câu hỏi để nhận báo cáo khuyến nghị chuyển đổi mùa vụ.
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        NASA International Space Apps Challenge 2026 • Challenge: Field Shift • Dự án AERO-AGRI
+    </footer>
+
+    <!-- Vendor Libraries (Offline Local) -->
+    <script src="vendor/leaflet/leaflet.js"></script>
+    <script src="vendor/chartjs/chart.umd.js"></script>
+    <!-- Application Logic -->
+    <script src="app.js"></script>
 </body>
 </html>
