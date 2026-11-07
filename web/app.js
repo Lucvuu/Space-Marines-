@@ -307,7 +307,7 @@ async function evaluateCrops() {
         crops.forEach(c => {
             const tr = document.createElement("tr");
 
-            const scText = c.score !== null ? `${c.score}` : "<span style='color:#9ca3af;'>Chưa tính</span>";
+            const scText = c.score !== null ? `${c.score}` : "<span style='color:#9ca3af; font-size:0.8rem;'>Chưa đủ dữ liệu để chấm</span>";
             const rkClass = `risk-${c.risk_level}`;
             const comp = c.components;
             const wVal = comp.irrigation_share !== undefined && comp.irrigation_share !== null ? comp.irrigation_share : comp.water_stress;
@@ -315,7 +315,9 @@ async function evaluateCrops() {
             const hStress = comp.heat_ratio !== null ? comp.heat_ratio.toFixed(2) : "0.00";
             const sStress = comp.salinity_exceed !== null ? comp.salinity_exceed.toFixed(2) : "<span style='color:#9ca3af;'>N/A</span>";
             const defText = c.deficit_mm !== null ? `${c.deficit_mm}` : "N/A";
-            const vsBase = c.water_vs_baseline_pct !== 0.0 ? `${c.water_vs_baseline_pct > 0 ? "+" : ""}${c.water_vs_baseline_pct}%` : "Baseline";
+            const vsBase = (c.water_vs_baseline_pct === null || c.water_vs_baseline_pct === undefined)
+                ? "<span style='color:#9ca3af;'>N/A</span>"
+                : (c.water_vs_baseline_pct !== 0.0 ? `${c.water_vs_baseline_pct > 0 ? "+" : ""}${c.water_vs_baseline_pct}%` : "Baseline");
 
             let noteText = "";
             if (c.missing_components && c.missing_components.length > 0) {

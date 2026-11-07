@@ -431,6 +431,12 @@ class TestAeroAgriStep6(unittest.TestCase):
                 bt_soy = [c for c in res_bt["crops"] if c["crop_id"] == "soybean"][0]
                 self.assertGreater(bt_rice["deficit_mm"], bt_soy["deficit_mm"])
 
+                # rice_shrimp ở Bến Tre thiếu thành phần của vùng -> score là None, water_vs_baseline_pct là None
+                bt_rs = [c for c in res_bt["crops"] if c["crop_id"] == "rice_shrimp"][0]
+                self.assertIsNone(bt_rs["score"])
+                self.assertEqual(bt_rs["risk_level"], "INSUFFICIENT_DATA")
+                self.assertIsNone(bt_rs["water_vs_baseline_pct"])
+
                 # Kiểm tra advisor
                 advice = build_advice("Ben_Tre_DBSCL", res_bt, question="Nên gieo lúa hay đậu tương?")
                 self.assertIn("markdown", advice)

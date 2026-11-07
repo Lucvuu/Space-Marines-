@@ -64,13 +64,14 @@ DỮ LIỆU JSON ĐÁNH GIÁ:
     rows_md = []
     for c in crops:
         c_name = c["crop_name"]
-        sc = f"{c['score']}/100" if c['score'] is not None else "Chưa tính"
+        sc = f"{c['score']}/100" if c['score'] is not None else "Chưa đủ dữ liệu để chấm"
         rk = c["risk_level"]
         comp = c["components"]
         w_val = comp.get("irrigation_share", comp.get("water_stress"))
         w_stress = f"{w_val:.2f}" if w_val is not None else "N/A"
         def_mm = f"{c['deficit_mm']} mm" if c['deficit_mm'] is not None else "N/A"
-        vs_base = f"{c['water_vs_baseline_pct']:+.1f}%" if c['water_vs_baseline_pct'] != 0.0 else "Baseline"
+        vs_val = c.get("water_vs_baseline_pct")
+        vs_base = "N/A" if vs_val is None else (f"{vs_val:+.1f}%" if vs_val != 0.0 else "Baseline")
         rows_md.append(f"| **{c_name}** | {sc} | `{rk}` | {def_mm} | {w_stress} | {vs_base} |")
 
     table_md = "\n".join(rows_md)
@@ -78,7 +79,7 @@ DỮ LIỆU JSON ĐÁNH GIÁ:
     # Phần 3: Việc nên làm 7 ngày tới
     actions = []
     if best_crop and best_crop["score"] is not None:
-        if best_crop["water_vs_baseline_pct"] > 0:
+        if best_crop.get("water_vs_baseline_pct") is not None and best_crop["water_vs_baseline_pct"] > 0:
             actions.append(f"Cân nhắc chuẩn bị đất và giống cho **{best_crop['crop_name']}** để tiết kiệm khoảng **{best_crop['water_vs_baseline_pct']}%** lượng nước thiếu hụt so với thói quen canh tác cũ.")
         else:
             actions.append(f"Theo dõi sát nguồn nước tưới nếu tiếp tục duy trì **{best_crop['crop_name']}** (mức thiếu hụt dự báo: {best_crop['deficit_mm']} mm).")

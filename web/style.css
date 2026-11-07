@@ -225,6 +225,7 @@ th {
 .risk-SEVERE { background: #7c2d12; color: #fdba74; }
 .risk-CRITICAL { background: #7f1d1d; color: #fca5a5; }
 .risk-UNKNOWN { background: #374151; color: #9ca3af; }
+.risk-INSUFFICIENT_DATA { background: #374151; color: #9ca3af; }
 
 /* Empty state */
 .empty-state {
