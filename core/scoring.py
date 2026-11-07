@@ -3,9 +3,12 @@
 AERO-AGRI Crop Suitability Scoring Engine
 Tính toán điểm thích nghi (0 - 100), cấp độ rủi ro, và thành phần rủi ro (Nước, Mặn, Nhiệt).
 Tuân thủ:
-- Tự động tái phân phối trọng số khi có thành phần null (thiếu mặn hoặc thiếu Kc)
-- Tính water_vs_baseline_pct so với cây đầu tiên trong candidate_crops
-- Không bao giờ bịa số liệu, ghi rõ nguồn và cờ is_synthetic
+- Thành phần nước tính tương đối: water_component = clip(deficit_mm / baseline_deficit_mm, 0, 1),
+  với baseline là cây đầu tiên trong candidate_crops của vùng.
+- Giữ irrigation_share (tỷ lệ ETc phải tưới = deficit_mm / total_req).
+- Tự động tái phân phối trọng số khi có thành phần null (thiếu mặn hoặc thiếu Kc).
+- Tính water_vs_baseline_pct so với cây đầu tiên trong candidate_crops.
+- Không bao giờ bịa số liệu, ghi rõ nguồn và cờ is_synthetic.
 """
 import os
 import json
@@ -51,11 +54,11 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
     if power_df is None:
         return {
             "available": False,
-            "error": f"chưa có dữ liệu POWER cho vùng {region_id}",
-            "crops": []
+            "region_id": region_id,
+            "error": "chưa có dữ liệu POWER cho vùng"
         }
 
-    # Đọc các nguồn tùy chọn
+    # Đọc các nguồn dữ liệu phụ trợ
     sal_df, sal_meta = load_csv("salinity", region_id)
     ndvi_df, ndvi_meta = load_csv("ndvi", region_id)
     sm_df, sm_meta = load_csv("soil_moisture", region_id)
@@ -68,28 +71,44 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
     if sm_df is not None:
         data_used.append(sm_meta)
 
-    # 2. Đánh giá từng cây trồng
+    # 2. Xác định deficit của cây baseline (cây đầu tiên trong candidate_crops)
+    baseline_crop_id = candidate_crops[0] if candidate_crops else None
+    baseline_deficit_mm = None
+    if baseline_crop_id and baseline_crop_id in crops_cfg:
+        wb_base = calculate_water_balance(
+            power_df, region_id, baseline_crop_id,
+            delta_temp_c=delta_temp_c,
+            delta_rain_pct=delta_rain_pct
+        )
+        baseline_deficit_mm = wb_base.get("mean_deficit_mm")
+
+    # 3. Đánh giá từng cây trồng
     raw_crop_results = []
-    baseline_deficit = None
 
     for idx, crop_id in enumerate(candidate_crops):
         if crop_id not in crops_cfg:
             continue
         c_info = crops_cfg[crop_id]
 
-        # A. Cân bằng nước
+        # A. Cân bằng nước & thành phần nước tương đối
         wb = calculate_water_balance(
             power_df, region_id, crop_id,
             delta_temp_c=delta_temp_c,
             delta_rain_pct=delta_rain_pct
         )
 
-        water_stress = wb.get("mean_water_stress")
+        irrigation_share = wb.get("mean_water_stress")
         deficit_mm = wb.get("mean_deficit_mm")
 
-        # Lưu deficit của cây đầu tiên làm baseline
-        if idx == 0 and deficit_mm is not None:
-            baseline_deficit = deficit_mm
+        # water_component = clip(deficit_mm / baseline_deficit_mm, 0, 1)
+        water_component = None
+        if deficit_mm is not None:
+            if baseline_deficit_mm is not None and baseline_deficit_mm > 0:
+                water_component = round(float(np.clip(deficit_mm / baseline_deficit_mm, 0.0, 1.0)), 3)
+            elif irrigation_share is not None:
+                water_component = round(float(np.clip(irrigation_share, 0.0, 1.0)), 3)
+            else:
+                water_component = 0.0
 
         # B. Rủi ro nhiệt (heat_ratio)
         heat_thresh = c_info.get("heat_threshold_c", 35.0)
@@ -118,13 +137,13 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
         else:
             missing_notes.append("cây không có ngưỡng mặn")
 
-        if water_stress is None:
+        if water_component is None:
             missing_notes.append("chưa tính bốc thoát hơi nước do thiếu Kc nông học")
 
         # D. Tái phân phối trọng số cho các thành phần khả dụng
         comp_dict = {}
-        if water_stress is not None:
-            comp_dict["water"] = (weights_base["w_water"], water_stress)
+        if water_component is not None:
+            comp_dict["water"] = (weights_base["w_water"], water_component)
         if salinity_exceed is not None:
             comp_dict["salinity"] = (weights_base["w_salinity"], salinity_exceed)
         if heat_ratio is not None:
@@ -146,7 +165,9 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
             "score": score,
             "risk_level": risk_level,
             "components": {
-                "water_stress": water_stress,
+                "water_component": water_component,
+                "irrigation_share": irrigation_share,
+                "water_stress": irrigation_share,
                 "salinity_exceed": salinity_exceed,
                 "heat_ratio": heat_ratio
             },
@@ -154,12 +175,12 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
             "missing_components": missing_notes
         })
 
-    # 3. Tính water_vs_baseline_pct
+    # 4. Tính water_vs_baseline_pct
     final_crops = []
     for item in raw_crop_results:
         def_mm = item["deficit_mm"]
-        if baseline_deficit is not None and baseline_deficit > 0 and def_mm is not None:
-            water_saved_pct = round((1.0 - (def_mm / baseline_deficit)) * 100.0, 1)
+        if baseline_deficit_mm is not None and baseline_deficit_mm > 0 and def_mm is not None:
+            water_saved_pct = round((1.0 - (def_mm / baseline_deficit_mm)) * 100.0, 1)
         else:
             water_saved_pct = 0.0
 
@@ -182,4 +203,3 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
         "crops": final_crops,
         "data_used": data_used
     }
-

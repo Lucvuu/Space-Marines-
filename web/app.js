@@ -310,7 +310,8 @@ async function evaluateCrops() {
             const scText = c.score !== null ? `${c.score}` : "<span style='color:#9ca3af;'>Chưa tính</span>";
             const rkClass = `risk-${c.risk_level}`;
             const comp = c.components;
-            const wStress = comp.water_stress !== null ? comp.water_stress.toFixed(2) : "<span style='color:#9ca3af;'>N/A</span>";
+            const wVal = comp.irrigation_share !== undefined && comp.irrigation_share !== null ? comp.irrigation_share : comp.water_stress;
+            const wStress = wVal !== null && wVal !== undefined ? wVal.toFixed(2) : "<span style='color:#9ca3af;'>N/A</span>";
             const hStress = comp.heat_ratio !== null ? comp.heat_ratio.toFixed(2) : "0.00";
             const sStress = comp.salinity_exceed !== null ? comp.salinity_exceed.toFixed(2) : "<span style='color:#9ca3af;'>N/A</span>";
             const defText = c.deficit_mm !== null ? `${c.deficit_mm}` : "N/A";

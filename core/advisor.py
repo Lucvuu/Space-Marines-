@@ -67,7 +67,8 @@ DỮ LIỆU JSON ĐÁNH GIÁ:
         sc = f"{c['score']}/100" if c['score'] is not None else "Chưa tính"
         rk = c["risk_level"]
         comp = c["components"]
-        w_stress = f"{comp['water_stress']:.2f}" if comp['water_stress'] is not None else "N/A"
+        w_val = comp.get("irrigation_share", comp.get("water_stress"))
+        w_stress = f"{w_val:.2f}" if w_val is not None else "N/A"
         def_mm = f"{c['deficit_mm']} mm" if c['deficit_mm'] is not None else "N/A"
         vs_base = f"{c['water_vs_baseline_pct']:+.1f}%" if c['water_vs_baseline_pct'] != 0.0 else "Baseline"
         rows_md.append(f"| **{c_name}** | {sc} | `{rk}` | {def_mm} | {w_stress} | {vs_base} |")
