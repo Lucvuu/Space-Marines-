@@ -377,5 +377,74 @@ class TestAeroAgriStep5(unittest.TestCase):
         self.assertGreater(wb_coffee["mean_deficit_mm"], 0.0)
 
 
+class TestAeroAgriStep6(unittest.TestCase):
+    def test_step6_scoring_missing_power(self):
+        """Khi chưa có file POWER: trả available=False, không crash."""
+        from core.scoring import evaluate_crop_suitability
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            old_data_dir = os.environ.get("AERO_DATA_DIR")
+            os.environ["AERO_DATA_DIR"] = tmp_dir
+            try:
+                res = evaluate_crop_suitability("Ben_Tre_DBSCL")
+                self.assertFalse(res["available"])
+                self.assertIn("chưa có dữ liệu POWER", res["error"])
+            finally:
+                if old_data_dir:
+                    os.environ["AERO_DATA_DIR"] = old_data_dir
+                else:
+                    os.environ.pop("AERO_DATA_DIR", None)
+
+    def test_step6_scoring_and_advisor_with_demo_data(self):
+        """Với dữ liệu demo: score Bến Tre khác Đắk Lắk; advisor sinh markdown 3 phần."""
+        from scripts.make_demo_data import generate_demo_dataset
+        from core.scoring import evaluate_crop_suitability
+        from core.advisor import build_advice
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            old_data_dir = os.environ.get("AERO_DATA_DIR")
+            os.environ["AERO_DATA_DIR"] = tmp_dir
+            try:
+                generate_demo_dataset()
+
+                res_bt = evaluate_crop_suitability("Ben_Tre_DBSCL")
+                res_dl = evaluate_crop_suitability("Dak_Lak_Tay_Nguyen")
+
+                self.assertTrue(res_bt["available"])
+                self.assertTrue(res_dl["available"])
+
+                # Cây lúa ở Bến Tre vs Ngô/Cà phê ở Đắk Lắk có score khác nhau
+                bt_rice = [c for c in res_bt["crops"] if c["crop_id"] == "rice"][0]
+                dl_coffee = [c for c in res_dl["crops"] if c["crop_id"] == "coffee"][0]
+                self.assertIsNotNone(bt_rice["score"])
+                self.assertIsNotNone(dl_coffee["score"])
+                self.assertNotEqual(bt_rice["score"], dl_coffee["score"])
+
+                # Lúa có deficit lớn hơn đậu tương
+                bt_soy = [c for c in res_bt["crops"] if c["crop_id"] == "soybean"][0]
+                self.assertGreater(bt_rice["deficit_mm"], bt_soy["deficit_mm"])
+
+                # Kiểm tra advisor
+                advice = build_advice("Ben_Tre_DBSCL", res_bt, question="Nên gieo lúa hay đậu tương?")
+                self.assertIn("markdown", advice)
+                self.assertFalse(advice["used_llm"])
+                md = advice["markdown"]
+                self.assertIn("1. Hiện trạng số liệu", md)
+                self.assertIn("2. Bảng so sánh", md)
+                self.assertIn("3. Việc nên làm", md)
+                self.assertIn("DỮ LIỆU MẪU", md)  # Gắn cờ dữ liệu mẫu
+
+            finally:
+                if old_data_dir:
+                    os.environ["AERO_DATA_DIR"] = old_data_dir
+                else:
+                    os.environ.pop("AERO_DATA_DIR", None)
+
+        # Đảm bảo data/raw thật của aero-agri vẫn chỉ chứa .gitkeep
+        for sub in ["power", "ndvi", "soil_moisture", "salinity"]:
+            dir_path = os.path.join(AERO_ROOT, "data", "raw", sub)
+            files = [f for f in os.listdir(dir_path) if f != ".gitkeep"]
+            self.assertEqual(len(files), 0, f"Dữ liệu test bị rò rỉ vào data/raw/{sub}")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
