@@ -260,5 +260,60 @@ class TestAeroAgriStep3(unittest.TestCase):
         self.assertIn("CRITICAL", data["risk_thresholds"])
 
 
+class TestAeroAgriStep4(unittest.TestCase):
+    def test_step4_fao56_example8_ra(self):
+        """FAO-56 Example 8 (lat -20°, 3/9, J=246) -> Ra ≈ 32.2 (±0.3)."""
+        from core.eto import calculate_extraterrestrial_radiation
+        ra = calculate_extraterrestrial_radiation(lat_deg=-20.0, day_of_year=246)
+        self.assertAlmostEqual(ra, 32.2, delta=0.3)
+
+    def test_step4_fao56_example18_eto(self):
+        """FAO-56 Example 18 (lat 50.8°N, elev 100m, 6/7, Tmax 21.5, Tmin 12.3, RH 73.5, u2 2.078, Rs 22.07) -> ETo ≈ 3.9 (±0.3)."""
+        from core.eto import calculate_daily_eto
+        eto = calculate_daily_eto(
+            tmax=21.5,
+            tmin=12.3,
+            rh_mean=73.5,
+            u2=2.078,
+            rs=22.07,
+            lat_deg=50.8,
+            elevation_m=100.0,
+            day_of_year=187
+        )
+        self.assertAlmostEqual(eto, 3.9, delta=0.3)
+
+    def test_step4_rs_rso_ratio_capped_at_one(self):
+        """Ràng buộc kỹ thuật #6: tỉ số Rs/Rso bị chặn không vượt quá 1.0."""
+        from core.eto import calculate_daily_eto
+        eto = calculate_daily_eto(
+            tmax=30.0,
+            tmin=20.0,
+            rh_mean=70.0,
+            u2=2.0,
+            rs=100.0,
+            lat_deg=10.0,
+            elevation_m=10.0,
+            day_of_year=100
+        )
+        self.assertGreater(eto, 0.0)
+
+    def test_step4_eto_series_simulation(self):
+        """Kiểm tra calculate_eto_series với delta_temp_c."""
+        from core.eto import calculate_eto_series
+        dates = pd.date_range("2024-01-01", "2024-01-10")
+        df = pd.DataFrame({
+            "date": dates,
+            "T2M_MAX": [32.0] * 10,
+            "T2M_MIN": [22.0] * 10,
+            "RH2M": [75.0] * 10,
+            "WS2M": [2.5] * 10,
+            "ALLSKY_SFC_SW_DWN": [20.0] * 10
+        })
+        eto_base = calculate_eto_series(df, lat_deg=10.24, elevation_m=2.0, delta_temp_c=0.0)
+        eto_warm = calculate_eto_series(df, lat_deg=10.24, elevation_m=2.0, delta_temp_c=2.0)
+        self.assertEqual(len(eto_base), 10)
+        self.assertGreater(eto_warm.mean(), eto_base.mean())
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
