@@ -354,6 +354,8 @@ class TestAeroAgriStep5(unittest.TestCase):
         self.assertTrue(wb_rice["available"])
         self.assertTrue(wb_soy["available"])
         self.assertGreater(wb_rice["mean_deficit_mm"], wb_soy["mean_deficit_mm"])
+        # Rice requirement includes land_prep (200) + percolation (3*105 = 315) = 515 mm
+        self.assertAlmostEqual(wb_rice["mean_water_req_mm"] - wb_rice["mean_etc_mm"], 515.0, delta=1.0)
 
     def test_step5_special_crops(self):
         """Cây đặc biệt: rice_shrimp trả available=False; coffee perennial chạy được."""
