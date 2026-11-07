@@ -141,3 +141,4 @@ def calculate_eto_series(df, lat_deg, elevation_m, delta_temp_c=0.0):
         day_of_year=doy
     )
     return pd.Series(eto, index=df.index, name="ETo_mm")
+

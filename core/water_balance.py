@@ -202,3 +202,4 @@ def calculate_water_balance(power_df, region_id, crop_id, delta_temp_c=0.0, delt
         "mean_peff_mm": round(float(df_y["peff_mm"].mean()), 1),
         "years_evaluated": len(df_y)
     }
+

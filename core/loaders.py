@@ -122,3 +122,4 @@ def get_data_status(region_id):
         else:
             status[stype] = meta
     return status
+

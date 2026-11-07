@@ -182,3 +182,4 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
         "crops": final_crops,
         "data_used": data_used
     }
+

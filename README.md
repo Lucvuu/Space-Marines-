@@ -21,3 +21,4 @@ Hệ thống tính toán nhu cầu nước cây trồng ($ET_c$) dựa trên chu
 - **Mô hình Lúa - Tôm:** Do tôm không có hệ số bốc thoát hơi nước thực vật $K_c$, tham số $K_c$ đặt là `null` ("TODO"). Thành phần thiếu nước được bỏ qua và trọng số được phân bổ lại theo quy tắc chuẩn.
 - **Khí quyển và bức xạ:** Độ dài bước sóng ngắn mặt trời sử dụng trực tiếp từ biến `ALLSKY_SFC_SW_DWN` của NASA POWER (MJ/m²/ngày). Tỉ số $R_s / R_{so}$ được chặn trên tối đa là $1.0$ khi tính bức xạ sóng dài ròng $R_{nl}$.
 - **Đất trống phơi nhiễm (Bare-field):** Được xác định khi $NDVI < 0.22$ trong mùa khô.
+
