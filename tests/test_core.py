@@ -446,5 +446,70 @@ class TestAeroAgriStep6(unittest.TestCase):
             self.assertEqual(len(files), 0, f"Dữ liệu test bị rò rỉ vào data/raw/{sub}")
 
 
+class TestAeroAgriStep7(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        import threading
+        from server import create_server
+        # Dùng cổng 0 để OS tự cấp cổng rảnh
+        cls.server = create_server("127.0.0.1", 0)
+        cls.port = cls.server.server_address[1]
+        cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
+        cls.thread.start()
+        cls.base_url = f"http://127.0.0.1:{cls.port}"
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.shutdown()
+        cls.server.server_close()
+
+    def test_step7_static_files(self):
+        """User Mod #7: Test GET / trả 200 và GET /vendor/chartjs/chart.umd.js trả 200."""
+        import requests
+        r_root = requests.get(f"{self.base_url}/")
+        self.assertEqual(r_root.status_code, 200)
+
+        r_vendor = requests.get(f"{self.base_url}/vendor/chartjs/chart.umd.js")
+        self.assertEqual(r_vendor.status_code, 200)
+        self.assertGreater(len(r_vendor.content), 10000)
+
+    def test_step7_api_status_and_regions(self):
+        """Kiểm tra GET /api/status và GET /api/regions."""
+        import requests
+        r_status = requests.get(f"{self.base_url}/api/status")
+        self.assertEqual(r_status.status_code, 200)
+        data_status = r_status.json()
+        self.assertIn("Ben_Tre_DBSCL", data_status)
+        self.assertIn("Dak_Lak_Tay_Nguyen", data_status)
+
+        r_reg = requests.get(f"{self.base_url}/api/regions")
+        self.assertEqual(r_reg.status_code, 200)
+        self.assertIn("Ben_Tre_DBSCL", r_reg.json())
+
+    def test_step7_evaluate_missing_data_404(self):
+        """Spec 8: Không có data -> /api/evaluate trả lỗi 404, không crash."""
+        import requests
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            old_data_dir = os.environ.get("AERO_DATA_DIR")
+            os.environ["AERO_DATA_DIR"] = tmp_dir
+            try:
+                payload = {"region": "Ben_Tre_DBSCL", "delta_temp_c": 0.0, "delta_rain_pct": 0.0}
+                r = requests.post(f"{self.base_url}/api/evaluate", json=payload)
+                self.assertEqual(r.status_code, 404)
+                self.assertIn("error", r.json())
+            finally:
+                if old_data_dir:
+                    os.environ["AERO_DATA_DIR"] = old_data_dir
+                else:
+                    os.environ.pop("AERO_DATA_DIR", None)
+
+    def test_step7_evaluate_bad_request_400(self):
+        """Kiểm tra bắt lỗi 400 khi thiếu tham số."""
+        import requests
+        r = requests.post(f"{self.base_url}/api/evaluate", json={})
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("error", r.json())
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
