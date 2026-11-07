@@ -123,7 +123,7 @@ DỮ LIỆU JSON ĐÁNH GIÁ:
 
 #### 2. Bảng so sánh rủi ro & hiệu quả sử dụng nước
 
-| Cây trồng | Điểm số (Score) | Cấp rủi ro | Thiếu hụt nước (ETc - Peff) | Stress nước (0–1) | So với Baseline |
+| Cây trồng | Điểm so sánh với hiện trạng | Cấp rủi ro | Thiếu hụt nước (ETc - Peff) | Tỷ lệ tưới (0–1) | So với Baseline |
 | :--- | :---: | :---: | :---: | :---: | :---: |
 {table_md}
 

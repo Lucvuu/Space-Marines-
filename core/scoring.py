@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 AERO-AGRI Crop Suitability Scoring Engine
-Tính toán điểm thích nghi (0 - 100), cấp độ rủi ro, và thành phần rủi ro (Nước, Mặn, Nhiệt).
+Tính toán Điểm so sánh với hiện trạng (0 - 100), cấp độ rủi ro tuyệt đối, và thành phần rủi ro (Nước, Mặn, Nhiệt).
 Tuân thủ:
 - Thành phần nước tính tương đối: water_component = clip(deficit_mm / baseline_deficit_mm, 0, 1),
   với baseline là cây đầu tiên trong candidate_crops của vùng.
@@ -10,6 +10,8 @@ Tuân thủ:
   Quy chuẩn nông học: ECe ≈ 1.5·ECw (FAO-29), 1‰ ≈ 1.56 dS/m.
 - Chỉ chia lại trọng số cho thành phần bị thiếu ở TẤT CẢ cây trong vùng.
   Nếu thành phần chỉ thiếu ở một số cây -> score = None, risk_level = "INSUFFICIENT_DATA".
+- risk_level chỉ tính từ thành phần tuyệt đối: r = max(heat_ratio, salinity_exceed nếu có)
+  theo ngưỡng risk_thresholds_exceed_ratio: LOW < 0.10, MODERATE < 0.25, SEVERE < 0.50, còn lại CRITICAL.
 - Tính water_vs_baseline_pct so với cây đầu tiên trong candidate_crops (None khi deficit_mm = None).
 - Không bao giờ bịa số liệu, ghi rõ nguồn và cờ is_synthetic.
 """
@@ -22,15 +24,19 @@ from core.water_balance import calculate_water_balance, load_config
 
 AERO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-def classify_risk(score, thresholds):
-    """Phân loại rủi ro dựa trên ngưỡng cấu hình."""
-    if score is None:
+def classify_risk_by_exceed(r_val, exceed_thresholds):
+    """
+    Phân loại rủi ro từ tỷ lệ ngày mùa vụ vượt ngưỡng nhiệt/mặn:
+    r = max(heat_ratio, salinity_exceed nếu có).
+    LOW < 0.10, MODERATE < 0.25, SEVERE < 0.50, còn lại CRITICAL.
+    """
+    if r_val is None:
         return "INSUFFICIENT_DATA"
-    if score >= thresholds.get("LOW", 80.0):
+    if r_val < exceed_thresholds.get("LOW", 0.10):
         return "LOW"
-    elif score >= thresholds.get("MODERATE", 60.0):
+    elif r_val < exceed_thresholds.get("MODERATE", 0.25):
         return "MODERATE"
-    elif score >= thresholds.get("SEVERE", 40.0):
+    elif r_val < exceed_thresholds.get("SEVERE", 0.50):
         return "SEVERE"
     else:
         return "CRITICAL"
@@ -60,7 +66,12 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
     reg_info = regions_cfg[region_id]
     candidate_crops = reg_info.get("candidate_crops", [])
     weights_base = scoring_cfg["weights"]
-    thresholds = scoring_cfg["risk_thresholds"]
+    exceed_thresholds = scoring_cfg.get("risk_thresholds_exceed_ratio", {
+        "LOW": 0.10,
+        "MODERATE": 0.25,
+        "SEVERE": 0.50,
+        "CRITICAL": 1.00
+    })
 
     # 1. Đọc dữ liệu POWER (bắt buộc)
     power_df, power_meta = load_csv("power", region_id)
@@ -166,8 +177,6 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
         })
 
     # 4. Bước 2: Xác định các thành phần active của vùng
-    # Chỉ chia lại trọng số cho thành phần bị thiếu ở TẤT CẢ cây trong vùng.
-    # Nếu 1 thành phần có mặt ở ít nhất 1 cây trong vùng, nó là thành phần bắt buộc để chấm điểm vùng đó.
     comp_keys_map = {
         "water": "water_component",
         "salinity": "salinity_exceed",
@@ -178,11 +187,16 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
         if any(item["components"][field] is not None for item in pre_crop_list)
     ]
 
-    # 5. Bước 3: Tính score, risk_level và water_vs_baseline_pct
+    # 5. Bước 3: Tính score, r = max(heat_ratio, salinity_exceed), risk_level và water_vs_baseline_pct
     final_crops = []
     for item in pre_crop_list:
         comp = item["components"]
         is_missing_any_active = any(comp[comp_keys_map[k]] is None for k in active_components)
+
+        # Tính r = max(heat_ratio, salinity_exceed nếu có)
+        abs_ratios = [v for v in [comp["heat_ratio"], comp["salinity_exceed"]] if v is not None]
+        r_val = round(float(max(abs_ratios)), 3) if abs_ratios else None
+        comp["exceed_ratio_r"] = r_val
 
         if not active_components or is_missing_any_active:
             score = None
@@ -196,7 +210,7 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
                 )
                 score = round(100.0 * (1.0 - weighted_penalty), 1)
                 score = max(0.0, min(100.0, score))
-                risk_level = classify_risk(score, thresholds)
+                risk_level = classify_risk_by_exceed(r_val, exceed_thresholds)
             else:
                 score = None
                 risk_level = "INSUFFICIENT_DATA"
@@ -208,6 +222,7 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
             water_saved_pct = round((1.0 - (def_mm / baseline_deficit_mm)) * 100.0, 1)
 
         item["score"] = score
+        item["exceed_ratio_r"] = r_val
         item["risk_level"] = risk_level
         item["water_vs_baseline_pct"] = water_saved_pct
         item["data_used"] = data_used

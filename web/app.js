@@ -327,7 +327,7 @@ async function evaluateCrops() {
             tr.innerHTML = `
                 <td><strong>${c.crop_name}</strong>${noteText}</td>
                 <td><strong style="color:#38bdf8; font-size:1rem;">${scText}</strong></td>
-                <td><span class="badge-risk ${rkClass}">${c.risk_level}</span></td>
+                <td><span class="badge-risk ${rkClass}" title="tỷ lệ ngày mùa vụ vượt ngưỡng nhiệt/mặn">${c.risk_level}</span></td>
                 <td>${defText}</td>
                 <td>${wStress}</td>
                 <td>${hStress}</td>

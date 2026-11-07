@@ -10,7 +10,12 @@
     "SEVERE": 40.0,
     "CRITICAL": 0.0
   },
+  "risk_thresholds_exceed_ratio": {
+    "LOW": 0.10,
+    "MODERATE": 0.25,
+    "SEVERE": 0.50,
+    "CRITICAL": 1.00
+  },
   "source": "AERO-AGRI default scoring specification",
   "verified": false
 }
-
