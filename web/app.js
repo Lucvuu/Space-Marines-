@@ -209,36 +209,76 @@ async function loadClimateChart() {
         const labels = displaySeries.map(s => s.month);
         const rain = displaySeries.map(s => s.rain_sum_mm);
         const eto = displaySeries.map(s => s.eto_sum_mm);
+        const ndvi = displaySeries.map(s => s.ndvi_mean);
+        const hasNdvi = ndvi.some(v => v !== null && v !== undefined);
 
         const ctx = document.getElementById("climateChart").getContext("2d");
         if (climateChart) {
             climateChart.destroy();
         }
 
+        const datasets = [
+            {
+                type: "bar",
+                label: "Lượng mưa (mm)",
+                data: rain,
+                backgroundColor: "rgba(56, 189, 248, 0.6)",
+                borderColor: "#38bdf8",
+                borderWidth: 1,
+                yAxisID: "y"
+            },
+            {
+                type: "line",
+                label: "Bốc thoát hơi nước ETo (mm)",
+                data: eto,
+                borderColor: "#f59e0b",
+                backgroundColor: "rgba(245, 158, 11, 0.1)",
+                fill: false,
+                tension: 0.3,
+                yAxisID: "y"
+            }
+        ];
+
+        if (hasNdvi) {
+            datasets.push({
+                type: "line",
+                label: "Chỉ số thực vật NDVI (0–1)",
+                data: ndvi,
+                borderColor: "#10b981",
+                backgroundColor: "rgba(16, 185, 129, 0.1)",
+                fill: false,
+                tension: 0.3,
+                yAxisID: "y1"
+            });
+        }
+
+        const scales = {
+            x: { ticks: { color: "#94a3b8", maxRotation: 45 }, grid: { color: "#1f2937" } },
+            y: {
+                type: "linear",
+                position: "left",
+                ticks: { color: "#94a3b8" },
+                grid: { color: "#1f2937" },
+                title: { display: true, text: "mm / tháng", color: "#94a3b8" }
+            }
+        };
+
+        if (hasNdvi) {
+            scales.y1 = {
+                type: "linear",
+                position: "right",
+                min: 0.0,
+                max: 1.0,
+                ticks: { color: "#10b981" },
+                grid: { drawOnChartArea: false },
+                title: { display: true, text: "NDVI (0–1)", color: "#10b981" }
+            };
+        }
+
         climateChart = new Chart(ctx, {
             data: {
                 labels: labels,
-                datasets: [
-                    {
-                        type: "bar",
-                        label: "Lượng mưa (mm)",
-                        data: rain,
-                        backgroundColor: "rgba(56, 189, 248, 0.6)",
-                        borderColor: "#38bdf8",
-                        borderWidth: 1,
-                        yAxisID: "y"
-                    },
-                    {
-                        type: "line",
-                        label: "Bốc thoát hơi nước ETo (mm)",
-                        data: eto,
-                        borderColor: "#f59e0b",
-                        backgroundColor: "rgba(245, 158, 11, 0.1)",
-                        fill: false,
-                        tension: 0.3,
-                        yAxisID: "y"
-                    }
-                ]
+                datasets: datasets
             },
             options: {
                 responsive: true,
@@ -246,10 +286,7 @@ async function loadClimateChart() {
                 plugins: {
                     legend: { labels: { color: "#cbd5e1" } }
                 },
-                scales: {
-                    x: { ticks: { color: "#94a3b8", maxRotation: 45 }, grid: { color: "#1f2937" } },
-                    y: { ticks: { color: "#94a3b8" }, grid: { color: "#1f2937" } }
-                }
+                scales: scales
             }
         });
     } catch (e) {
