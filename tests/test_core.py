@@ -315,5 +315,67 @@ class TestAeroAgriStep4(unittest.TestCase):
         self.assertGreater(eto_warm.mean(), eto_base.mean())
 
 
+class TestAeroAgriStep5(unittest.TestCase):
+    def test_step5_usda_scs_peff(self):
+        """Spec 8: Peff: P = 100 -> 84.0; P = 300 -> 155.0."""
+        from core.water_balance import calculate_monthly_peff
+        self.assertAlmostEqual(calculate_monthly_peff(100.0), 84.0, places=2)
+        self.assertAlmostEqual(calculate_monthly_peff(300.0), 155.0, places=2)
+
+    def test_step5_kc_interpolation(self):
+        """Kiểm tra nội suy Kc theo stages."""
+        from core.water_balance import build_daily_kc
+        stages = {"ini": 20, "dev": 25, "mid": 35, "late": 20}
+        kc = build_daily_kc(stages, kc_ini=0.40, kc_mid=1.15, kc_end=0.50, season_days=100)
+        self.assertEqual(len(kc), 100)
+        # Ngày 10 thuộc stage ini -> 0.40
+        self.assertAlmostEqual(kc[9], 0.40, places=3)
+        # Ngày 60 thuộc stage mid -> 1.15
+        self.assertAlmostEqual(kc[59], 1.15, places=3)
+        # Ngày 99 thuộc stage late -> gần 0.50
+        self.assertAlmostEqual(kc[99], 0.50, places=2)
+
+    def test_step5_water_balance_rice_vs_soybean(self):
+        """Spec 8: lúa có deficit_mm lớn hơn đậu tương."""
+        from core.water_balance import calculate_water_balance
+        # Tạo chuỗi dữ liệu 1 năm mùa khô giả lập
+        dates = pd.date_range("2024-01-01", "2024-06-30")
+        df = pd.DataFrame({
+            "date": dates,
+            "T2M_MAX": [33.0] * len(dates),
+            "T2M_MIN": [24.0] * len(dates),
+            "RH2M": [70.0] * len(dates),
+            "WS2M": [3.0] * len(dates),
+            "ALLSKY_SFC_SW_DWN": [20.0] * len(dates),
+            "PRECTOTCORR": [1.0] * len(dates)
+        })
+        wb_rice = calculate_water_balance(df, "Ben_Tre_DBSCL", "rice")
+        wb_soy = calculate_water_balance(df, "Ben_Tre_DBSCL", "soybean")
+        self.assertTrue(wb_rice["available"])
+        self.assertTrue(wb_soy["available"])
+        self.assertGreater(wb_rice["mean_deficit_mm"], wb_soy["mean_deficit_mm"])
+
+    def test_step5_special_crops(self):
+        """Cây đặc biệt: rice_shrimp trả available=False; coffee perennial chạy được."""
+        from core.water_balance import calculate_water_balance
+        dates = pd.date_range("2024-01-01", "2024-06-30")
+        df = pd.DataFrame({
+            "date": dates,
+            "T2M_MAX": [30.0] * len(dates),
+            "T2M_MIN": [18.0] * len(dates),
+            "RH2M": [60.0] * len(dates),
+            "WS2M": [3.5] * len(dates),
+            "ALLSKY_SFC_SW_DWN": [22.0] * len(dates),
+            "PRECTOTCORR": [0.5] * len(dates)
+        })
+        wb_rs = calculate_water_balance(df, "Ben_Tre_DBSCL", "rice_shrimp")
+        self.assertFalse(wb_rs["available"])
+        self.assertIsNone(wb_rs["mean_deficit_mm"])
+
+        wb_coffee = calculate_water_balance(df, "Dak_Lak_Tay_Nguyen", "coffee")
+        self.assertTrue(wb_coffee["available"])
+        self.assertGreater(wb_coffee["mean_deficit_mm"], 0.0)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
