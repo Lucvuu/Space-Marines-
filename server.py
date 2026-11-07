@@ -10,6 +10,7 @@ Tuân thủ:
 import os
 import sys
 import json
+import socket
 import urllib.parse
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
@@ -23,6 +24,14 @@ from core.scoring import evaluate_crop_suitability
 from core.advisor import build_advice
 
 WEB_DIR = os.path.join(AERO_ROOT, "web")
+
+def is_osm_reachable():
+    """Kiểm tra kết nối tới OSM tile server để tránh lỗi console khi chạy offline."""
+    try:
+        socket.create_connection(("tile.openstreetmap.org", 80), timeout=0.5)
+        return True
+    except OSError:
+        return False
 
 class AeroAgriAPIHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -52,6 +61,7 @@ class AeroAgriAPIHandler(SimpleHTTPRequestHandler):
                 status = {}
                 for reg_id in regions_cfg:
                     status[reg_id] = get_data_status(reg_id)
+                status["_osm_online"] = is_osm_reachable()
                 self.send_json(200, status)
                 return
 

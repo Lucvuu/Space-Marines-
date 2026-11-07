@@ -2,9 +2,11 @@
 // Hoàn toàn offline, không CDN, không Math.random, bám sát mục 7
 
 let map = null;
+let tileLayerAdded = false;
 let markers = {};
 let climateChart = null;
 let currentRegion = "Ben_Tre_DBSCL";
+let latestRegionStatus = {};
 let simDebounceTimer = null;
 
 const REGIONS_DATA = {
@@ -67,12 +69,6 @@ function initMap() {
             zoomControl: true
         });
 
-        // OSM Tile layer (nếu offline thì lớp tile không tải được nhưng circleMarker vẫn hiển thị tốt)
-        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            maxZoom: 18,
-            attribution: "&copy; OpenStreetMap"
-        }).addTo(map);
-
         // User mod #4: Dùng L.circleMarker, không dùng icon mặc định
         Object.entries(REGIONS_DATA).forEach(([regId, info]) => {
             const marker = L.circleMarker([info.lat, info.lon], {
@@ -108,15 +104,24 @@ async function updateStatusBar() {
         const res = await fetch("/api/status");
         if (!res.ok) return;
         const status = await res.json();
-        const regStatus = status[currentRegion] || {};
+        latestRegionStatus = status[currentRegion] || {};
 
-        updateChip("chip-power", "POWER", regStatus.power);
-        updateChip("chip-ndvi", "NDVI", regStatus.ndvi);
-        updateChip("chip-sm", "SMAP", regStatus.soil_moisture);
-        updateChip("chip-sal", "Độ mặn", regStatus.salinity);
+        // Thêm tile layer nếu có kết nối mạng tới OSM
+        if (status._osm_online && !tileLayerAdded && map) {
+            L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                maxZoom: 18,
+                attribution: "&copy; OpenStreetMap"
+            }).addTo(map);
+            tileLayerAdded = true;
+        }
+
+        updateChip("chip-power", "POWER", latestRegionStatus.power);
+        updateChip("chip-ndvi", "NDVI", latestRegionStatus.ndvi);
+        updateChip("chip-sm", "SMAP", latestRegionStatus.soil_moisture);
+        updateChip("chip-sal", "Độ mặn", latestRegionStatus.salinity);
 
         // Hiển thị badge dữ liệu mẫu nếu có bất kỳ nguồn nào là synthetic
-        const isSynth = Object.values(regStatus).some(s => s && s.is_synthetic);
+        const isSynth = Object.values(latestRegionStatus).some(s => s && s.is_synthetic);
         const badgeArea = document.getElementById("dataBadgeArea");
         if (isSynth) {
             badgeArea.innerHTML = '<span class="chip chip-synthetic">⚠️ DỮ LIỆU MẪU (SYNTHETIC)</span>';
@@ -151,6 +156,24 @@ async function loadRegionData() {
     if (map && REGIONS_DATA[currentRegion]) {
         const target = REGIONS_DATA[currentRegion];
         map.setView([target.lat, target.lon], 8);
+    }
+
+    // Nếu chưa có dữ liệu POWER, hiện trạng thái rỗng ngay, không gọi API gây 404 console
+    if (!latestRegionStatus.power || !latestRegionStatus.power.available) {
+        const chartWrapper = document.getElementById("chartWrapper");
+        const chartEmpty = document.getElementById("climateEmpty");
+        if (chartWrapper && chartEmpty) {
+            chartWrapper.style.display = "none";
+            chartEmpty.style.display = "block";
+        }
+
+        const tableWrapper = document.getElementById("cropTableWrapper");
+        const tableEmpty = document.getElementById("evaluateEmpty");
+        if (tableWrapper && tableEmpty) {
+            tableWrapper.style.display = "none";
+            tableEmpty.style.display = "block";
+        }
+        return;
     }
 
     await loadClimateChart();
