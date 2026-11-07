@@ -75,27 +75,7 @@
     "verified": false
   },
   "coffee": {
-    "name_vi": "Cà phê Robusta độc canh",
-    "perennial": true,
-    "season_days": 120,
-    "stages": {
-      "ini": 30,
-      "dev": 30,
-      "mid": 30,
-      "late": 30
-    },
-    "kc_ini": 0.95,
-    "kc_mid": 1.00,
-    "kc_end": 1.00,
-    "land_prep_mm": null,
-    "percolation_mm_day": null,
-    "salinity_threshold_ece_dsm": null,
-    "heat_threshold_c": 33.0,
-    "source": "FAO-56 Table 12",
-    "verified": false
-  },
-  "coffee_cover_crop": {
-    "name_vi": "Cà phê xen cây họ đậu phủ đất",
+    "name_vi": "Cà phê Robusta độc canh (đất trần)",
     "perennial": true,
     "season_days": 120,
     "stages": {
@@ -110,8 +90,28 @@
     "land_prep_mm": null,
     "percolation_mm_day": null,
     "salinity_threshold_ece_dsm": null,
-    "heat_threshold_c": 35.0,
-    "source": "FAO-56 Table 12 (thảm phủ giảm bốc hơi)",
+    "heat_threshold_c": 33.0,
+    "source": "FAO-56 Table 12 (Coffee, bare ground)",
+    "verified": false
+  },
+  "coffee_cover_crop": {
+    "name_vi": "Cà phê có cây phủ đất / cỏ",
+    "perennial": true,
+    "season_days": 120,
+    "stages": {
+      "ini": 30,
+      "dev": 30,
+      "mid": 30,
+      "late": 30
+    },
+    "kc_ini": 1.05,
+    "kc_mid": 1.10,
+    "kc_end": 1.10,
+    "land_prep_mm": null,
+    "percolation_mm_day": null,
+    "salinity_threshold_ece_dsm": null,
+    "heat_threshold_c": 33.0,
+    "source": "FAO-56 Table 12 (Coffee, with weeds)",
     "verified": false
   }
 }
