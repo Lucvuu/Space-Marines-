@@ -451,6 +451,9 @@ class TestAeroAgriStep6(unittest.TestCase):
                 self.assertIn("2. Bảng so sánh", md)
                 self.assertIn("3. Việc nên làm", md)
                 self.assertIn("DỮ LIỆU MẪU", md)  # Gắn cờ dữ liệu mẫu
+                self.assertNotIn("mất trắng", md.lower())
+                self.assertNotIn("mất mùa", md.lower())
+                self.assertNotIn("năng suất", md.lower())
 
             finally:
                 if old_data_dir:

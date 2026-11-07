@@ -77,18 +77,34 @@ DỮ LIỆU JSON ĐÁNH GIÁ:
     table_md = "\n".join(rows_md)
 
     # Phần 3: Việc nên làm 7 ngày tới
+    baseline_name = crops[0]["crop_name"] if crops else "cây hiện trạng"
     actions = []
     if best_crop and best_crop["score"] is not None:
-        if best_crop.get("water_vs_baseline_pct") is not None and best_crop["water_vs_baseline_pct"] > 0:
-            actions.append(f"Cân nhắc chuẩn bị đất và giống cho **{best_crop['crop_name']}** để tiết kiệm khoảng **{best_crop['water_vs_baseline_pct']}%** lượng nước thiếu hụt so với thói quen canh tác cũ.")
+        vs_pct = best_crop.get("water_vs_baseline_pct")
+        if vs_pct is not None and vs_pct > 0:
+            actions.append(
+                f"Cân nhắc chuẩn bị đất và giống cho **{best_crop['crop_name']}** "
+                f"(nhu cầu tưới {best_crop['deficit_mm']} mm, ít hơn {baseline_name} {abs(vs_pct):.1f}%)."
+            )
+        elif vs_pct is not None and vs_pct < 0:
+            actions.append(
+                f"Theo dõi sát nguồn nước nếu chọn **{best_crop['crop_name']}** "
+                f"(nhu cầu tưới {best_crop['deficit_mm']} mm, nhiều hơn {baseline_name} {abs(vs_pct):.1f}%)."
+            )
         else:
-            actions.append(f"Theo dõi sát nguồn nước tưới nếu tiếp tục duy trì **{best_crop['crop_name']}** (mức thiếu hụt dự báo: {best_crop['deficit_mm']} mm).")
+            actions.append(
+                f"Theo dõi sát nguồn nước nếu tiếp tục duy trì **{best_crop['crop_name']}** "
+                f"(nhu cầu tưới {best_crop['deficit_mm']} mm)."
+            )
 
     # Kiểm tra rủi ro nhiệt
     high_heat_crops = [c for c in crops if c["components"]["heat_ratio"] and c["components"]["heat_ratio"] > 0.15]
     if high_heat_crops:
-        names = ", ".join(c["crop_name"] for c in high_heat_crops)
-        actions.append(f"Lên phương án tưới dặm buổi sáng hoặc che phủ đất cho ({names}) do tỷ lệ ngày nắng nóng gay gắt cao.")
+        heat_details = ", ".join(
+            f"{c['crop_name']} ({round(c['components']['heat_ratio'] * 100, 1)}% số ngày vượt ngưỡng nhiệt)"
+            for c in high_heat_crops
+        )
+        actions.append(f"Lên phương án tưới dặm buổi sáng cho: {heat_details}.")
 
     # Kiểm tra mặn
     high_sal_crops = [c for c in crops if c["components"]["salinity_exceed"] and c["components"]["salinity_exceed"] > 0.20]
