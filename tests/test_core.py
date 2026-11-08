@@ -609,6 +609,45 @@ class TestAeroAgriStep7(unittest.TestCase):
         self.assertAlmostEqual(rows[1]["ndvi"], 0.6200, places=4)
         self.assertEqual(rows[1]["n_valid_pixels"], 22)
 
+    def test_prep6_regression_baseline(self):
+        """Kiểm tra kết quả evaluate trên demo data khớp với regression_baseline.json (sai số 1e-6)."""
+        from scripts.make_demo_data import generate_demo_dataset
+        from core.scoring import evaluate_crop_suitability
+
+        baseline_path = os.path.join(AERO_ROOT, "tests", "fixtures", "regression_baseline.json")
+        self.assertTrue(os.path.isfile(baseline_path))
+        with open(baseline_path, "r", encoding="utf-8") as f:
+            baseline = json.load(f)
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            old_data_dir = os.environ.get("AERO_DATA_DIR")
+            os.environ["AERO_DATA_DIR"] = tmp_dir
+            try:
+                generate_demo_dataset()
+                for reg_id, scen_dict in baseline.items():
+                    for scen_key, expected_crops in scen_dict.items():
+                        dt_str, dr_str = scen_key.split("_")
+                        res = evaluate_crop_suitability(reg_id, float(dt_str), float(dr_str))
+                        actual_map = {c["crop_id"]: c for c in res["crops"]}
+                        for cid, exp in expected_crops.items():
+                            act = actual_map[cid]
+                            self.assertEqual(act["risk_level"], exp["risk_level"])
+                            for num_field, act_key in [
+                                ("score", "score"),
+                                ("r", "exceed_ratio_r"),
+                                ("deficit_mm", "deficit_mm"),
+                                ("water_vs_baseline_pct", "water_vs_baseline_pct"),
+                            ]:
+                                if exp[num_field] is None:
+                                    self.assertIsNone(act[act_key])
+                                else:
+                                    self.assertAlmostEqual(float(act[act_key]), float(exp[num_field]), delta=1e-6)
+            finally:
+                if old_data_dir:
+                    os.environ["AERO_DATA_DIR"] = old_data_dir
+                else:
+                    os.environ.pop("AERO_DATA_DIR", None)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

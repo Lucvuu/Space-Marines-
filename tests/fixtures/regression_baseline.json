@@ -1,0 +1,112 @@
+{
+  "Ben_Tre_DBSCL": {
+    "0.0_0.0": {
+      "rice": {
+        "score": 17.0,
+        "risk_level": "CRITICAL",
+        "r": 0.956,
+        "deficit_mm": 1124.1,
+        "water_vs_baseline_pct": 0.0
+      },
+      "soybean": {
+        "score": 48.4,
+        "risk_level": "CRITICAL",
+        "r": 0.94,
+        "deficit_mm": 429.1,
+        "water_vs_baseline_pct": 61.8
+      },
+      "maize": {
+        "score": 50.6,
+        "risk_level": "CRITICAL",
+        "r": 0.993,
+        "deficit_mm": 418.4,
+        "water_vs_baseline_pct": 62.8
+      },
+      "rice_shrimp": {
+        "score": null,
+        "risk_level": "INSUFFICIENT_DATA",
+        "r": 0.217,
+        "deficit_mm": null,
+        "water_vs_baseline_pct": null
+      }
+    },
+    "2.0_-30.0": {
+      "rice": {
+        "score": 5.5,
+        "risk_level": "CRITICAL",
+        "r": 0.956,
+        "deficit_mm": 1173.7,
+        "water_vs_baseline_pct": 0.0
+      },
+      "soybean": {
+        "score": 36.0,
+        "risk_level": "CRITICAL",
+        "r": 0.94,
+        "deficit_mm": 467.4,
+        "water_vs_baseline_pct": 60.2
+      },
+      "maize": {
+        "score": 40.6,
+        "risk_level": "CRITICAL",
+        "r": 0.993,
+        "deficit_mm": 456.0,
+        "water_vs_baseline_pct": 61.1
+      },
+      "rice_shrimp": {
+        "score": null,
+        "risk_level": "INSUFFICIENT_DATA",
+        "r": 0.793,
+        "deficit_mm": null,
+        "water_vs_baseline_pct": null
+      }
+    }
+  },
+  "Dak_Lak_Tay_Nguyen": {
+    "0.0_0.0": {
+      "coffee": {
+        "score": 27.8,
+        "risk_level": "SEVERE",
+        "r": 0.37,
+        "deficit_mm": 723.5,
+        "water_vs_baseline_pct": 0.0
+      },
+      "coffee_cover_crop": {
+        "score": 18.0,
+        "risk_level": "SEVERE",
+        "r": 0.37,
+        "deficit_mm": 838.7,
+        "water_vs_baseline_pct": -15.9
+      },
+      "maize": {
+        "score": 55.6,
+        "risk_level": "LOW",
+        "r": 0.009,
+        "deficit_mm": 518.6,
+        "water_vs_baseline_pct": 28.3
+      }
+    },
+    "2.0_-30.0": {
+      "coffee": {
+        "score": 14.6,
+        "risk_level": "CRITICAL",
+        "r": 0.831,
+        "deficit_mm": 767.7,
+        "water_vs_baseline_pct": 0.0
+      },
+      "coffee_cover_crop": {
+        "score": 4.8,
+        "risk_level": "CRITICAL",
+        "r": 0.831,
+        "deficit_mm": 889.6,
+        "water_vs_baseline_pct": -15.9
+      },
+      "maize": {
+        "score": 51.6,
+        "risk_level": "MODERATE",
+        "r": 0.147,
+        "deficit_mm": 550.3,
+        "water_vs_baseline_pct": 28.3
+      }
+    }
+  }
+}
