@@ -215,3 +215,4 @@ Dak_Lak_Tay_Nguyen   | salinity        | CHƯA CÓ      | 0        | -          
 3. **Dữ liệu độ mặn thực tế cho Bến Tre (`data/raw/salinity/Ben_Tre_DBSCL.csv`):** Cần cung cấp chuỗi CSV độ mặn trạm quan trắc (hoặc số liệu báo cáo Viện KHTL Miền Nam) để kích hoạt thành phần `salinity_exceed` trên dữ liệu thật.
 4. **Thông số mô hình `rice_shrimp`:** Quyết định giữ trạng thái `INSUFFICIENT_DATA` (minh bạch về giới hạn mô hình FAO-56 đối với thủy sản) hay bổ sung bộ quy tắc đánh giá riêng cho vụ tôm.
 5. **Tích hợp khóa API cho `call_llm()` trong `core/advisor.py`:** Quyết định có nối Gemini/Claude API cho phần trình bày khuyến nghị hay giữ nguyên bộ sinh khuyến nghị tất định (deterministic template) khi đem đi demo để đảm bảo tốc độ và 0% rủi ro mạng/hallucination.
+
