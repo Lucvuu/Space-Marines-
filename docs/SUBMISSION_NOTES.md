@@ -8,20 +8,23 @@
 
 | Product Name | Variables / Bands | Spatial & Temporal Resolution | Access URL / Endpoint | Usage in Application |
 |---|---|---|---|---|
-| **NASA POWER** (Prediction Of Worldwide Energy Resources, Agroclimatology Archive) | `T2M_MAX` (°C), `T2M_MIN` (°C), `RH2M` (%), `WS2M` (m/s), `ALLSKY_SFC_SW_DWN` (MJ/m²/day), `PRECTOTCORR` (mm/day) | 0.5° × 0.625° grid, Daily (2015-01-01 to 2025-12-31) | `https://power.larc.nasa.gov/api/temporal/daily/point` (`community=AG`) | Core input for daily FAO-56 Penman-Monteith reference evapotranspiration ($ET_o$), USDA-SCS monthly effective rainfall ($P_{eff}$), crop water deficit, and seasonal heat-exceedance ratio. |
-| **NASA MODIS Terra Vegetation Indices (`MOD13Q1` v061)** via ORNL DAAC REST API | `250m_16_days_NDVI` (scale factor `0.0001`, fill value `-3000` filtered out) | 250 m, 16-day composite (2015 to 2025) | `https://modis.ornl.gov/rst/api/v1/MOD13Q1/dates` and `/subset` | Aggregated into monthly mean NDVI and plotted on the secondary axis (0–1) of the regional climate chart to visualize seasonal vegetation cover cycles. Not currently included in the numerical crop score formula. |
-| **NASA SMAP L4 Global 3-hourly 9 km Surface and Rootzone Soil Moisture** *(Optional schema supported)* | `sm_rootzone` (m³/m³) | 9 km, Daily CSV contract (`data/raw/soil_moisture/<region_id>.csv`) | Local CSV ingestion contract | Supported by the data loader and `/api/climate` endpoint when user CSV files are provided; displays an explicit empty state when absent. |
+| **NASA POWER** (Prediction Of Worldwide Energy Resources, Agroclimatology Archive) | `T2M_MAX` (°C), `T2M_MIN` (°C), `RH2M` (%), `WS2M` (m/s), `ALLSKY_SFC_SW_DWN` (MJ/m²/day), `PRECTOTCORR` (mm/day) | Meteorology (MERRA-2): 0.5° × 0.625°; Solar radiation `ALLSKY_SFC_SW_DWN` (CERES): 1° × 1°; Daily (2015-01-01 to 2025-12-31) | `https://power.larc.nasa.gov/api/temporal/daily/point` (`community=AG`) | Core input for daily FAO-56 Penman-Monteith reference evapotranspiration ($ET_o$), USDA-SCS monthly effective rainfall ($P_{eff}$), crop water deficit, and seasonal heat-exceedance ratio. |
+| **NASA MODIS Terra Vegetation Indices (`MOD13Q1` v061)** via ORNL DAAC REST API | `250m_16_days_NDVI` (scale factor `0.0001`, fill value `-3000` filtered out) & `250m_16_days_pixel_reliability` (keeping codes `0` good and `1` marginal, $\ge 20$ valid pixels/day) | 250 m (3×3 km window = 81 pixels median), 16-day composite (2015 to 2025) | `https://modis.ornl.gov/rst/api/v1/MOD13Q1/dates` and `/subset` | Aggregated into monthly mean NDVI and plotted on the secondary axis (0–1) of the regional climate chart to visualize seasonal vegetation cover cycles. Not currently included in the numerical crop score formula. |
 
 **Pilot Coordinates Evaluated:**
-- **Bến Tre (Mekong Delta, Vietnam):** `lat = 10.2433`, `lon = 106.3758`, `elevation = 2.0 m` (Dry season: Months 1–4).
-- **Đắk Lắk (Central Highlands, Vietnam):** `lat = 12.6667`, `lon = 108.0500`, `elevation = 530.0 m` (Dry season: Months 1–4).
+- **Bến Tre (Mekong Delta, Vietnam):**
+  - Meteorology (POWER): `lat = 10.2433`, `lon = 106.3758`, `elevation = 2.0 m` (Dry season: Months 1–4).
+  - Agricultural NDVI window (`ndvi_point`): `lat = 10.0992`, `lon = 106.6040` (Rice fields near Mỹ Nhơn market, former Ba Tri district).
+- **Đắk Lắk (Central Highlands, Vietnam):**
+  - Meteorology (POWER): `lat = 12.6667`, `lon = 108.0500`, `elevation = 530.0 m` (Dry season: Months 1–4).
+  - Agricultural NDVI window (`ndvi_point`): `lat = 12.8314`, `lon = 108.1282` (Coffee plantations near Quảng Phú, former Cư M'gar district).
 
 ---
 
 ## 2. Methodology & Equations
 
 ### 2.1. Reference Evapotranspiration ($ET_o$) — FAO-56 Penman-Monteith
-Daily reference evapotranspiration is computed using the FAO Irrigation and Drainage Paper No. 56 (Allen et al., 1998) Penman-Monteith equation (**Eq. 6**):
+Daily reference evapotranspiration is computed using the FAO Irrigation and Drainage Paper No. 56 (Allen et al., 1998) Penman-Monteith equation (**Eq. 6**), with wind speed at 2 m floored at $u_2 = \max(u_2, 0.5\text{ m/s})$ per FAO-56 Ch. 3, p. 63:
 
 $$ET_o = \frac{0.408 \Delta (R_n - G) + \gamma \frac{900}{T_{mean} + 273} u_2 (e_s - e_a)}{\Delta + \gamma (1 + 0.34 u_2)}$$
 
@@ -44,7 +47,7 @@ When a user adjusts the climate simulator temperature slider ($\Delta T$ in °C)
 - **Crop Evapotranspiration ($ET_c$):**
   - Annual crops (`rice`, `soybean`, `maize`): daily $K_c$ is linearly interpolated across four growth stages (`ini`, `dev`, `mid`, `late`) starting on January 1 of each dry season ($ET_c = K_c \cdot ET_o$).
   - Perennial crops (`coffee`, `coffee_cover_crop`): evaluated across dry-season months (1–4) using fixed $K_c = K_{c,\text{mid}}$.
-  - Additional water requirements (`land_prep_mm` and `percolation_mm_day`, e.g., $200\text{ mm}$ land preparation and $3\text{ mm/day}$ percolation for paddy rice per FAO-56 Ch. 7 / CROPWAT):
+  - Additional water requirements (`land_prep_mm` and `percolation_mm_day`, e.g., $200\text{ mm}$ land preparation and $3\text{ mm/day}$ percolation for paddy rice — assumed values, not from FAO-56; source TODO (`verified: false`)):
     $$W_{\text{req}} = \sum ET_c + W_{\text{land\_prep}} + (d_{\text{season}} \cdot W_{\text{percolation}})$$
 - **Monthly Effective Rainfall ($P_{eff}$, mm) — USDA Soil Conservation Service (USDA-SCS) method:**
   $$P_{eff} = \begin{cases} P \cdot \frac{125 - 0.2 P}{125} & \text{if } P \le 250\text{ mm/month} \\ 125 + 0.1 P & \text{if } P > 250\text{ mm/month} \end{cases}$$
@@ -69,34 +72,50 @@ When a user adjusts the climate simulator temperature slider ($\Delta T$ in °C)
 
 ## 3. Known Limitations
 
-1. **Spatial Resolution of Meteorology:** NASA POWER agroclimatology variables have a $0.5^\circ \times 0.625^\circ$ grid resolution (~55 km), which smooths out local microclimates and topographic gradients in Central Highlands valleys.
+1. **Spatial Resolution of Meteorology & Solar Radiation:** NASA POWER meteorology variables (MERRA-2) have a $0.5^\circ \times 0.625^\circ$ grid resolution (~55 km), and solar radiation `ALLSKY_SFC_SW_DWN` (CERES) has a $1^\circ \times 1^\circ$ grid resolution, which smooth out local microclimates and topographic gradients in Central Highlands valleys.
 2. **No Crop Yield or Economic Modeling:** The engine calculates physical water balance (mm) and threshold-exceedance frequency ($r$), not agronomic yield (tons/ha) or market revenue.
-3. **Missing In-Situ Salinity & SMAP Data:** Real river/canal salinity time series (`salinity_ppt`) for Bến Tre and SMAP L4 rootzone soil moisture (`sm_rootzone`) are not automatically fetched from a public unauthenticated API; when absent, the application explicitly reports them as missing (`available: false`) rather than substituting synthetic numbers.
-4. **Unverified Agronomic Parameters (`verified: false`):** All crop parameters in `config/crops.json`, region definitions in `config/regions.json`, and scoring thresholds in `config/scoring.json` are marked `"verified": false`. Specifically:
+3. **SMAP & In-Situ Salinity Data:** SMAP CSV schema supported, no SMAP data used in current results. Real river/canal salinity time series (`salinity_ppt`) for Bến Tre is also not automatically fetched from a public unauthenticated API; when absent, the application explicitly reports them as missing (`available: false`) rather than substituting synthetic numbers.
+4. **Unverified Agronomic Parameters (`verified: false`):** Crop parameters in `config/crops.json`, region definitions in `config/regions.json`, and scoring thresholds in `config/scoring.json` carry `"verified": false` at the top level:
    - `heat_threshold_c` values carry `"source": {"heat": "TODO: cần nguồn"}` because FAO-56 does not define daily maximum temperature thresholds.
+   - `rice` additional water parameters (`land_prep_mm = 200`, `percolation_mm_day = 3`) are assumed values, not from FAO-56; source TODO (`verified: false`).
    - `rice_shrimp` rotational aquaculture-rice parameters (`kc_*`, `salinity_threshold_ece_dsm`) are `null` (`TODO`) awaiting local agricultural extension validation.
+5. **Fixed Sowing Date Assumption:** Annual crops are assumed sown on Jan 1. Actual Winter-Spring rice in Bến Tre is sown around Nov–Dec.
+6. **Whole-Season Heat Exceedance Counting:** Heat exceedance counts all days with $T_{max} > \text{threshold}$ in the season, not only sensitive stages such as anthesis.
+7. **Upland Salinity Conversion Assumption:** For upland crops, the salinity threshold is converted from $EC_e$ to water salinity using the FAO-29 assumption $EC_e \approx 1.5 \cdot EC_w$. This assumes a steady-state leaching fraction and has not been field-checked for the Mekong Delta.
+8. **Wind Speed Floor:** The POWER `WS2M` floor is applied at $0.5\text{ m/s}$ (FAO-56 p.63, Fix 1).
+9. **Actual Vapour Pressure Formulation:** Actual vapour pressure is computed from daily mean `RH2M` using FAO-56 Eq. 19, which FAO-56 calls "less desirable" than Eq. 17/18 because POWER provides no $RH_{max}/RH_{min}$. Sensitivity check: using POWER `T2MDEW` with Eq. 14 instead raises Jan–Apr $ET_o$ in Bến Tre by about 7–9% and changes Đắk Lắk by less than 1%. Crop ranking is unaffected because all crops in a region share the same $ET_o$.
+10. **Representative Point NDVI Window:** NDVI comes from a 3×3 km window around one selected farm point, not the whole province.
 
 ---
 
-## 4. Third-Party Libraries & AI Disclosure
+## 4. Data Citations & Acknowledgements
+
+- **NASA POWER:** *"These data were obtained from the NASA Langley Research Center (LaRC) POWER Project funded through the NASA Earth Science/Applied Science Program."* (`https://power.larc.nasa.gov/`, accessed 2026-11-07).
+- **MODIS MOD13Q1:** Didan, K. (2021). *MODIS/Terra Vegetation Indices 16-Day L3 Global 250m SIN Grid V061*. NASA EOSDIS Land Processes DAAC. `doi:10.5067/MODIS/MOD13Q1.061`.
+- **ORNL DAAC Subset Web Service:** ORNL DAAC MODIS/VIIRS Land Product Subsets web service (`https://modis.ornl.gov/`, accessed 2026-11-08).
+- **OpenStreetMap:** Online map tiles when network connectivity is available, *"© OpenStreetMap contributors"*, licensed under the Open Data Commons Open Database License (ODbL).
+
+---
+
+## 5. Third-Party Libraries & AI Disclosure
 
 ### Third-Party Software & Libraries
-| Library | Version | License | Role |
-|---|---|---|---|
-| Python Standard Library (`http.server`, `unittest`, `json`, `urllib`) | Python 3.11+ | PSF License | Local HTTP server, REST routing, test runner |
-| `pandas` | $\ge 2.0.0$ | BSD-3-Clause | Time-series alignment and monthly/seasonal aggregation |
-| `numpy` | $\ge 1.24.0$ | BSD-3-Clause | Vectorized FAO-56 Penman-Monteith calculations |
-| `requests` | $\ge 2.28.0$ | Apache-2.0 | HTTP client for NASA POWER and ORNL DAAC MODIS APIs |
-| `pytest` | $\ge 7.0.0$ | MIT | Automated unit and regression testing |
-| Leaflet | `1.9.4` (vendored offline) | BSD-2-Clause | Interactive map rendering (`L.circleMarker`) |
-| Chart.js | `4.4.1` (vendored offline) | MIT | Monthly rainfall, $ET_o$, and MODIS NDVI visualization |
+| Library / Service | Requirement | Tested Version | License | Role |
+|---|---|---|---|---|
+| Python Standard Library (`http.server`, `unittest`, `json`, `urllib.parse`) | Python 3.11+ | `3.13.15` | PSF License | Local HTTP server, URL parsing, unit test framework |
+| `pandas` | $\ge 2.0.0$ | `3.0.6` | BSD-3-Clause | Time-series alignment and monthly/seasonal aggregation |
+| `numpy` | $\ge 1.24.0$ | `2.5.2` | BSD-3-Clause | Vectorized FAO-56 Penman-Monteith calculations |
+| `requests` | $\ge 2.28.0$ | `2.34.2` | Apache-2.0 | HTTP client for NASA POWER and ORNL DAAC MODIS APIs |
+| `pytest` | $\ge 7.0.0$ | `9.2.0` | MIT | Automated unit and regression testing |
+| Leaflet | `1.9.4` (vendored offline) | `1.9.4` | BSD-2-Clause | Interactive map rendering (`L.circleMarker`) |
+| Chart.js | `4.4.1` (vendored offline) | `4.4.1` | MIT | Monthly rainfall, $ET_o$, and MODIS NDVI visualization |
+| OpenStreetMap Tiles | Online when reachable | N/A | ODbL (`© OpenStreetMap contributors`) | Optional background basemap tiles |
 
 ### AI & Tooling Disclosure
 Code scaffolded with Google Antigravity (Gemini) and reviewed with Claude.
 
 ---
 
-## 5. License
+## 6. License
 
 This project is licensed under the **Apache License, Version 2.0**. See the [LICENSE](../LICENSE) file for the full license text.
-
