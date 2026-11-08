@@ -3,8 +3,9 @@
 AERO-AGRI Crop Suitability Scoring Engine
 Tính toán Điểm so sánh với hiện trạng (0 - 100), cấp độ rủi ro tuyệt đối, và thành phần rủi ro (Nước, Mặn, Nhiệt).
 Tuân thủ:
-- Thành phần nước tính tương đối: water_component = clip(deficit_mm / baseline_deficit_mm, 0, 1),
-  với baseline là cây đầu tiên trong candidate_crops của vùng.
+- Thành phần nước chuẩn hóa theo deficit lớn nhất trong vùng:
+  water_component = deficit_mm / max(deficit_mm của các cây có deficit hợp lệ trong vùng)
+  (nếu max = 0 thì mọi cây có deficit hợp lệ đều có water_component = 0; cây có deficit None thì water_component = None).
 - Giữ irrigation_share (tỷ lệ ETc phải tưới = deficit_mm / total_req).
 - Ngưỡng mặn: chuyển đổi từ salinity_threshold_ece_dsm sang ‰: ppt = ece / 1.5 / 1.56
   Quy chuẩn nông học: ECe ≈ 1.5·ECw (FAO-29), 1‰ ≈ 1.56 dS/m.
@@ -122,16 +123,6 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
         irrigation_share = wb.get("mean_water_stress")
         deficit_mm = wb.get("mean_deficit_mm")
 
-        # water_component = clip(deficit_mm / baseline_deficit_mm, 0, 1)
-        water_component = None
-        if deficit_mm is not None:
-            if baseline_deficit_mm is not None and baseline_deficit_mm > 0:
-                water_component = round(float(np.clip(deficit_mm / baseline_deficit_mm, 0.0, 1.0)), 3)
-            elif irrigation_share is not None:
-                water_component = round(float(np.clip(irrigation_share, 0.0, 1.0)), 3)
-            else:
-                water_component = 0.0
-
         # B. Rủi ro nhiệt (heat_ratio)
         heat_thresh = c_info.get("heat_threshold_c")
         heat_ratio = None
@@ -159,14 +150,14 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
         else:
             missing_notes.append("cây không có ngưỡng mặn")
 
-        if water_component is None:
+        if deficit_mm is None:
             missing_notes.append("chưa tính bốc thoát hơi nước do thiếu Kc nông học")
 
         pre_crop_list.append({
             "crop_id": crop_id,
             "crop_name": c_info.get("name_vi", crop_id),
             "components": {
-                "water_component": water_component,
+                "water_component": None,
                 "irrigation_share": irrigation_share,
                 "water_stress": irrigation_share,
                 "salinity_exceed": salinity_exceed,
@@ -175,6 +166,18 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
             "deficit_mm": deficit_mm,
             "missing_components": missing_notes
         })
+
+    # Chuẩn hóa water_component theo max(deficit_mm của các cây có deficit hợp lệ trong vùng)
+    valid_deficits = [item["deficit_mm"] for item in pre_crop_list if item["deficit_mm"] is not None]
+    max_deficit_mm = max(valid_deficits) if valid_deficits else None
+    for item in pre_crop_list:
+        def_mm = item["deficit_mm"]
+        if def_mm is None:
+            item["components"]["water_component"] = None
+        elif max_deficit_mm is not None and max_deficit_mm > 0:
+            item["components"]["water_component"] = round(float(def_mm / max_deficit_mm), 3)
+        else:
+            item["components"]["water_component"] = 0.0
 
     # 4. Bước 2: Xác định các thành phần active của vùng
     comp_keys_map = {

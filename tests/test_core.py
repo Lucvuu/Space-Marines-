@@ -471,7 +471,16 @@ class TestAeroAgriStep6(unittest.TestCase):
 
                 # Lúa có deficit lớn hơn đậu tương
                 bt_soy = [c for c in res_bt["crops"] if c["crop_id"] == "soybean"][0]
+                bt_maize = [c for c in res_bt["crops"] if c["crop_id"] == "maize"][0]
                 self.assertGreater(bt_rice["deficit_mm"], bt_soy["deficit_mm"])
+
+                # Fix 2: Ở Bến Tre, thứ tự score: rice < soybean, rice < maize
+                self.assertLess(bt_rice["score"], bt_soy["score"])
+                self.assertLess(bt_rice["score"], bt_maize["score"])
+
+                # Fix 2: Ở Đắk Lắk, coffee_cover_crop phải có điểm thấp hơn coffee
+                dl_cover = [c for c in res_dl["crops"] if c["crop_id"] == "coffee_cover_crop"][0]
+                self.assertLess(dl_cover["score"], dl_coffee["score"])
 
                 # rice_shrimp ở Bến Tre thiếu thành phần của vùng -> score là None, water_vs_baseline_pct là None
                 bt_rs = [c for c in res_bt["crops"] if c["crop_id"] == "rice_shrimp"][0]

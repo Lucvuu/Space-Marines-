@@ -56,8 +56,8 @@ When a user adjusts the climate simulator temperature slider ($\Delta T$ in °C)
   Crop salinity thresholds from FAO-56 Table 23 are given as $EC_e$ (dS/m). Assuming $EC_e \approx 1.5 \cdot EC_w$ (FAO Irrigation and Drainage Paper 29) and $1\text{ ‰} \approx 1.56\text{ dS/m}$:
   $$\text{salinity\_threshold\_ppt} = \frac{EC_e}{1.5 \times 1.56}$$
 - **Relative Comparison Score (`score`, 0–100):**
-  Measures suitability relative to the region's baseline crop (first crop in `candidate_crops`):
-  $$\text{water\_component} = \text{clip}\left(\frac{\text{deficit\_mm}}{\text{baseline\_deficit\_mm}}, 0, 1\right)$$
+  Measures suitability across candidate crops in the region by normalizing the water component against the maximum seasonal deficit among crops with valid deficit in the region:
+  $$\text{water\_component}_i = \begin{cases} \frac{\text{deficit\_mm}_i}{\max_{j \in \text{valid}} (\text{deficit\_mm}_j)} & \text{if } \max_{j \in \text{valid}} (\text{deficit\_mm}_j) > 0 \\ 0 & \text{if } \max_{j \in \text{valid}} (\text{deficit\_mm}_j) = 0 \end{cases}$$
   $$\text{score} = 100 \times \left(1 - \sum_{k \in \text{active}} \tilde{w}_k \cdot c_k\right)$$
   Weights are only redistributed for components missing across **all** crops in a region. If a crop is missing a component that is available for other crops in the same region (e.g., `rice_shrimp` lacking plant $K_c$), its `score` is set to `null` and `risk_level` is marked `INSUFFICIENT_DATA`.
 - **Absolute Risk Classification (`risk_level`):**
@@ -75,7 +75,6 @@ When a user adjusts the climate simulator temperature slider ($\Delta T$ in °C)
 4. **Unverified Agronomic Parameters (`verified: false`):** All crop parameters in `config/crops.json`, region definitions in `config/regions.json`, and scoring thresholds in `config/scoring.json` are marked `"verified": false`. Specifically:
    - `heat_threshold_c` values carry `"source": {"heat": "TODO: cần nguồn"}` because FAO-56 does not define daily maximum temperature thresholds.
    - `rice_shrimp` rotational aquaculture-rice parameters (`kc_*`, `salinity_threshold_ece_dsm`) are `null` (`TODO`) awaiting local agricultural extension validation.
-5. **Relative Water Clipping Ceiling:** Because `water_component = clip(deficit_mm / baseline_deficit_mm, 0, 1)` caps at `1.0`, any candidate crop whose water deficit exceeds the baseline crop's deficit (such as `coffee_cover_crop` with $K_{c,\text{mid}} = 1.10$ vs. bare-ground `coffee` with $K_{c,\text{mid}} = 0.95$) receives the same maximum water penalty (`1.0`) as the baseline crop.
 
 ---
 
