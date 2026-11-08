@@ -21,9 +21,28 @@ Trong đó:
 - Ra: Bức xạ ngoài khí quyển tính từ vĩ độ và ngày trong năm (Eq. 21)
 - Rso: Bức xạ bầu trời quang = (0.75 + 2e-5 * z) * Ra (Eq. 37)
 - Rnl: Bức xạ sóng dài ròng (Eq. 39), tỉ số Rs/Rso chặn tối đa 1.0
+- Chặn dưới tốc độ gió u2: FAO-56 ch.3, p.63: u2 should be limited to about u2 >= 0.5 m/s when used in Eq. 6 (verified: true)
 """
+import os
+import json
 import numpy as np
 import pandas as pd
+
+
+def _load_u2_min_ms():
+    """
+    Đọc ngưỡng chặn dưới tốc độ gió u2 từ config/scoring.json.
+    Nguồn: FAO-56 ch.3, p.63: u2 should be limited to about u2 >= 0.5 m/s when used in Eq. 6 (verified: true).
+    """
+    cfg_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "scoring.json")
+    try:
+        with open(cfg_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data.get("eto_u2_min"), dict):
+            return float(data["eto_u2_min"].get("u2_min_ms", 0.5))
+        return float(data.get("u2_min_ms", 0.5))
+    except Exception:
+        return 0.5
 
 def calculate_atmospheric_pressure(elevation_m):
     """FAO-56 Eq. 7: Áp suất khí quyển P (kPa) theo cao độ z (m)."""
@@ -110,6 +129,10 @@ def calculate_daily_eto(tmax, tmin, rh_mean, u2, rs, lat_deg, elevation_m, day_o
     rn = rns - rnl
     g = 0.0  # Daily time step
 
+    # FAO-56 ch.3, p.63: u2 should be limited to about u2 >= 0.5 m/s when used in Eq. 6 (verified: true)
+    u2_min = _load_u2_min_ms()
+    u2 = np.maximum(u2, u2_min) if isinstance(u2, (np.ndarray, pd.Series)) else max(u2, u2_min)
+
     # FAO-56 Eq. 6
     radiation_term = 0.408 * delta * (rn - g)
     aerodynamic_term = gamma * (900.0 / (tmean + 273.0)) * u2 * (es - ea)
@@ -127,7 +150,8 @@ def calculate_eto_series(df, lat_deg, elevation_m, delta_temp_c=0.0):
     tmax = df["T2M_MAX"].values + delta_temp_c
     tmin = df["T2M_MIN"].values + delta_temp_c
     rh = np.clip(df["RH2M"].values, 5.0, 100.0)
-    u2 = np.maximum(df["WS2M"].values, 0.0)
+    u2_min = _load_u2_min_ms()
+    u2 = np.maximum(df["WS2M"].values, u2_min)
     rs = np.maximum(df["ALLSKY_SFC_SW_DWN"].values, 0.0)
 
     eto = calculate_daily_eto(

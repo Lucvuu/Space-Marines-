@@ -338,6 +338,19 @@ class TestAeroAgriStep4(unittest.TestCase):
         self.assertEqual(len(eto_base), 10)
         self.assertGreater(eto_warm.mean(), eto_base.mean())
 
+    def test_step4_u2_floor_at_0_5_ms(self):
+        """Fix 1: u2 = 0.1 và u2 = 0.5 cho ra cùng một ETo (FAO-56 ch.3, p.63)."""
+        from core.eto import calculate_daily_eto
+        eto_low = calculate_daily_eto(
+            tmax=31.0, tmin=20.0, rh_mean=68.0, u2=0.1,
+            rs=20.0, lat_deg=12.6667, elevation_m=530.0, day_of_year=45
+        )
+        eto_floor = calculate_daily_eto(
+            tmax=31.0, tmin=20.0, rh_mean=68.0, u2=0.5,
+            rs=20.0, lat_deg=12.6667, elevation_m=530.0, day_of_year=45
+        )
+        self.assertAlmostEqual(float(eto_low), float(eto_floor), places=9)
+
 
 class TestAeroAgriStep5(unittest.TestCase):
     def test_step5_usda_scs_peff(self):
