@@ -301,4 +301,55 @@ Dak_Lak_Tay_Nguyen   | salinity        | CHƯA CÓ      | 0        | -          
 | **Tháng 11** | `0.654` | `0.803` |
 | **Tháng 12** | `0.688` | `0.797` |
 
+---
+
+## 9. Prep 6 (Configurable Season Start & Partial-Month $P_{eff}$ Proration)
+
+### 9.1. Commit Hash của từng bước (Bước 0 → Bước 3)
+
+| Bước | Commit Hash | Commit Message | Nội dung chính |
+|---|---|---|---|
+| **Bước 0** | `5e8ee4e` | `test: regression baseline before season refactor` | Chụp mốc regression cho 2 vùng × 2 kịch bản (`(0,0)` và `(+2, -30)`) trên dữ liệu demo (seed cố định trong `tmp_path`) vào `tests/fixtures/regression_baseline.json` và thêm unit test `test_prep6_regression_baseline`. |
+| **Bước 1** | `715b120` | `feat: configurable season start per region/crop, cross-year seasons` | Thêm `season_start: "01-01"` và `crop_season_start: {}` vào `config/regions.json`; gom phần tính cửa sổ mùa vụ vào hàm dùng chung `iter_crop_season_slices` / `collect_crop_season_df` trong `core/water_balance.py` (hỗ trợ mùa vụ vắt qua năm sau như `"11-01"`, 105 ngày $\rightarrow$ `01/11/y` đến `13/02/y+1`); cập nhật `core/scoring.py` dùng đúng cửa sổ mùa vụ của từng cây hằng năm cho `heat_ratio` và `salinity_exceed`. |
+| **Bước 2** | `5767216` | `fix: prorate USDA-SCS Peff for partial months` | Thêm `calculate_season_peff`: tính $P_{eff}$ theo tổng mưa **cả tháng** rồi nhân với `(số ngày thuộc mùa vụ trong tháng đó / tổng số ngày của tháng)`. Cập nhật `regression_baseline.json` và thêm unit test `test_prep6_prorate_peff_partial_months`. |
+| **Bước 3** | `113f26e` | `feat: add season_window to evaluate output, UI table and SUBMISSION_NOTES` | Trả thêm `season_window: {"start": "MM-DD", "end": "MM-DD"}` cho từng cây trong `evaluate_crop_suitability`, hiển thị cột **Khung mùa vụ** trên bảng UI (`web/index.html`, `web/app.js`), và cập nhật `docs/SUBMISSION_NOTES.md`. |
+
+---
+
+### 9.2. Output `python -m pytest -q`
+
+```text
+................................                                         [100%]
+32 passed, 1 warning in 2.15s
+```
+
+---
+
+### 9.3. Bảng so sánh `deficit_mm` trước và sau Bước 2 (Phân bổ tỷ lệ $P_{eff}$ cho tháng lẻ)
+
+#### A. Trên dữ liệu thật NASA POWER (2015–2025)
+
+| Vùng | Cây trồng (`crop_id`) | Khung mùa vụ (`season_window`) | Kịch bản `(0°C, 0% mưa)` **Trước Bước 2** (mm) | Kịch bản `(0°C, 0% mưa)` **Sau Bước 2** (mm) | Kịch bản `(+2°C, -30% mưa)` **Trước Bước 2** (mm) | Kịch bản `(+2°C, -30% mưa)` **Sau Bước 2** (mm) |
+|---|---|:---:|:---:|:---:|:---:|:---:|
+| `Ben_Tre_DBSCL` | `rice` (105 ngày) | `01-01 → 04-15` | `1058.8` | **1060.1** | `1114.3` | **1114.8** |
+| `Ben_Tre_DBSCL` | `soybean` (100 ngày) | `01-01 → 04-10` | `392.6` | **394.9** | `437.0` | **438.4** |
+| `Ben_Tre_DBSCL` | `maize` (100 ngày) | `01-01 → 04-10` | `388.1` | **390.4** | `432.2` | **433.6** |
+| `Ben_Tre_DBSCL` | `rice_shrimp` (120 ngày) | `01-01 → 04-30` | `None` | `None` | `None` | `None` |
+| `Dak_Lak_Tay_Nguyen` | `coffee` (lâu năm) | `01-01 → 04-30` | `351.3` | **351.3** | `393.0` | **393.0** |
+| `Dak_Lak_Tay_Nguyen` | `coffee_cover_crop` (lâu năm) | `01-01 → 04-30` | `418.5` | **418.5** | `463.5` | **463.5** |
+| `Dak_Lak_Tay_Nguyen` | `maize` (100 ngày) | `01-01 → 04-10` | `266.4` | **260.3** | `294.3` | **289.7** |
+
+#### B. Trên dữ liệu Demo (`make_demo_data`, Seed 42 — `regression_baseline.json`)
+
+| Vùng | Cây trồng (`crop_id`) | Khung mùa vụ (`season_window`) | Kịch bản `(0°C, 0% mưa)` **Trước Bước 2** (mm) | Kịch bản `(0°C, 0% mưa)` **Sau Bước 2** (mm) | Kịch bản `(+2°C, -30% mưa)` **Trước Bước 2** (mm) | Kịch bản `(+2°C, -30% mưa)` **Sau Bước 2** (mm) |
+|---|---|:---:|:---:|:---:|:---:|:---:|
+| `Ben_Tre_DBSCL` | `rice` (105 ngày) | `01-01 → 04-15` | `1124.1` | **1124.1** | `1173.7` | **1173.7** |
+| `Ben_Tre_DBSCL` | `soybean` (100 ngày) | `01-01 → 04-10` | `429.1` | **429.3** | `467.4` | **467.5** |
+| `Ben_Tre_DBSCL` | `maize` (100 ngày) | `01-01 → 04-10` | `418.4` | **418.6** | `456.0` | **456.1** |
+| `Ben_Tre_DBSCL` | `rice_shrimp` (120 ngày) | `01-01 → 04-30` | `None` | `None` | `None` | `None` |
+| `Dak_Lak_Tay_Nguyen` | `coffee` (lâu năm) | `01-01 → 04-30` | `723.5` | **723.5** | `767.7` | **767.7** |
+| `Dak_Lak_Tay_Nguyen` | `coffee_cover_crop` (lâu năm) | `01-01 → 04-30` | `838.7` | **838.7** | `889.6` | **889.6** |
+| `Dak_Lak_Tay_Nguyen` | `maize` (100 ngày) | `01-01 → 04-10` | `518.6` | **518.8** | `550.3` | **550.5** |
+
+
 
