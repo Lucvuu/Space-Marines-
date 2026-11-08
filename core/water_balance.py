@@ -129,6 +129,32 @@ def calculate_monthly_peff(p_mm):
     else:
         return 125.0 + 0.1 * p_mm
 
+
+def calculate_season_peff(df_all, df_season, rain_col="Rain_sim_mm"):
+    """
+    Tính tổng mưa hiệu quả USDA-SCS cho một mùa vụ (df_season), phân bổ theo tỷ lệ ngày
+    cho các tháng lẻ:
+    Với mỗi tháng (YYYY-MM) có mặt trong df_season:
+      Peff_tháng = calculate_monthly_peff(tổng mưa CẢ tháng trong df_all)
+                   * (số ngày thuộc mùa vụ trong tháng đó / số ngày của tháng đó)
+    """
+    if df_season is None or len(df_season) == 0:
+        return 0.0
+    s_dates = pd.to_datetime(df_season["date"])
+    a_dates = pd.to_datetime(df_all["date"])
+    s_ym = s_dates.dt.strftime("%Y-%m")
+    a_ym = a_dates.dt.strftime("%Y-%m")
+
+    total_peff = 0.0
+    for ym in s_ym.unique():
+        mask_s = (s_ym == ym)
+        n_season_days = int(mask_s.sum())
+        days_in_month = int(s_dates[mask_s].dt.days_in_month.iloc[0])
+        full_month_rain = float(df_all.loc[a_ym == ym, rain_col].sum())
+        month_peff = calculate_monthly_peff(full_month_rain)
+        total_peff += month_peff * (n_season_days / float(days_in_month))
+    return total_peff
+
 def build_daily_kc(stages, kc_ini, kc_mid, kc_end, season_days):
     """
     Nội suy Kc tuyến tính theo từng giai đoạn sinh trưởng (FAO-56).
@@ -219,12 +245,7 @@ def calculate_water_balance(power_df, region_id, crop_id, delta_temp_c=0.0, delt
             kc_mid = crop_info["kc_mid"]
             df_season["ETc_mm"] = df_season["ETo_mm"] * kc_mid
             total_etc = df_season["ETc_mm"].sum()
-
-            # Mưa hiệu quả USDA-SCS theo từng tháng mùa khô
-            total_peff = 0.0
-            for m in dry_months:
-                m_rain = df_season[df_season["date"].dt.month == m]["Rain_sim_mm"].sum()
-                total_peff += calculate_monthly_peff(m_rain)
+            total_peff = calculate_season_peff(df, df_season, rain_col="Rain_sim_mm")
 
         else:
             stages = crop_info.get("stages", {})
@@ -238,13 +259,7 @@ def calculate_water_balance(power_df, region_id, crop_id, delta_temp_c=0.0, delt
             df_season["Kc"] = kc_array
             df_season["ETc_mm"] = df_season["ETo_mm"] * df_season["Kc"]
             total_etc = df_season["ETc_mm"].sum()
-
-            # Mưa hiệu quả USDA-SCS theo từng tháng trong mùa vụ
-            total_peff = 0.0
-            df_season["ym"] = df_season["date"].dt.strftime("%Y-%m")
-            for ym in df_season["ym"].unique():
-                m_rain = df_season[df_season["ym"] == ym]["Rain_sim_mm"].sum()
-                total_peff += calculate_monthly_peff(m_rain)
+            total_peff = calculate_season_peff(df, df_season, rain_col="Rain_sim_mm")
 
         # Nhu cầu nước tổng thể = ETc + làm đất + thấm lọc
         total_prep = land_prep

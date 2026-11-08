@@ -709,6 +709,33 @@ class TestAeroAgriStep7(unittest.TestCase):
                 else:
                     os.environ.pop("AERO_DATA_DIR", None)
 
+    def test_prep6_prorate_peff_partial_months(self):
+        """
+        Prep 6 Bước 2:
+        - Mùa vụ đầy đủ 2 tháng thì Peff không đổi so với cách cũ.
+        - Nửa tháng (15/30 ngày của tháng 4) có tổng mưa cả tháng = 100 mm thì Peff bằng nửa Peff của 100 mm (42.0 mm).
+        """
+        from core.water_balance import calculate_monthly_peff, calculate_season_peff
+
+        # Tạo dữ liệu 2 tháng đầy đủ: tháng 3 (31 ngày, tổng mưa 62 mm) và tháng 4 (30 ngày, tổng mưa 100 mm)
+        dates_mar = pd.date_range("2025-03-01", "2025-03-31", freq="D")
+        dates_apr = pd.date_range("2025-04-01", "2025-04-30", freq="D")
+        df_mar = pd.DataFrame({"date": dates_mar, "Rain_sim_mm": [2.0] * 31})        # tổng 62 mm
+        # Tháng 4 tổng mưa 100 mm (rải không đều: 15 ngày đầu mưa 20 mm, 15 ngày sau mưa 80 mm)
+        df_apr = pd.DataFrame({"date": dates_apr, "Rain_sim_mm": [20.0 / 15.0] * 15 + [80.0 / 15.0] * 15})
+        df_all = pd.concat([df_mar, df_apr], ignore_index=True)
+
+        # 1. Mùa vụ trọn vẹn cả 2 tháng (1/3 .. 30/4) -> Peff không đổi so với tổng calculate_monthly_peff(62) + calculate_monthly_peff(100)
+        expected_full_2m = calculate_monthly_peff(62.0) + calculate_monthly_peff(100.0)
+        actual_full_2m = calculate_season_peff(df_all, df_all, rain_col="Rain_sim_mm")
+        self.assertAlmostEqual(actual_full_2m, expected_full_2m, places=6)
+
+        # 2. Nửa tháng 4 (15 ngày đầu tháng 4, từ 1/4 .. 15/4) khi cả tháng 4 mưa 100 mm -> Peff = 0.5 * Peff(100) = 42.0 mm
+        df_half_apr = df_apr.iloc[:15].copy()
+        actual_half_apr = calculate_season_peff(df_all, df_half_apr, rain_col="Rain_sim_mm")
+        self.assertAlmostEqual(actual_half_apr, 0.5 * calculate_monthly_peff(100.0), places=6)
+        self.assertAlmostEqual(actual_half_apr, 42.0, places=6)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
