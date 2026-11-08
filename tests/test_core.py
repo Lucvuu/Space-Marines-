@@ -418,10 +418,22 @@ class TestAeroAgriStep5(unittest.TestCase):
 
 class TestAeroAgriStep6(unittest.TestCase):
     def test_step6_salinity_conversion(self):
-        """Kiểm tra đổi ECe sang ngưỡng nước tưới ppt: rice (3.0 dS/m) cho ra khoảng 1.28‰."""
+        """Fix 5: kiểm ngưỡng ppt của rice (soil_water_submerged, 3.0 dS/m) ≈ 1.923 và soybean (ece, 5.0 dS/m) ≈ 2.137."""
         from core.scoring import ece_to_water_salinity_ppt
-        rice_ppt = ece_to_water_salinity_ppt(3.0)
-        self.assertAlmostEqual(rice_ppt, 1.28, delta=0.01)
+        from core.water_balance import load_config
+        crops_cfg = load_config("crops")
+        rice_cfg = crops_cfg["rice"]
+        soy_cfg = crops_cfg["soybean"]
+        rice_ppt = ece_to_water_salinity_ppt(
+            rice_cfg["salinity_threshold_ece_dsm"],
+            salinity_basis=rice_cfg["salinity_basis"]
+        )
+        soy_ppt = ece_to_water_salinity_ppt(
+            soy_cfg["salinity_threshold_ece_dsm"],
+            salinity_basis=soy_cfg["salinity_basis"]
+        )
+        self.assertAlmostEqual(rice_ppt, 1.923, delta=0.002)
+        self.assertAlmostEqual(soy_ppt, 2.137, delta=0.002)
 
     def test_step6_scoring_missing_power(self):
         """Khi chưa có file POWER: trả available=False, không crash."""

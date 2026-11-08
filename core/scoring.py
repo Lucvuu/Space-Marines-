@@ -7,8 +7,10 @@ Tuân thủ:
   water_component = deficit_mm / max(deficit_mm của các cây có deficit hợp lệ trong vùng)
   (nếu max = 0 thì mọi cây có deficit hợp lệ đều có water_component = 0; cây có deficit None thì water_component = None).
 - Giữ irrigation_share (tỷ lệ ETc phải tưới = deficit_mm / total_req).
-- Ngưỡng mặn: chuyển đổi từ salinity_threshold_ece_dsm sang ‰: ppt = ece / 1.5 / 1.56
-  Quy chuẩn nông học: ECe ≈ 1.5·ECw (FAO-29), 1‰ ≈ 1.56 dS/m.
+- Ngưỡng mặn: chuyển đổi từ salinity_threshold_ece_dsm sang ‰ theo salinity_basis:
+  + Nếu salinity_basis == "soil_water_submerged" (lúa nước, FAO-56 Table 23 p.179, footnote 6): ppt = EC / 1.56
+  + Nếu salinity_basis == "ece" (cây cạn, FAO-56 Table 23 p.178-179): ppt = ECe / 1.5 / 1.56
+    Quy chuẩn nông học: ECe ≈ 1.5·ECw (FAO-29), 1‰ ≈ 1.56 dS/m.
 - Chỉ chia lại trọng số cho thành phần bị thiếu ở TẤT CẢ cây trong vùng.
   Nếu thành phần chỉ thiếu ở một số cây -> score = None, risk_level = "INSUFFICIENT_DATA".
 - risk_level chỉ tính từ thành phần tuyệt đối: r = max(heat_ratio, salinity_exceed nếu có)
@@ -42,15 +44,21 @@ def classify_risk_by_exceed(r_val, exceed_thresholds):
     else:
         return "CRITICAL"
 
-def ece_to_water_salinity_ppt(ece_dsm):
+def ece_to_water_salinity_ppt(ece_dsm, salinity_basis="ece"):
     """
-    Chuyển đổi độ dẫn điện bão hòa của đất (ECe) sang ngưỡng độ mặn nước tưới (‰):
-    ppt = ece / 1.5 / 1.56
+    Chuyển đổi ngưỡng độ dẫn điện (dS/m, FAO-56 Table 23 p.178-179) sang ngưỡng độ mặn nước (‰):
+    - Nếu salinity_basis == "soil_water_submerged" (FAO-56 Table 23 p.179, footnote 6 cho lúa ngập nước):
+      ppt = EC / 1.56
+    - Nếu salinity_basis == "ece" (cây cạn):
+      ppt = ECe / 1.5 / 1.56
     Docstring quy chuẩn: ECe ≈ 1.5·ECw (FAO-29), 1‰ ≈ 1.56 dS/m.
     """
     if ece_dsm is None:
         return None
-    return float(ece_dsm) / 1.5 / 1.56
+    val = float(ece_dsm)
+    if salinity_basis == "soil_water_submerged":
+        return val / 1.56
+    return val / 1.5 / 1.56
 
 def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
     """
@@ -131,9 +139,10 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
             heat_exceed_days = int((sim_tmax > heat_thresh).sum())
             heat_ratio = round(heat_exceed_days / max(len(df_dry), 1), 3)
 
-        # C. Rủi ro mặn (salinity_exceed) từ salinity_threshold_ece_dsm
+        # C. Rủi ro mặn (salinity_exceed) từ salinity_threshold_ece_dsm và salinity_basis
         ece_thresh = c_info.get("salinity_threshold_ece_dsm")
-        sal_thresh = ece_to_water_salinity_ppt(ece_thresh)
+        sal_basis = c_info.get("salinity_basis") or "ece"
+        sal_thresh = ece_to_water_salinity_ppt(ece_thresh, salinity_basis=sal_basis)
         salinity_exceed = None
         missing_notes = []
 

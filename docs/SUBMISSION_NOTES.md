@@ -55,9 +55,12 @@ When a user adjusts the climate simulator temperature slider ($\Delta T$ in °C)
   $$\text{deficit\_mm} = \max(W_{\text{req}} - \sum P_{eff}, 0), \quad \text{irrigation\_share} = \text{clip}\left(\frac{\text{deficit\_mm}}{W_{\text{req}}}, 0, 1\right)$$
 
 ### 2.3. Salinity Conversion & Suitability / Risk Separation
-- **Soil Saturation Extract ($EC_e$) to Irrigation Water Salinity ($\text{ppt}$, ‰):**
-  Crop salinity thresholds from FAO-56 Table 23 are given as $EC_e$ (dS/m). Assuming $EC_e \approx 1.5 \cdot EC_w$ (FAO Irrigation and Drainage Paper 29) and $1\text{ ‰} \approx 1.56\text{ dS/m}$:
-  $$\text{salinity\_threshold\_ppt} = \frac{EC_e}{1.5 \times 1.56}$$
+- **Salinity Threshold Conversion to Water Salinity ($\text{ppt}$, ‰):**
+  Crop salinity thresholds from FAO-56 Table 23 (pp. 178–179) are converted according to each crop's `salinity_basis` (`1 ‰ ≈ 1.56 dS/m`):
+  - **Submerged paddy rice (`salinity_basis = "soil_water_submerged"`):** Per FAO-56 Table 23 (p. 179, Footnote 6): *"Because paddy rice is grown under flooded conditions, values refer to the electrical conductivity of the soil water while the plants are submerged."* Thus the $3.0\text{ dS/m}$ threshold for rice is already the electrical conductivity of the standing soil water and is **not** divided by $1.5$:
+    $$\text{salinity\_threshold\_ppt}_{\text{submerged}} = \frac{EC_{\text{sw}}}{1.56} \quad (\text{for rice: } \frac{3.0}{1.56} \approx 1.923\text{ ‰})$$
+  - **Upland crops (`salinity_basis = "ece"`, e.g., soybean, maize):** Thresholds are soil saturation extract conductivity ($EC_e$, dS/m). Assuming $EC_e \approx 1.5 \cdot EC_w$ (FAO Irrigation and Drainage Paper 29):
+    $$\text{salinity\_threshold\_ppt}_{\text{ece}} = \frac{EC_e}{1.5 \times 1.56} \quad (\text{for soybean: } \frac{5.0}{1.5 \times 1.56} \approx 2.137\text{ ‰})$$
 - **Relative Comparison Score (`score`, 0–100):**
   Measures suitability across candidate crops in the region by normalizing the water component against the maximum seasonal deficit among crops with valid deficit in the region:
   $$\text{water\_component}_i = \begin{cases} \frac{\text{deficit\_mm}_i}{\max_{j \in \text{valid}} (\text{deficit\_mm}_j)} & \text{if } \max_{j \in \text{valid}} (\text{deficit\_mm}_j) > 0 \\ 0 & \text{if } \max_{j \in \text{valid}} (\text{deficit\_mm}_j) = 0 \end{cases}$$

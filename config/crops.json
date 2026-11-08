@@ -15,14 +15,16 @@
     "land_prep_mm": 200,
     "percolation_mm_day": 3,
     "salinity_threshold_ece_dsm": 3.0,
+    "salinity_basis": "soil_water_submerged",
     "heat_threshold_c": 35.0,
     "source": {
-      "kc": "FAO-56 Table 11 & 12",
-      "salinity": "FAO-56 Table 23",
+      "kc": "FAO-56 Table 12 p.111 (Kc end range 0.90-0.60, 0.75 chosen)",
+      "salinity": "FAO-56 Table 23 p.179, footnote 6",
       "heat": "TODO: cần nguồn",
-      "water_extra": "FAO-56 Ch.7 / CROPWAT rice, cần kiểm chứng"
+      "water_extra": "assumption, source TODO"
     },
-    "verified": false
+    "verified": false,
+    "verified_params": ["kc", "salinity"]
   },
   "soybean": {
     "name_vi": "Đậu tương",
@@ -40,14 +42,16 @@
     "land_prep_mm": null,
     "percolation_mm_day": null,
     "salinity_threshold_ece_dsm": 5.0,
+    "salinity_basis": "ece",
     "heat_threshold_c": 35.0,
     "source": {
-      "kc": "FAO-56 Table 11 & 12",
-      "salinity": "FAO-56 Table 23",
+      "kc": "FAO-56 Table 12 p.111 (Kc ini = Legumes group value 0.4)",
+      "salinity": "FAO-56 Table 23 p.178",
       "heat": "TODO: cần nguồn",
       "water_extra": "N/A (cây cạn, null)"
     },
-    "verified": false
+    "verified": false,
+    "verified_params": ["kc", "salinity"]
   },
   "maize": {
     "name_vi": "Ngô sinh khối / ngô hạt",
@@ -65,14 +69,16 @@
     "land_prep_mm": null,
     "percolation_mm_day": null,
     "salinity_threshold_ece_dsm": 1.7,
+    "salinity_basis": "ece",
     "heat_threshold_c": 36.0,
     "source": {
-      "kc": "FAO-56 Table 11 & 12",
-      "salinity": "FAO-56 Table 23",
+      "kc": "FAO-56 Table 12 p.111 (Kc ini = Cereals group 0.3; Kc end 0.35 = dry harvest, footnote 11)",
+      "salinity": "FAO-56 Table 23 p.179",
       "heat": "TODO: cần nguồn",
       "water_extra": "N/A (cây cạn, null)"
     },
-    "verified": false
+    "verified": false,
+    "verified_params": ["kc", "salinity"]
   },
   "rice_shrimp": {
     "name_vi": "Mô hình sinh thái Lúa - Tôm",
@@ -85,6 +91,7 @@
     "land_prep_mm": null,
     "percolation_mm_day": null,
     "salinity_threshold_ece_dsm": null,
+    "salinity_basis": null,
     "heat_threshold_c": 35.0,
     "source": {
       "kc": "TODO: Tôm không có Kc thực vật, cần chuyên gia địa phương",
@@ -92,7 +99,8 @@
       "heat": "TODO: cần nguồn",
       "water_extra": "TODO: cần chuyên gia địa phương"
     },
-    "verified": false
+    "verified": false,
+    "verified_params": []
   },
   "coffee": {
     "name_vi": "Cà phê Robusta độc canh (đất trần)",
@@ -110,14 +118,16 @@
     "land_prep_mm": null,
     "percolation_mm_day": null,
     "salinity_threshold_ece_dsm": null,
+    "salinity_basis": null,
     "heat_threshold_c": 33.0,
     "source": {
-      "kc": "FAO-56 Table 12 (Coffee, bare ground)",
+      "kc": "FAO-56 Table 12 p.112, Coffee - bare ground cover / - with weeds",
       "salinity": "N/A (vùng cao nguyên không nhiễm mặn)",
       "heat": "TODO: cần nguồn",
       "water_extra": "N/A (cây cạn, null)"
     },
-    "verified": false
+    "verified": false,
+    "verified_params": ["kc"]
   },
   "coffee_cover_crop": {
     "name_vi": "Cà phê có cây phủ đất / cỏ",
@@ -135,13 +145,15 @@
     "land_prep_mm": null,
     "percolation_mm_day": null,
     "salinity_threshold_ece_dsm": null,
+    "salinity_basis": null,
     "heat_threshold_c": 33.0,
     "source": {
-      "kc": "FAO-56 Table 12 (Coffee, with weeds)",
+      "kc": "FAO-56 Table 12 p.112, Coffee - bare ground cover / - with weeds",
       "salinity": "N/A (vùng cao nguyên không nhiễm mặn)",
       "heat": "TODO: cần nguồn",
       "water_extra": "N/A (cây cạn, null)"
     },
-    "verified": false
+    "verified": false,
+    "verified_params": ["kc"]
   }
 }
