@@ -1,28 +1,98 @@
-# AERO-AGRI: Khung Ra Quyết Định Chuyển Đổi Canh Tác Thích Ứng Khí Hậu
-*NASA International Space Apps Challenge 2026 - Challenge: Field Shift (Adapting Farms with NASA Data)*
+# AERO-AGRI: Hệ Thống Hỗ Trợ Quyết Định Chuyển Đổi Cơ Cấu Cây Trồng Thích Ứng Khí Hậu
+*2026 NASA International Space Apps Challenge — Challenge: Field Shift: Adapting Farms with NASA Data*
+
+---
 
 ## 1. Giới thiệu
-AERO-AGRI là công cụ hỗ trợ ra quyết định dành cho nông dân và hợp tác xã tại 2 vùng trọng điểm:
-- **Bến Tre (ĐBSCL):** Vùng trũng ven biển chịu rủi ro hạn mặn mùa khô (tháng 1–4).
-- **Đắk Lắk (Tây Nguyên):** Vùng cao nguyên bazan chịu rủi ro khô hạn và sụt giảm nguồn nước ngầm (tháng 1–4).
+**AERO-AGRI** là công cụ hỗ trợ ra quyết định luân canh và chuyển đổi cây trồng dựa trên dữ liệu quan sát Trái Đất của NASA (NASA POWER, MODIS `MOD13Q1`) kết hợp với mô hình cân bằng nước nông học chuẩn **FAO-56 Penman-Monteith** và **USDA-SCS**, tập trung vào 2 vùng thí điểm tại Việt Nam:
+- **Bến Tre (Đồng bằng Sông Cửu Long):** Vùng ven biển chịu rủi ro hạn mặn mùa khô (`rice`, `soybean`, `maize`, `rice_shrimp`).
+- **Đắk Lắk (Tây Nguyên):** Vùng cao nguyên đất bazan chịu rủi ro khô hạn mùa khô (`coffee`, `coffee_cover_crop`, `maize`).
 
-Hệ thống tính toán nhu cầu nước cây trồng ($ET_c$) dựa trên chuẩn FAO-56 Penman-Monteith, lượng mưa hiệu quả USDA-SCS, và đưa ra khuyến nghị chuyển đổi mùa vụ minh bạch từ số liệu.
+---
 
-## 2. Hướng dẫn sử dụng nhanh (5 dòng)
-1. Cài đặt thư viện: `pip install -r requirements.txt`
-2. Tải dữ liệu thật từ NASA POWER: `python core/power_fetch.py` (hoặc tạo dữ liệu thử nghiệm: `python scripts/make_demo_data.py`).
-3. Khai báo nguồn trong `data/manifest.json` (tự động cập nhật khi chạy fetch hoặc make_demo_data).
-4. Khởi chạy ứng dụng: `python run.py` (hệ thống tự mở trình duyệt tại `http://localhost:8050`).
-5. Chạy kiểm thử: `python -m pytest -q` hoặc `python tests/test_core.py`.
+## 2. Hướng dẫn sử dụng nhanh (Quickstart)
+1. **Cài đặt thư viện:** `pip install -r requirements.txt`
+2. **Tải dữ liệu NASA thật (2015–2025):**
+   - Khí tượng & bức xạ NASA POWER: `python core/power_fetch.py`
+   - Chỉ số thực vật MODIS NDVI (lọc mây, cửa sổ 3×3 km): `python core/ndvi_fetch.py`
+   - *(Hoặc tạo dữ liệu mẫu để chạy thử offline: `python scripts/make_demo_data.py`)*
+3. **Kiểm tra trạng thái dữ liệu:** `python scripts/check_data.py`
+4. **Khởi chạy ứng dụng web:** `python run.py` (tự động mở trình duyệt tại `http://127.0.0.1:8050`).
+5. **Chạy bộ kiểm thử tự động (32 tests):** `python -m pytest -q`
 
-## 3. Giả định kỹ thuật (Assumptions)
-- **Cấu trúc thư mục dữ liệu:** Thư mục dữ liệu đọc qua biến môi trường `AERO_DATA_DIR`, mặc định là `data/`.
-- **Thành phần nước tương đối ($water\_component$):** Tính tương đối theo công thức:
-  $$\text{water\_component} = \text{clip}\left(\frac{\text{deficit\_mm}}{\text{baseline\_deficit\_mm}}, 0, 1\right)$$
-  với baseline là cây đầu tiên trong danh sách `candidate_crops` của vùng.
-- **Tỷ lệ tưới ($irrigation\_share$):** Tỷ lệ giữa lượng nước thiếu hụt trên tổng nhu cầu nước của cây ($\text{deficit} / ET_c$, tương đương `water_stress` cũ).
-- **Dữ liệu tham gia tính điểm (data_used):** `data_used` trong kết quả đánh giá chỉ liệt kê các nguồn dữ liệu thực sự tham gia vào phép tính điểm thích nghi (NASA POWER cho bốc thoát hơi nước/nhiệt và Độ mặn quan trắc). Dữ liệu viễn thám NDVI (MODIS) và Độ ẩm đất (SMAP) hiện tại chỉ phục vụ hiển thị chu kỳ khí hậu và quan sát trực quan, chưa tham gia trực tiếp vào công thức tính điểm.
-- **Kc cây lâu năm:** Với cây cà phê và cà phê xen cây phủ đất (`perennial: true`), giai đoạn mùa khô (tháng 1–4) sử dụng hệ số $K_c = kc\_mid$ cố định do cây đã trưởng thành và duy trì tán lá ổn định.
-- **Mô hình Lúa - Tôm:** Do tôm không có hệ số bốc thoát hơi nước thực vật $K_c$, tham số $K_c$ đặt là `null` ("TODO"). Thành phần thiếu nước được bỏ qua và trọng số được phân bổ lại theo quy tắc chuẩn.
-- **Khí quyển và bức xạ:** Độ dài bước sóng ngắn mặt trời sử dụng trực tiếp từ biến `ALLSKY_SFC_SW_DWN` của NASA POWER (MJ/m²/ngày). Tỉ số $R_s / R_{so}$ được chặn trên tối đa là $1.0$ khi tính bức xạ sóng dài ròng $R_{nl}$.
-- **Đất trống phơi nhiễm (Bare-field):** Được xác định khi $NDVI < 0.22$ trong mùa khô.
+---
+
+## 3. Cấu trúc dự án & Hệ thống tài liệu
+
+```text
+aero-agri/
+├── README.md                     # Tài liệu tổng quan, hướng dẫn chạy & giả định kỹ thuật (Tiếng Việt)
+├── LICENSE                       # Giấy phép nguồn mở Apache License 2.0
+├── MORNING_REPORT.md             # Báo cáo kiểm toán số liệu, kết quả test và lịch sử các vòng sửa (Task 0–6, Vòng 3, Prep 6)
+├── docs/
+│   └── SUBMISSION_NOTES.md       # Hồ sơ kỹ thuật nộp NASA Space Apps (Tiếng Anh: nguồn dữ liệu, phương trình, trích dẫn, giới hạn)
+├── config/
+│   ├── regions.json              # Tọa độ vùng, ndvi_point (3x3 km), season_start, crop_season_start, candidate_crops
+│   ├── crops.json                # Hệ số Kc theo giai đoạn, ngưỡng mặn + salinity_basis, ngưỡng nhiệt, nguồn trích dẫn FAO-56
+│   └── scoring.json              # Trọng số (w_water, w_salinity, w_heat), ngưỡng rủi ro tuyệt đối r, chặn dưới gió u2_min_ms
+├── core/
+│   ├── loaders.py                # Đọc & kiểm tra hợp đồng schema CSV, quản lý manifest.json, cô lập qua AERO_DATA_DIR
+│   ├── power_fetch.py            # Tải dữ liệu ngày NASA POWER API (T2M_MAX, T2M_MIN, RH2M, WS2M, ALLSKY_SFC_SW_DWN, PRECTOTCORR)
+│   ├── ndvi_fetch.py             # Tải dữ liệu MODIS MOD13Q1 v061 qua ORNL DAAC API (lọc mây pixel_reliability, median 3x3 km)
+│   ├── eto.py                    # Bốc thoát hơi nước tham chiếu FAO-56 Penman-Monteith (Eq. 6)
+│   ├── water_balance.py          # Cửa sổ mùa vụ (hỗ trợ vắt qua năm), nội suy Kc, mưa hiệu quả USDA-SCS phân bổ tháng lẻ
+│   ├── scoring.py                # Tính điểm so sánh tương đối (0–100) và phân loại cấp rủi ro tuyệt đối (LOW..CRITICAL)
+│   └── advisor.py                # Sinh báo cáo khuyến nghị 3 phần tất định từ số liệu đã tính (không bịa số)
+├── data/
+│   ├── manifest.json             # Truy xuất nguồn gốc dữ liệu và cờ is_synthetic
+│   └── raw/                      # Chứa CSV theo 4 nguồn: power/, ndvi/, soil_moisture/, salinity/
+├── scripts/
+│   ├── check_data.py             # In bảng trạng thái từng nguồn dữ liệu × từng vùng
+│   └── make_demo_data.py         # Sinh dữ liệu mẫu (is_synthetic: true, seed cố định) phục vụ kiểm thử & demo
+├── server.py                     # Máy chủ HTTP & REST API (/api/status, /api/regions, /api/climate, /api/evaluate, /api/advise)
+├── run.py                        # Điểm vào 1 lệnh: kiểm tra dữ liệu -> mở server cổng 8050 -> mở trình duyệt
+├── tests/
+│   ├── test_core.py              # Bộ 32 unit & regression tests
+│   └── fixtures/                 # Fixture kiểm thử MODIS subset (modis_subset_sample.json) & mốc regression (regression_baseline.json)
+└── web/
+    ├── index.html                # Giao diện bảng điều khiển Tiếng Việt (Offline-first)
+    ├── style.css                 # Giao diện nền tối, đáp ứng màn hình di động >= 360px
+    ├── app.js                    # Logic bản đồ Leaflet circleMarker, biểu đồ Chart.js 2 trục, Simulator & Cố vấn
+    └── vendor/                   # Thư viện Leaflet 1.9.4 & Chart.js 4.4.1 lưu cục bộ (không phụ thuộc CDN)
+```
+
+### Danh mục tài liệu trong kho mã nguồn
+| Tài liệu | Mục đích | Ngôn ngữ |
+|---|---|---|
+| [`README.md`](README.md) | Hướng dẫn cài đặt, vận hành, cấu trúc thư mục và các giả định kỹ thuật cốt lõi. | Tiếng Việt |
+| [`docs/SUBMISSION_NOTES.md`](docs/SUBMISSION_NOTES.md) | Tài liệu kỹ thuật phục vụ chấm thi NASA Space Apps (bảng sản phẩm NASA, công thức toán học, trích dẫn khoa học, phiên bản thư viện, các giới hạn mô hình). | Tiếng Anh |
+| [`MORNING_REPORT.md`](MORNING_REPORT.md) | Nhật ký kỹ thuật chi tiết các bản vá (Task 0–6, Vòng 3 Fix 0–5, Prep 6 Bước 0–3), bảng kiểm tra tính nhất quán trên dữ liệu thật và danh sách quyết định mở. | Tiếng Việt |
+| [`LICENSE`](LICENSE) | Giấy phép mã nguồn mở Apache License, Version 2.0. | Tiếng Anh |
+
+---
+
+## 4. Phương pháp luận & Giả định kỹ thuật (Technical Assumptions)
+
+1. **Cô lập thư mục dữ liệu (`AERO_DATA_DIR`):**
+   - Toàn bộ các mô-đun đọc/ghi dữ liệu qua biến môi trường `AERO_DATA_DIR` (mặc định là `aero-agri/data`). Mọi kiểm thử tự động chạy trong thư mục tạm `tmp_path`, tuyệt đối không ghi đè dữ liệu thật trong `data/raw/`.
+2. **Bốc thoát hơi nước tham chiếu ($ET_o$ — FAO-56 Penman-Monteith):**
+   - Tính theo phương trình FAO-56 Eq. 6 từ `T2M_MAX`, `T2M_MIN`, `RH2M`, `WS2M`, `ALLSKY_SFC_SW_DWN`.
+   - Tỉ số bức xạ sóng ngắn tương đối $R_s / R_{so}$ được chặn trên ở `1.0` trước khi tính bức xạ sóng dài ròng $R_{nl}$ (Eq. 39).
+   - Tốc độ gió ở độ cao 2 m được chặn dưới tại $u_2 = \max(u_2, 0.5\text{ m/s})$ theo chuẩn **FAO-56 Ch. 3, p. 63** (`verified: true`) để khắc phục sai lệch gió thấp của dữ liệu tái phân tích trên địa hình gồ ghề.
+3. **Lịch thời vụ cấu hình được (`season_start` / `crop_season_start`) & Mưa hiệu quả tháng lẻ:**
+   - Cây hằng năm (`perennial: false`): bắt đầu từ ngày `season_start` (`MM-DD`, mặc định `"01-01"`, có thể ghi đè riêng cho từng cây qua `crop_season_start` trong `config/regions.json`) và kéo dài `season_days` ngày (hỗ trợ mùa vụ vắt qua năm sau, ví dụ `"11-01"` kéo sang tháng 2 năm sau).
+   - Cây lâu năm (`perennial: true`, gồm `coffee` và `coffee_cover_crop`): đánh giá trong các tháng mùa khô `dry_season_months` với hệ số $K_c = K_{c,\text{mid}}$ cố định (theo FAO-56 Table 12 p. 112: đất trần `0.95`, có cây phủ/cỏ `1.10`).
+   - Lượng mưa hiệu quả tháng theo công thức **USDA-SCS** được tính trên tổng mưa **cả tháng**, sau đó phân bổ theo tỷ lệ số ngày thực tế thuộc mùa vụ trong tháng đó ($\text{days\_in\_season} / \text{days\_in\_month}$).
+4. **Nhu cầu nước phụ trợ của lúa nước (`land_prep_mm`, `percolation_mm_day`):**
+   - Tổng nhu cầu nước $W_{\text{req}} = \sum ET_c + W_{\text{land\_prep}} + d_{\text{season}} \cdot W_{\text{percolation}}$ (với lúa nước giả định làm đất `200 mm` và thấm lọc `3 mm/ngày`; cây cạn đặt `null` $\rightarrow 0$).
+5. **Quy đổi ngưỡng độ mặn (`salinity_basis` — FAO-56 Table 23 pp. 178–179):**
+   - Với lúa ngập nước (`salinity_basis = "soil_water_submerged"`): theo Footnote 6 của FAO-56 Table 23 (p. 179), ngưỡng `3.0 dS/m` của lúa đã là độ dẫn điện của nước ruộng khi ngập, do đó đổi trực tiếp sang phần nghìn: $\text{ppt} = EC / 1.56 \approx 1.923\text{ ‰}$.
+   - Với cây trồng cạn (`salinity_basis = "ece"`, như đậu tương `5.0 dS/m`, ngô `1.7 dS/m`): áp dụng quy chuẩn $EC_e \approx 1.5 \cdot EC_w$ (FAO-29) và $1\text{ ‰} \approx 1.56\text{ dS/m}$ $\rightarrow \text{ppt} = EC_e / (1.5 \times 1.56)$.
+6. **Tách biệt Điểm so sánh tương đối (`score`) và Mức rủi ro tuyệt đối (`risk_level`):**
+   - **Thành phần nước (`water_component`):** Chuẩn hóa theo mức thiếu hụt nước lớn nhất trong số các cây có số liệu hợp lệ của vùng:
+     $$\text{water\_component}_i = \frac{\text{deficit\_mm}_i}{\max_{j \in \text{valid}} (\text{deficit\_mm}_j)}$$
+   - **Quy tắc thiếu dữ liệu (`INSUFFICIENT_DATA`):** Chỉ chia lại trọng số khi một thành phần bị thiếu ở **tất cả** các cây trong vùng (ví dụ toàn vùng chưa có file CSV độ mặn). Nếu một thành phần chỉ thiếu ở một số cây (ví dụ `rice_shrimp` chưa có $K_c$ thực vật), cây đó nhận `score = null`, `risk_level = "INSUFFICIENT_DATA"` và không đưa vào xếp hạng.
+   - **Mức rủi ro tuyệt đối (`risk_level`):** Chỉ tính từ tỷ lệ ngày mùa vụ vượt ngưỡng tuyệt đối $r = \max(\text{heat\_ratio}, \text{salinity\_exceed})$ theo ngưỡng trong `config/scoring.json` (`LOW < 0.10`, `MODERATE < 0.25`, `SEVERE < 0.50`, `CRITICAL >= 0.50`).
+7. **Nguồn dữ liệu tham gia tính điểm (`data_used`) & Viễn thám MODIS NDVI:**
+   - Trường `data_used` chỉ liệt kê các nguồn thực sự tham gia vào phép tính điểm (`power` và `salinity` khi có).
+   - Chuỗi MODIS NDVI (`MOD13Q1`, 250 m, 16 ngày) được lấy trung vị (`median`) trên cửa sổ **3×3 km (81 pixel)** tại tọa độ ruộng canh tác (`ndvi_point`), lọc mây qua band `250m_16_days_pixel_reliability` (chỉ giữ pixel loại `0` và `1`, loại bỏ ngày có dưới 20 pixel hợp lệ), dùng để hiển thị chu kỳ mùa vụ trên trục phụ của biểu đồ khí hậu.
