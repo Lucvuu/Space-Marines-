@@ -216,3 +216,89 @@ Dak_Lak_Tay_Nguyen   | salinity        | CHƯA CÓ      | 0        | -          
 4. **Thông số mô hình `rice_shrimp`:** Quyết định giữ trạng thái `INSUFFICIENT_DATA` (minh bạch về giới hạn mô hình FAO-56 đối với thủy sản) hay bổ sung bộ quy tắc đánh giá riêng cho vụ tôm.
 5. **Tích hợp khóa API cho `call_llm()` trong `core/advisor.py`:** Quyết định có nối Gemini/Claude API cho phần trình bày khuyến nghị hay giữ nguyên bộ sinh khuyến nghị tất định (deterministic template) khi đem đi demo để đảm bảo tốc độ và 0% rủi ro mạng/hallucination.
 
+---
+
+## 8. Vòng 3 (Round 3 Fixes & Verification)
+
+### 8.1. Commit hash của từng Fix (Fix 0 → Fix 5)
+
+| Fix | Commit Hash | Commit Message | Nội dung chính |
+|---|---|---|---|
+| **Fix 0** | `0fb112f` | `chore: trailing newlines` | Dọn working tree (3 file `LICENSE`, `MORNING_REPORT.md`, `docs/SUBMISSION_NOTES.md`). |
+| **Fix 1** | `fa7ce46` | `fix: enforce u2 >= 0.5 m/s floor in FAO-56 ETo calculation` | Áp dụng chặn dưới tốc độ gió `u2 = max(u2, 0.5)` trong `core/eto.py` và đưa `u2_min_ms: 0.5` vào `config/scoring.json` (nguồn: `FAO-56 ch.3, p.63`, `verified: true` cho riêng tham số này, `verified: false` ở cấp file). Thêm test `u2 = 0.1` và `u2 = 0.5` cho ra cùng một $ET_o$. |
+| **Fix 2** | `8fd9156` | `fix: normalize water_component by max regional crop deficit` | Chuẩn hóa `water_component = deficit_mm / max(deficit_mm hợp lệ trong vùng)` (nếu `max = 0` thì mọi cây `= 0`), giúp phân biệt điểm giữa `coffee` (`34.4`) và `coffee_cover_crop` (`22.9`) tại Đắk Lắk. Cập nhật công thức và xóa Limitation 5 cũ trong `docs/SUBMISSION_NOTES.md`. |
+| **Fix 3** | `6c0eda2` | `fix: fetch 3x3km cloud-filtered agricultural MODIS NDVI median` | Bổ sung `ndvi_point` (ruộng lúa Ba Tri cũ tại Bến Tre `10.0992, 106.6040`; vườn cà phê Cư M'gar cũ tại Đắk Lắk `12.8314, 108.1282`), tải cửa sổ 3×3 km (`kmAboveBelow=1&kmLeftRight=1`, 81 pixel), lọc mây qua `250m_16_days_pixel_reliability` (chỉ giữ `0` và `1`, bỏ ngày `< 20` pixel hợp lệ), lấy `median` và ghi thêm cột `n_valid_pixels`. Cập nhật tooltip đường NDVI trên UI. |
+| **Fix 4** | `1174d42` | `docs: update SUBMISSION_NOTES citations, resolutions, tested versions and limitations` | Cập nhật `docs/SUBMISSION_NOTES.md`: chuyển SMAP sang Limitations, ghi rõ độ phân giải MERRA-2 ($0.5^\circ \times 0.625^\circ$) vs CERES ($1^\circ \times 1^\circ$), thêm mục *Data Citations & Acknowledgements*, cột *Tested Version* (`Python 3.13.15`, `pandas 3.0.6`, `numpy 2.5.2`, `requests 2.34.2`, `pytest 9.2.0`), và bổ sung đầy đủ các Limitations nông học/khí tượng. |
+| **Fix 5** | `bb522a6` | `fix: distinguish submerged rice soil water EC vs upland ECe per FAO-56 Table 23` | Thêm `salinity_basis` (`"soil_water_submerged"` cho `rice` $\rightarrow \text{ppt} = EC / 1.56 \approx 1.923\text{ ‰}$ theo FAO-56 Table 23 p.179 footnote 6; `"ece"` cho `soybean`, `maize` $\rightarrow \text{ppt} = EC_e / 1.5 / 1.56 \approx 2.137\text{ ‰}$), cập nhật số trang nguồn FAO-56, thêm `verified_params`, và cập nhật `docs/SUBMISSION_NOTES.md` mục 2.3. |
+
+---
+
+### 8.2. Output `python -m pytest -q`
+
+```text
+.............................                                            [100%]
+29 passed, 1 warning in 1.72s
+```
+
+---
+
+### 8.3. Bảng kết quả 2 vùng × 2 kịch bản sau Vòng 3 (NASA POWER thật 2015–2025)
+
+#### A. Vùng `Ben_Tre_DBSCL` (Bến Tre — Đồng bằng Sông Cửu Long)
+
+| Kịch bản | Crop (`crop_id`) | Điểm so sánh (`score`) | Mức rủi ro (`risk_level`) | $r$ (`exceed_ratio_r`) | `deficit_mm` | `water_component` | `water_vs_baseline_pct` |
+|---|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| **(0°C, 0% mưa)** | Ngô (`maize`) | **71.2** | `LOW` | `0.091` | `388.1` | `0.367` | `+63.3%` |
+| **(0°C, 0% mưa)** | Đậu tương (`soybean`) | **67.6** | `MODERATE` | `0.206` | `392.6` | `0.371` | `+62.9%` |
+| **(0°C, 0% mưa)** | Lúa thâm canh (`rice`) | **22.7** | `MODERATE` | `0.206` | `1058.8` | `1.000` | `0.0%` |
+| **(0°C, 0% mưa)** | Lúa - Tôm (`rice_shrimp`) | `None` | `INSUFFICIENT_DATA` | `0.206` | `None` | `None` | `None` |
+| **(+2°C, -30% mưa)** | Ngô (`maize`) | **61.7** | `SEVERE` | `0.370` | `432.2` | `0.388` | `+61.2%` |
+| **(+2°C, -30% mưa)** | Đậu tương (`soybean`) | **56.9** | `CRITICAL` | `0.530` | `437.0` | `0.392` | `+60.8%` |
+| **(+2°C, -30% mưa)** | Lúa thâm canh (`rice`) | **13.4** | `CRITICAL` | `0.530` | `1114.3` | `1.000` | `0.0%` |
+| **(+2°C, -30% mưa)** | Lúa - Tôm (`rice_shrimp`) | `None` | `INSUFFICIENT_DATA` | `0.530` | `None` | `None` | `None` |
+
+#### B. Vùng `Dak_Lak_Tay_Nguyen` (Đắk Lắk — Tây Nguyên)
+
+| Kịch bản | Crop (`crop_id`) | Điểm so sánh (`score`) | Mức rủi ro (`risk_level`) | $r$ (`exceed_ratio_r`) | `deficit_mm` | `water_component` | `water_vs_baseline_pct` |
+|---|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| **(0°C, 0% mưa)** | Ngô (`maize`) | **53.1** | `LOW` | `0.048` | `266.4` | `0.637` | `+24.2%` |
+| **(0°C, 0% mưa)** | Cà phê đất trần (`coffee`) | **34.4** | `MODERATE` | `0.200` | `351.3` | `0.839` | `0.0%` |
+| **(0°C, 0% mưa)** | Cà phê có cây phủ (`coffee_cover_crop`) | **22.9** | `MODERATE` | `0.200` | `418.5` | `1.000` | `-19.1%` |
+| **(+2°C, -30% mưa)** | Ngô (`maize`) | **50.9** | `MODERATE` | `0.130` | `294.3` | `0.635` | `+25.1%` |
+| **(+2°C, -30% mưa)** | Cà phê đất trần (`coffee`) | **28.9** | `SEVERE` | `0.367` | `393.0` | `0.848` | `0.0%` |
+| **(+2°C, -30% mưa)** | Cà phê có cây phủ (`coffee_cover_crop`) | **18.1** | `SEVERE` | `0.367` | `463.5` | `1.000` | `-17.9%` |
+
+---
+
+### 8.4. $ET_o$ theo tháng 1–4 của Đắk Lắk trước và sau Fix 1 (`u2 = max(u2, 0.5)`)
+
+| Tháng | `WS2M` trung bình (m/s) | $ET_o$ trung bình ngày **Trước Fix 1** (mm/ngày) | $ET_o$ trung bình ngày **Sau Fix 1** (mm/ngày) | Tổng $ET_o$ tháng **Trước Fix 1** (mm/tháng) | Tổng $ET_o$ tháng **Sau Fix 1** (mm/tháng) |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Tháng 01** | `0.383` | `2.73` | **2.75** | `84.7` | **85.3** |
+| **Tháng 02** | `0.382` | `3.35` | **3.38** | `94.8` | **95.5** |
+| **Tháng 03** | `0.334` | `4.22` | **4.27** | `130.7` | **132.5** |
+| **Tháng 04** | `0.292` | `4.38` | **4.48** | `131.5` | **134.5** |
+
+---
+
+### 8.5. NDVI trung bình theo tháng mới (Cửa sổ nông nghiệp 3×3 km, lọc mây `reliability in (0, 1)`, $\ge 20$ pixel/ngày)
+
+- **Bến Tre (`Ben_Tre_DBSCL`)**: Tọa độ `10.0992, 106.6040` (Ruộng lúa gần chợ Mỹ Nhơn, Ba Tri cũ) — **181 kỳ hợp lệ / 253 kỳ** (trung bình toàn chuỗi: `0.629`, thể hiện rõ chu kỳ 2–3 vụ lúa trong năm).
+- **Đắk Lắk (`Dak_Lak_Tay_Nguyen`)**: Tọa độ `12.8314, 108.1282` (Vườn cà phê gần Quảng Phú, Cư M'gar cũ) — **201 kỳ hợp lệ / 253 kỳ** (trung bình toàn chuỗi: `0.744`, thể hiện tán cây lâu năm xanh quanh năm, giảm nhẹ vào đỉnh mùa khô tháng 2–4).
+
+| Tháng | Bến Tre (`10.0992, 106.6040` — Ruộng lúa) | Đắk Lắk (`12.8314, 108.1282` — Vườn cà phê) |
+|:---:|:---:|:---:|
+| **Tháng 01** | `0.735` | `0.755` |
+| **Tháng 02** | `0.681` | `0.679` |
+| **Tháng 03** | `0.482` | `0.660` |
+| **Tháng 04** | `0.398` | `0.679` |
+| **Tháng 05** | `0.435` | `0.728` |
+| **Tháng 06** | `0.686` | `0.769` |
+| **Tháng 07** | `0.781` | `0.791` |
+| **Tháng 08** | `0.736` | `0.796` |
+| **Tháng 09** | `0.569` | `0.781` |
+| **Tháng 10** | `0.629` | `0.795` |
+| **Tháng 11** | `0.654` | `0.803` |
+| **Tháng 12** | `0.688` | `0.797` |
+
+
