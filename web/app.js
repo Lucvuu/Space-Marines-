@@ -10,8 +10,26 @@ let latestRegionStatus = {};
 let simDebounceTimer = null;
 
 const REGIONS_DATA = {
-    "Ben_Tre_DBSCL": { name: "Bến Tre", lat: 10.2433, lon: 106.3758 },
-    "Dak_Lak_Tay_Nguyen": { name: "Đắk Lắk", lat: 12.6667, lon: 108.0500 }
+    "Ben_Tre_DBSCL": {
+        name: "Bến Tre",
+        lat: 10.2433,
+        lon: 106.3758,
+        ndvi_point: {
+            lat: 10.0992,
+            lon: 106.6040,
+            note: "Ruộng lúa gần chợ Mỹ Nhơn (huyện Ba Tri cũ, Bến Tre; nay thuộc tỉnh Vĩnh Long). Chọn trên ảnh vệ tinh."
+        }
+    },
+    "Dak_Lak_Tay_Nguyen": {
+        name: "Đắk Lắk",
+        lat: 12.6667,
+        lon: 108.0500,
+        ndvi_point: {
+            lat: 12.8314,
+            lon: 108.1282,
+            note: "Vườn cà phê gần Quảng Phú (huyện Cư M'gar cũ, Đắk Lắk). Chọn trên ảnh vệ tinh."
+        }
+    }
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -239,6 +257,16 @@ async function loadClimateChart() {
             }
         ];
 
+        const ndviPoint = data.ndvi_point || (REGIONS_DATA[currentRegion] && REGIONS_DATA[currentRegion].ndvi_point);
+        const ndviTooltipNote = ndviPoint
+            ? `Nguồn NDVI (${ndviPoint.lat}, ${ndviPoint.lon}): ${ndviPoint.note}`
+            : "Nguồn: MODIS MOD13Q1 (250m)";
+
+        const chipNdviEl = document.getElementById("chip-ndvi");
+        if (chipNdviEl) {
+            chipNdviEl.title = ndviTooltipNote;
+        }
+
         if (hasNdvi) {
             datasets.push({
                 type: "line",
@@ -284,7 +312,17 @@ async function loadClimateChart() {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { labels: { color: "#cbd5e1" } }
+                    legend: { labels: { color: "#cbd5e1" } },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                if (context.dataset && context.dataset.yAxisID === "y1") {
+                                    return ndviTooltipNote;
+                                }
+                                return "";
+                            }
+                        }
+                    }
                 },
                 scales: scales
             }

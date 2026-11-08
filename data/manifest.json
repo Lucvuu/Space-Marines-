@@ -12,15 +12,15 @@
     "is_synthetic": false
   },
   "ndvi/Ben_Tre_DBSCL.csv": {
-    "source": "NASA MODIS MOD13Q1 v061 (ORNL DAAC REST API, 250m 16-day NDVI)",
+    "source": "NASA MODIS MOD13Q1 v061 (ORNL DAAC REST API, 250m 16-day NDVI, 3x3 km median at 10.0992, 106.604)",
     "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1",
-    "retrieved_at": "2026-11-07",
+    "retrieved_at": "2026-11-08",
     "is_synthetic": false
   },
   "ndvi/Dak_Lak_Tay_Nguyen.csv": {
-    "source": "NASA MODIS MOD13Q1 v061 (ORNL DAAC REST API, 250m 16-day NDVI)",
+    "source": "NASA MODIS MOD13Q1 v061 (ORNL DAAC REST API, 250m 16-day NDVI, 3x3 km median at 12.8314, 108.1282)",
     "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1",
-    "retrieved_at": "2026-11-07",
+    "retrieved_at": "2026-11-08",
     "is_synthetic": false
   }
 }

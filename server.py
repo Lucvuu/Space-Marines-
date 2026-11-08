@@ -132,6 +132,7 @@ class AeroAgriAPIHandler(SimpleHTTPRequestHandler):
                     "region": reg_id,
                     "months_count": len(records),
                     "monthly_series": records,
+                    "ndvi_point": reg_info.get("ndvi_point"),
                     "is_synthetic": power_meta.get("is_synthetic", False)
                 })
                 return

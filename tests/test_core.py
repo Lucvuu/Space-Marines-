@@ -579,22 +579,23 @@ class TestAeroAgriStep7(unittest.TestCase):
         self.assertIn("error", r.json())
 
     def test_task2_modis_ndvi_parse_scale_filter(self):
-        """Kiểm tra parse, scale (x0.0001) và lọc fill (-3000, ngoài [-0.2, 1.0]) từ fixture MODIS."""
+        """Kiểm tra parse cửa sổ nhiều pixel, lọc fill (-3000, ngoài [-0.2, 1.0]), lọc mây (reliability 0/1, >=20 pixel) và tính median."""
         from core.ndvi_fetch import parse_subset_response
         fixture_path = os.path.join(AERO_ROOT, "tests", "fixtures", "modis_subset_sample.json")
         self.assertTrue(os.path.isfile(fixture_path))
         with open(fixture_path, "r", encoding="utf-8") as f:
             payload = json.load(f)
         rows = parse_subset_response(payload)
-        # Trong 6 mẫu của fixture: 3 hợp lệ (3316->0.3316, 2516->0.2516, 6420->0.6420)
-        # 3 bị loại: -3000 (fill), 12500 (1.25 > 1.0), -2500 (-0.25 < -0.2)
-        self.assertEqual(len(rows), 3)
+        # Ngày 2024-01-01: 21 pixel hợp lệ (10x0.3, 1x0.4, 10x0.5; bỏ -3000, 12500, -2500 và pixel reliability=3) -> median = 0.4000
+        # Ngày 2024-01-17: chỉ có 10 pixel reliability 0/1 (< 20) -> bị loại cả ngày
+        # Ngày 2024-02-02: 22 pixel hợp lệ (11x0.60, 11x0.64; bỏ 3 pixel -3000) -> median = 0.6200
+        self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0]["date"], "2024-01-01")
-        self.assertAlmostEqual(rows[0]["ndvi"], 0.3316, places=4)
+        self.assertAlmostEqual(rows[0]["ndvi"], 0.4000, places=4)
+        self.assertEqual(rows[0]["n_valid_pixels"], 21)
         self.assertEqual(rows[1]["date"], "2024-02-02")
-        self.assertAlmostEqual(rows[1]["ndvi"], 0.2516, places=4)
-        self.assertEqual(rows[2]["date"], "2024-03-21")
-        self.assertAlmostEqual(rows[2]["ndvi"], 0.6420, places=4)
+        self.assertAlmostEqual(rows[1]["ndvi"], 0.6200, places=4)
+        self.assertEqual(rows[1]["n_valid_pixels"], 22)
 
 
 if __name__ == "__main__":
