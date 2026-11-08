@@ -648,6 +648,67 @@ class TestAeroAgriStep7(unittest.TestCase):
                 else:
                     os.environ.pop("AERO_DATA_DIR", None)
 
+    def test_prep6_cross_year_season_window_and_crop_override(self):
+        """
+        Prep 6 Bước 1:
+        - Mùa vụ bắt đầu '11-01', season_days 105: cửa sổ tính đúng từ 1/11 năm y đến 13/2 năm y+1.
+        - Hai cây trong cùng một vùng có crop_season_start khác nhau thì heat_ratio khác nhau.
+        """
+        from unittest.mock import patch
+        from core.water_balance import get_annual_season_bounds, iter_crop_season_slices, load_config
+        from core.scoring import evaluate_crop_suitability
+        from scripts.make_demo_data import generate_demo_dataset
+
+        # 1. Kiểm tra get_annual_season_bounds & iter_crop_season_slices cho '11-01', 105 ngày
+        s_dt, e_dt = get_annual_season_bounds(2023, "11-01", 105)
+        self.assertEqual(s_dt.strftime("%Y-%m-%d"), "2023-11-01")
+        self.assertEqual(e_dt.strftime("%Y-%m-%d"), "2024-02-13")
+
+        dates = pd.date_range("2022-01-01", "2024-12-31", freq="D")
+        df_test = pd.DataFrame({"date": dates, "val": 1})
+        reg_mock = {"season_start": "11-01", "dry_season_months": [1, 2, 3, 4]}
+        crop_mock = {"perennial": False, "season_days": 105}
+        slices = list(iter_crop_season_slices(df_test, reg_mock, "rice", crop_mock))
+        self.assertEqual([y for y, _ in slices], [2022, 2023])
+        self.assertEqual(slices[0][1]["date"].min().strftime("%Y-%m-%d"), "2022-11-01")
+        self.assertEqual(slices[0][1]["date"].max().strftime("%Y-%m-%d"), "2023-02-13")
+        self.assertEqual(len(slices[0][1]), 105)
+
+        # 2. Hai cây trong cùng vùng có crop_season_start khác nhau -> heat_ratio khác nhau
+        real_regions = load_config("regions")
+        real_crops = load_config("crops")
+        patched_regions = json.loads(json.dumps(real_regions))
+        patched_regions["Ben_Tre_DBSCL"]["crop_season_start"] = {
+            "rice": "02-01",
+            "soybean": "07-01"
+        }
+
+        def fake_load_config(name):
+            if name == "regions":
+                return patched_regions
+            if name == "crops":
+                return real_crops
+            return load_config(name)
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            old_data_dir = os.environ.get("AERO_DATA_DIR")
+            os.environ["AERO_DATA_DIR"] = tmp_dir
+            try:
+                generate_demo_dataset()
+                with patch("core.scoring.load_config", side_effect=fake_load_config), \
+                     patch("core.water_balance.load_config", side_effect=fake_load_config):
+                    res = evaluate_crop_suitability("Ben_Tre_DBSCL", 0.0, 0.0)
+                    c_map = {c["crop_id"]: c for c in res["crops"]}
+                    hr_rice = c_map["rice"]["components"]["heat_ratio"]
+                    hr_soy = c_map["soybean"]["components"]["heat_ratio"]
+                    self.assertNotEqual(hr_rice, hr_soy)
+                    self.assertGreater(hr_rice, hr_soy)
+            finally:
+                if old_data_dir:
+                    os.environ["AERO_DATA_DIR"] = old_data_dir
+                else:
+                    os.environ.pop("AERO_DATA_DIR", None)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

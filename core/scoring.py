@@ -23,7 +23,12 @@ import json
 import numpy as np
 import pandas as pd
 from core.loaders import load_csv, get_data_dir
-from core.water_balance import calculate_water_balance, load_config
+from core.water_balance import (
+    calculate_water_balance,
+    load_config,
+    collect_crop_season_df,
+    get_crop_season_window_info
+)
 
 AERO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -113,8 +118,6 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
 
     # 3. Bước 1: Tính các thành phần (water, salinity, heat) cho từng cây trồng
     pre_crop_list = []
-    dry_months = reg_info.get("dry_season_months", [1, 2, 3, 4])
-    df_dry = power_df[power_df["date"].dt.month.isin(dry_months)].copy()
 
     for idx, crop_id in enumerate(candidate_crops):
         if crop_id not in crops_cfg:
@@ -131,13 +134,16 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
         irrigation_share = wb.get("mean_water_stress")
         deficit_mm = wb.get("mean_deficit_mm")
 
+        # Lọc dữ liệu theo đúng cửa sổ mùa vụ của từng cây (dùng chung iter_crop_season_slices / collect_crop_season_df)
+        df_crop_season = collect_crop_season_df(power_df, reg_info, crop_id, c_info)
+
         # B. Rủi ro nhiệt (heat_ratio)
         heat_thresh = c_info.get("heat_threshold_c")
         heat_ratio = None
-        if heat_thresh is not None and len(df_dry) > 0:
-            sim_tmax = df_dry["T2M_MAX"] + delta_temp_c
+        if heat_thresh is not None and len(df_crop_season) > 0:
+            sim_tmax = df_crop_season["T2M_MAX"] + delta_temp_c
             heat_exceed_days = int((sim_tmax > heat_thresh).sum())
-            heat_ratio = round(heat_exceed_days / max(len(df_dry), 1), 3)
+            heat_ratio = round(heat_exceed_days / max(len(df_crop_season), 1), 3)
 
         # C. Rủi ro mặn (salinity_exceed) từ salinity_threshold_ece_dsm và salinity_basis
         ece_thresh = c_info.get("salinity_threshold_ece_dsm")
@@ -148,10 +154,10 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
 
         if sal_thresh is not None:
             if sal_df is not None and "salinity_ppt" in sal_df.columns:
-                sal_dry = sal_df[sal_df["date"].dt.month.isin(dry_months)]
-                if len(sal_dry) > 0:
-                    sal_exceed_days = int((sal_dry["salinity_ppt"] > sal_thresh).sum())
-                    salinity_exceed = round(sal_exceed_days / len(sal_dry), 3)
+                sal_season = collect_crop_season_df(sal_df, reg_info, crop_id, c_info)
+                if len(sal_season) > 0:
+                    sal_exceed_days = int((sal_season["salinity_ppt"] > sal_thresh).sum())
+                    salinity_exceed = round(sal_exceed_days / len(sal_season), 3)
                 else:
                     missing_notes.append("chưa tính mặn do thiếu dữ liệu mùa khô")
             else:

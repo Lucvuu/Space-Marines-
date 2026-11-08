@@ -11,6 +11,8 @@
       "note": "Ruộng lúa gần chợ Mỹ Nhơn (huyện Ba Tri cũ, Bến Tre; nay thuộc tỉnh Vĩnh Long). Chọn trên ảnh vệ tinh."
     },
     "dry_season_months": [1, 2, 3, 4],
+    "season_start": "01-01",
+    "crop_season_start": {},
     "candidate_crops": ["rice", "soybean", "maize", "rice_shrimp"],
     "source": "NASA Space Apps Hanoi 2026 specs",
     "verified": false
@@ -27,6 +29,8 @@
       "note": "Vườn cà phê gần Quảng Phú (huyện Cư M'gar cũ, Đắk Lắk). Chọn trên ảnh vệ tinh."
     },
     "dry_season_months": [1, 2, 3, 4],
+    "season_start": "01-01",
+    "crop_season_start": {},
     "candidate_crops": ["coffee", "coffee_cover_crop", "maize"],
     "source": "NASA Space Apps Hanoi 2026 specs",
     "verified": false
