@@ -267,7 +267,10 @@ class TestAeroAgriStep3(unittest.TestCase):
             self.assertIsInstance(cinfo["source"], dict)
             for k in ["kc", "salinity", "heat", "water_extra"]:
                 self.assertIn(k, cinfo["source"])
-            self.assertEqual(cinfo["source"]["heat"], "TODO: cần nguồn")
+            self.assertIsInstance(cinfo["source"]["heat"], str)
+            self.assertGreater(len(cinfo["source"]["heat"].strip()), 0)
+            if "heat" in cinfo.get("verified_params", []):
+                self.assertNotIn("TODO", cinfo["source"]["heat"])
             self.assertIn("verified", cinfo)
 
     def test_step3_config_scoring(self):
@@ -376,7 +379,7 @@ class TestAeroAgriStep5(unittest.TestCase):
         """Spec 8: lúa có deficit_mm lớn hơn đậu tương."""
         from core.water_balance import calculate_water_balance
         # Tạo chuỗi dữ liệu 1 năm mùa khô giả lập
-        dates = pd.date_range("2024-01-01", "2024-06-30")
+        dates = pd.date_range("2023-11-01", "2024-06-30")
         df = pd.DataFrame({
             "date": dates,
             "T2M_MAX": [33.0] * len(dates),

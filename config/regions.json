@@ -11,7 +11,8 @@
       "note": "Ruộng lúa gần chợ Mỹ Nhơn (huyện Ba Tri cũ, Bến Tre; nay thuộc tỉnh Vĩnh Long). Chọn trên ảnh vệ tinh."
     },
     "dry_season_months": [1, 2, 3, 4],
-    "season_start": "01-01",
+    "season_start": "11-01",
+    "season_start_source": "Đông Xuân vùng ven biển: 'kết thúc gieo sạ hoàn toàn trong tháng 10 đến tháng 11 dương lịch' (Trung tâm Khuyến nông Quốc gia, sổ tay hạn hán – xâm nhập mặn mùa khô 2026–2027, tr.10). Ba Tri: Đông Xuân gieo khoảng 22/11/2023, thu hoạch cuối tháng 2/2024 (Báo Nông nghiệp Việt Nam, 22/02/2024).",
     "crop_season_start": {},
     "candidate_crops": ["rice", "soybean", "maize", "rice_shrimp"],
     "source": "NASA Space Apps Hanoi 2026 specs",
@@ -31,7 +32,7 @@
     "dry_season_months": [1, 2, 3, 4],
     "season_start": "01-01",
     "crop_season_start": {},
-    "candidate_crops": ["coffee", "coffee_cover_crop", "maize"],
+    "candidate_crops": ["coffee", "coffee_cover_crop"],
     "source": "NASA Space Apps Hanoi 2026 specs",
     "verified": false
   }

@@ -20,11 +20,11 @@
     "source": {
       "kc": "FAO-56 Table 12 p.111 (Kc end range 0.90-0.60, 0.75 chosen)",
       "salinity": "FAO-56 Table 23 p.179, footnote 6",
-      "heat": "TODO: cần nguồn",
+      "heat": "Jagadish et al. 2007, J. Exp. Bot. 58(7):1627, abstract: spikelet sterility at >=33.7 °C tissue temperature at anthesis (chamber air setpoint 35 °C; tissue 0.4-1.8 °C below air).",
       "water_extra": "assumption, source TODO"
     },
     "verified": false,
-    "verified_params": ["kc", "salinity"]
+    "verified_params": ["kc", "salinity", "heat"]
   },
   "soybean": {
     "name_vi": "Đậu tương",
@@ -47,7 +47,7 @@
     "source": {
       "kc": "FAO-56 Table 12 p.111 (Kc ini = Legumes group value 0.4)",
       "salinity": "FAO-56 Table 23 p.178",
-      "heat": "TODO: cần nguồn",
+      "heat": "VHD35 (Tmax >= 35 °C) is a climate-index definition (Plants 2026), not a measured damage threshold: low confidence.",
       "water_extra": "N/A (cây cạn, null)"
     },
     "verified": false,
@@ -70,11 +70,11 @@
     "percolation_mm_day": null,
     "salinity_threshold_ece_dsm": 1.7,
     "salinity_basis": "ece",
-    "heat_threshold_c": 36.0,
+    "heat_threshold_c": 35.0,
     "source": {
       "kc": "FAO-56 Table 12 p.111 (Kc ini = Cereals group 0.3; Kc end 0.35 = dry harvest, footnote 11)",
       "salinity": "FAO-56 Table 23 p.179",
-      "heat": "TODO: cần nguồn",
+      "heat": "~35 °C air temperature for tropical maize pollination (Maydica 2016 heat-stress study; Lizaso et al. 2018 cited secondarily). Primary source not read: low confidence.",
       "water_extra": "N/A (cây cạn, null)"
     },
     "verified": false,
@@ -119,11 +119,11 @@
     "percolation_mm_day": null,
     "salinity_threshold_ece_dsm": null,
     "salinity_basis": null,
-    "heat_threshold_c": 33.0,
+    "heat_threshold_c": null,
     "source": {
       "kc": "FAO-56 Table 12 p.112, Coffee - bare ground cover / - with weeds",
       "salinity": "N/A (vùng cao nguyên không nhiễm mặn)",
-      "heat": "TODO: cần nguồn",
+      "heat": "No sourced daily-Tmax damage threshold for Coffea canephora. Kath et al. 2020 (Global Change Biology 26:3677) give a growing-season mean optimum (mean Tmax <= 24.1 °C), not a daily threshold, so heat is not scored for coffee.",
       "water_extra": "N/A (cây cạn, null)"
     },
     "verified": false,
@@ -146,11 +146,11 @@
     "percolation_mm_day": null,
     "salinity_threshold_ece_dsm": null,
     "salinity_basis": null,
-    "heat_threshold_c": 33.0,
+    "heat_threshold_c": null,
     "source": {
       "kc": "FAO-56 Table 12 p.112, Coffee - bare ground cover / - with weeds",
       "salinity": "N/A (vùng cao nguyên không nhiễm mặn)",
-      "heat": "TODO: cần nguồn",
+      "heat": "No sourced daily-Tmax damage threshold for Coffea canephora. Kath et al. 2020 (Global Change Biology 26:3677) give a growing-season mean optimum (mean Tmax <= 24.1 °C), not a daily threshold, so heat is not scored for coffee.",
       "water_extra": "N/A (cây cạn, null)"
     },
     "verified": false,
