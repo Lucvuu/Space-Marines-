@@ -45,12 +45,12 @@ When a user adjusts the climate simulator temperature slider ($\Delta T$ in °C)
 
 ### 2.2. Crop Water Requirement, Effective Rainfall ($P_{eff}$), and Seasonal Deficit
 - **Crop Evapotranspiration ($ET_c$):**
-  - Annual crops (`rice`, `soybean`, `maize`): daily $K_c$ is linearly interpolated across four growth stages (`ini`, `dev`, `mid`, `late`) starting on January 1 of each dry season ($ET_c = K_c \cdot ET_o$).
+  - Annual crops (`rice`, `soybean`, `maize`): daily $K_c$ is linearly interpolated across four growth stages (`ini`, `dev`, `mid`, `late`) over `season_days` starting from the configurable `season_start` (`MM-DD`, with optional per-crop override `crop_season_start` in `config/regions.json`, supporting cross-year seasons) ($ET_c = K_c \cdot ET_o$).
   - Perennial crops (`coffee`, `coffee_cover_crop`): evaluated across dry-season months (1–4) using fixed $K_c = K_{c,\text{mid}}$.
   - Additional water requirements (`land_prep_mm` and `percolation_mm_day`, e.g., $200\text{ mm}$ land preparation and $3\text{ mm/day}$ percolation for paddy rice — assumed values, not from FAO-56; source TODO (`verified: false`)):
     $$W_{\text{req}} = \sum ET_c + W_{\text{land\_prep}} + (d_{\text{season}} \cdot W_{\text{percolation}})$$
-- **Monthly Effective Rainfall ($P_{eff}$, mm) — USDA Soil Conservation Service (USDA-SCS) method:**
-  $$P_{eff} = \begin{cases} P \cdot \frac{125 - 0.2 P}{125} & \text{if } P \le 250\text{ mm/month} \\ 125 + 0.1 P & \text{if } P > 250\text{ mm/month} \end{cases}$$
+- **Monthly Effective Rainfall ($P_{eff}$, mm) — USDA Soil Conservation Service (USDA-SCS) method (prorated for partial months):**
+  $$P_{eff,\text{full}} = \begin{cases} P \cdot \frac{125 - 0.2 P}{125} & \text{if } P \le 250\text{ mm/month} \\ 125 + 0.1 P & \text{if } P > 250\text{ mm/month} \end{cases}, \quad P_{eff,\text{season}} = \sum_{m} P_{eff,\text{full}}(m) \cdot \frac{d_{\text{season},m}}{d_{\text{month},m}}$$
 - **Seasonal Irrigation Deficit & Irrigation Share:**
   $$\text{deficit\_mm} = \max(W_{\text{req}} - \sum P_{eff}, 0), \quad \text{irrigation\_share} = \text{clip}\left(\frac{\text{deficit\_mm}}{W_{\text{req}}}, 0, 1\right)$$
 
@@ -82,7 +82,7 @@ When a user adjusts the climate simulator temperature slider ($\Delta T$ in °C)
    - `heat_threshold_c` values carry `"source": {"heat": "TODO: cần nguồn"}` because FAO-56 does not define daily maximum temperature thresholds.
    - `rice` additional water parameters (`land_prep_mm = 200`, `percolation_mm_day = 3`) are assumed values, not from FAO-56; source TODO (`verified: false`).
    - `rice_shrimp` rotational aquaculture-rice parameters (`kc_*`, `salinity_threshold_ece_dsm`) are `null` (`TODO`) awaiting local agricultural extension validation.
-5. **Fixed Sowing Date Assumption:** Annual crops are assumed sown on Jan 1. Actual Winter-Spring rice in Bến Tre is sown around Nov–Dec.
+5. **Crop Calendar Placeholders:** season start dates are configurable; current values are placeholders pending local crop-calendar sources.
 6. **Whole-Season Heat Exceedance Counting:** Heat exceedance counts all days with $T_{max} > \text{threshold}$ in the season, not only sensitive stages such as anthesis.
 7. **Upland Salinity Conversion Assumption:** For upland crops, the salinity threshold is converted from $EC_e$ to water salinity using the FAO-29 assumption $EC_e \approx 1.5 \cdot EC_w$. This assumes a steady-state leaching fraction and has not been field-checked for the Mekong Delta.
 8. **Wind Speed Floor:** The POWER `WS2M` floor is applied at $0.5\text{ m/s}$ (FAO-56 p.63, Fix 1).

@@ -631,6 +631,9 @@ class TestAeroAgriStep7(unittest.TestCase):
                         actual_map = {c["crop_id"]: c for c in res["crops"]}
                         for cid, exp in expected_crops.items():
                             act = actual_map[cid]
+                            self.assertIn("season_window", act)
+                            self.assertIn("start", act["season_window"])
+                            self.assertIn("end", act["season_window"])
                             self.assertEqual(act["risk_level"], exp["risk_level"])
                             for num_field, act_key in [
                                 ("score", "score"),

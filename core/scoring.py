@@ -171,6 +171,7 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
         pre_crop_list.append({
             "crop_id": crop_id,
             "crop_name": c_info.get("name_vi", crop_id),
+            "season_window": get_crop_season_window_info(reg_info, crop_id, c_info),
             "components": {
                 "water_component": None,
                 "irrigation_share": irrigation_share,

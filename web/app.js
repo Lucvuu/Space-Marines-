@@ -399,8 +399,13 @@ async function evaluateCrops() {
                 noteText = `<div style="font-size:0.7rem; color:#94a3b8; margin-top:2px;">* ${c.missing_components.join(", ")}</div>`;
             }
 
+            const winText = (c.season_window && c.season_window.start && c.season_window.end)
+                ? `<code>${c.season_window.start} → ${c.season_window.end}</code>`
+                : "<span style='color:#9ca3af;'>N/A</span>";
+
             tr.innerHTML = `
                 <td><strong>${c.crop_name}</strong>${noteText}</td>
+                <td>${winText}</td>
                 <td><strong style="color:#38bdf8; font-size:1rem;">${scText}</strong></td>
                 <td><span class="badge-risk ${rkClass}" title="tỷ lệ ngày mùa vụ vượt ngưỡng nhiệt/mặn">${c.risk_level}</span></td>
                 <td>${defText}</td>
