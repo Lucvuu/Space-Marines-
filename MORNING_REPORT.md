@@ -486,6 +486,125 @@ Kết quả:
 | **(+2°C, -30% mưa)** | `S3` | Lúa Hè Thu | `05-25 → 09-06` | `True` | `469.2` | **515.0** | `416.3` | **567.9** |
 | **(+2°C, -30% mưa)** | `S3` | Ngô | `11-01 → 02-08` | `True` | `324.1` | **0.0** | `145.3` | **178.9** |
 
+---
+
+## 12. Fix 6C (Rice Extra Water from FAO Training Manual 3: SAT 200 + WL 100, PERC 4)
+
+### 12.1. Commit Hash của từng bước (Bước 1 → Bước 2 + Report)
+
+| Bước | Commit Hash | Commit Message | Nội dung chính |
+|---|---|---|---|
+| **Bước 1** | `03c09d7` | `config: rice extra water from FAO Training Manual 3 (SAT 200 + WL 100, PERC 4)` | Cập nhật `config/crops.json` cho `rice`: `land_prep_mm = 300`, `percolation_mm_day = 4`, và `source.water_extra` theo FAO Training Manual 3 (Brouwer & Heibloem 1986, Part II Sec. 4.4); cập nhật `Ben_Tre_DBSCL.assumptions[1]` trong `config/rotations.json`; cập nhật `test_step5_water_balance_rice_vs_soybean` (`515.0 → 720.0`), 10 giá trị trong `tests/fixtures/regression_baseline.json`, và đồng bộ bảng nguồn trong `docs/SUBMISSION_NOTES.md`. |
+| **Bước 2** | `53d42e4` | `docs: cite FAO Training Manual 3 for rice extra water` | Chép nguyên văn mô tả `land_prep_mm`/`percolation_mm_day` và mục Limitations 5 trong `docs/SUBMISSION_NOTES.md`, mục 5 trong `README.md`, và nhãn hiển thị `nước làm đất, lớp nước và thấm (FAO TM3)` / `loại đất giả định` trong `web/app.js`. |
+| **Kết thúc** | *(commit hiện tại)* | `fix6c report` | Ghi báo cáo mục **12. Fix 6C** vào `MORNING_REPORT.md`. |
+
+---
+
+### 12.2. Output `git diff tests/fixtures/regression_baseline.json` (ở Bước 1 — đúng 10 dòng thay đổi)
+
+```diff
+diff --git a/tests/fixtures/regression_baseline.json b/tests/fixtures/regression_baseline.json
+index 63c2a40..358ba88 100644
+--- a/tests/fixtures/regression_baseline.json
++++ b/tests/fixtures/regression_baseline.json
+@@ -5,22 +5,22 @@
+         "score": 35.8,
+         "risk_level": "SEVERE",
+         "r": 0.398,
+-        "deficit_mm": 721.5,
++        "deficit_mm": 926.5,
+         "water_vs_baseline_pct": 0.0
+       },
+       "soybean": {
+-        "score": 82.3,
++        "score": 83.3,
+         "risk_level": "SEVERE",
+         "r": 0.362,
+         "deficit_mm": 67.3,
+-        "water_vs_baseline_pct": 90.7
++        "water_vs_baseline_pct": 92.7
+       },
+       "maize": {
+-        "score": 77.6,
++        "score": 78.6,
+         "risk_level": "CRITICAL",
+         "r": 0.527,
+         "deficit_mm": 63.6,
+-        "water_vs_baseline_pct": 91.2
++        "water_vs_baseline_pct": 93.1
+       },
+       "rice_shrimp": {
+         "score": null,
+@@ -35,22 +35,22 @@
+         "score": 29.1,
+         "risk_level": "SEVERE",
+         "r": 0.449,
+-        "deficit_mm": 803.8,
++        "deficit_mm": 1008.8,
+         "water_vs_baseline_pct": 0.0
+       },
+       "soybean": {
+-        "score": 71.8,
++        "score": 73.6,
+         "risk_level": "SEVERE",
+         "r": 0.43,
+         "deficit_mm": 140.6,
+-        "water_vs_baseline_pct": 82.5
++        "water_vs_baseline_pct": 86.1
+       },
+       "maize": {
+-        "score": 67.1,
++        "score": 68.8,
+         "risk_level": "CRITICAL",
+         "r": 0.527,
+         "deficit_mm": 136.7,
+-        "water_vs_baseline_pct": 83.0
++        "water_vs_baseline_pct": 86.4
+       },
+       "rice_shrimp": {
+         "score": null,
+```
+
+---
+
+### 12.3. Output `python -m pytest -q`
+
+```text
+........................................                                 [100%]
+40 passed, 1 warning in 23.25s
+```
+
+---
+
+### 12.4. Output lệnh `grep` ở Bước 2
+
+Lệnh kiểm tra trên `docs/`, `README.md`, `web/` và `config/`:
+```bash
+grep -rnE "3 mm/day|3 mm/ngày|thấm 3|source TODO|chưa có nguồn chuẩn|calendar_12m" docs/ README.md web/ config/
+```
+Kết quả (chỉ còn đúng 1 dòng ngoại lệ `st.calendar_12m` làm fallback trong `web/app.js`):
+```text
+web/app.js:468:        const calHtml = (st.calendar || st.calendar_12m || []).map(mc => {
+```
+
+---
+
+### 12.5. Bảng số liệu trên dữ liệu thật (`data/raw/power/`, 2015–2025) ở kịch bản `(0 °C, 0%)`
+
+| Vùng | Chiến lược | `annual_deficit_mm` | `partial` | `bare_months` | Pha (`label`) | Khung mùa vụ (`window`) | `etc_mm` (mm) | `assumed_extra_mm` (mm) | `peff_mm` (mm) | `deficit_mm` (mm) |
+|---|---|---:|:---:|:---:|---|---|---:|---:|---:|---:|
+| `Ben_Tre_DBSCL` | **S0**: Hiện trạng: 2 vụ lúa (Hè Thu + Đông Xuân sớm) | **1636.2 mm** | `False` | `[2, 3, 4, 5, 9, 10]` | Lúa Hè Thu | `05-25 → 09-06` | `443.7` | **720.0** | `491.9` | **671.8** |
+| `Ben_Tre_DBSCL` | **S0**: Hiện trạng: 2 vụ lúa (Hè Thu + Đông Xuân sớm) | **1636.2 mm** | `False` | `[2, 3, 4, 5, 9, 10]` | Lúa Đông Xuân sớm | `11-01 → 02-13` | `436.9` | **720.0** | `192.6` | **964.4** |
+| `Ben_Tre_DBSCL` | **S1**: Lúa – tôm (lúa mùa mưa, tôm sú mùa khô) | **680.5 mm** *(chưa tính vụ tôm)* | `True` | `[1, 2, 8, 12]` | Lúa mùa mưa | `09-01 → 12-14` | `404.3` | **720.0** | `443.9` | **680.5** |
+| `Ben_Tre_DBSCL` | **S1**: Lúa – tôm (lúa mùa mưa, tôm sú mùa khô) | **680.5 mm** *(chưa tính vụ tôm)* | `True` | `[1, 2, 8, 12]` | Tôm sú (nước lợ) | `03-01 → 07-31` | `None` | `None` | `None` | `None` |
+| `Ben_Tre_DBSCL` | **S2**: Lúa Hè Thu + đậu tương thay vụ Đông Xuân | **791.7 mm** | `False` | `[2, 3, 4, 5, 9, 10]` | Lúa Hè Thu | `05-25 → 09-06` | `443.7` | **720.0** | `491.9` | **671.8** |
+| `Ben_Tre_DBSCL` | **S2**: Lúa Hè Thu + đậu tương thay vụ Đông Xuân | **791.7 mm** | `False` | `[2, 3, 4, 5, 9, 10]` | Đậu tương | `11-01 → 02-08` | `310.9` | **0.0** | `191.4` | **119.9** |
+| `Ben_Tre_DBSCL` | **S3**: Lúa Hè Thu + ngô thay vụ Đông Xuân | **786.6 mm** | `False` | `[2, 3, 4, 5, 9, 10]` | Lúa Hè Thu | `05-25 → 09-06` | `443.7` | **720.0** | `491.9` | **671.8** |
+| `Ben_Tre_DBSCL` | **S3**: Lúa Hè Thu + ngô thay vụ Đông Xuân | **786.6 mm** | `False` | `[2, 3, 4, 5, 9, 10]` | Ngô | `11-01 → 02-08` | `305.2` | **0.0** | `191.4` | **114.8** |
+| `Dak_Lak_Tay_Nguyen` | **D0**: Hiện trạng: cà phê vối đất trần | **351.3 mm** | `False` | `[]` | Cà phê (đất trần) | `01-01 → 04-30` | `425.4` | **0.0** | `74.1` | **351.3** |
+| `Dak_Lak_Tay_Nguyen` | **D1**: Cà phê vối có cây che phủ đất / thảm cỏ | **418.5 mm** | `False` | `[]` | Cà phê + cây phủ | `01-01 → 04-30` | `492.6` | **0.0** | `74.1` | **418.5** |
+
+
 
 
 
