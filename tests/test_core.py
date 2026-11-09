@@ -766,6 +766,8 @@ class TestAeroAgriFix6(unittest.TestCase):
         """1. Bến Tre, S0: bare_months == [2, 3, 4, 5, 9, 10]."""
         from core.rotation import evaluate_rotations
         res = evaluate_rotations("Ben_Tre_DBSCL", 0.0, 0.0)
+        if not res.get("available"):
+            self.skipTest("Thiếu file CSV dữ liệu POWER cho Ben_Tre_DBSCL")
         s0 = next(s for s in res["strategies"] if s["id"] == "S0")
         self.assertEqual(s0["bare_months"], [2, 3, 4, 5, 9, 10])
 
@@ -776,9 +778,13 @@ class TestAeroAgriFix6(unittest.TestCase):
         from core.loaders import load_csv
 
         res = evaluate_rotations("Ben_Tre_DBSCL", 0.0, 0.0)
+        if not res.get("available"):
+            self.skipTest("Thiếu file CSV dữ liệu POWER cho Ben_Tre_DBSCL")
         s0 = next(s for s in res["strategies"] if s["id"] == "S0")
 
         df_power, _ = load_csv("power", "Ben_Tre_DBSCL")
+        if df_power is None:
+            self.skipTest("Thiếu file CSV dữ liệu POWER cho Ben_Tre_DBSCL")
         wb_ht = calculate_water_balance(df_power, "Ben_Tre_DBSCL", "rice", 0.0, 0.0, season_start="05-25")
         wb_dx = calculate_water_balance(df_power, "Ben_Tre_DBSCL", "rice", 0.0, 0.0, season_start="11-01")
         expected_sum = wb_ht["mean_deficit_mm"] + wb_dx["mean_deficit_mm"]
@@ -789,6 +795,8 @@ class TestAeroAgriFix6(unittest.TestCase):
         """3. Bến Tre, S1: partial là true, pha tôm có modeled false, annual_deficit_mm không null."""
         from core.rotation import evaluate_rotations
         res = evaluate_rotations("Ben_Tre_DBSCL", 0.0, 0.0)
+        if not res.get("available"):
+            self.skipTest("Thiếu file CSV dữ liệu POWER cho Ben_Tre_DBSCL")
         s1 = next(s for s in res["strategies"] if s["id"] == "S1")
         self.assertTrue(s1["partial"])
         shrimp_phase = next(p for p in s1["phases"] if p["crop"] is None)
@@ -799,6 +807,8 @@ class TestAeroAgriFix6(unittest.TestCase):
         """4. Đắk Lắk: evaluate trả score khác null cho coffee và coffee_cover_crop; coffee_cover_crop có deficit lớn hơn coffee."""
         from core.scoring import evaluate_crop_suitability
         res = evaluate_crop_suitability("Dak_Lak_Tay_Nguyen", 0.0, 0.0)
+        if not res.get("available"):
+            self.skipTest("Thiếu file CSV dữ liệu POWER cho Dak_Lak_Tay_Nguyen")
         c_map = {c["crop_id"]: c for c in res["crops"]}
         self.assertIn("coffee", c_map)
         self.assertIn("coffee_cover_crop", c_map)
@@ -848,6 +858,8 @@ class TestAeroAgriFix6(unittest.TestCase):
         from core.loaders import load_csv
 
         df_power, _ = load_csv("power", "Ben_Tre_DBSCL")
+        if df_power is None:
+            self.skipTest("Thiếu file CSV dữ liệu POWER cho Ben_Tre_DBSCL")
         res_old = calculate_water_balance(df_power, "Ben_Tre_DBSCL", "rice", 0.5, -10.0)
         res_new = calculate_water_balance(df_power, "Ben_Tre_DBSCL", "rice", 0.5, -10.0, season_start=None)
 
@@ -882,6 +894,8 @@ class TestAeroAgriFix6(unittest.TestCase):
 
         for reg_id in ["Ben_Tre_DBSCL", "Dak_Lak_Tay_Nguyen"]:
             res = evaluate_rotations(reg_id, 0.0, 0.0)
+            if not res.get("available"):
+                self.skipTest(f"Thiếu file CSV dữ liệu POWER cho {reg_id}")
             for s in res["strategies"]:
                 for ph in s["phases"]:
                     if not ph["modeled"]:

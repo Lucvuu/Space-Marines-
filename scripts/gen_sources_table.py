@@ -56,3 +56,4 @@ def generate_sources_markdown() -> str:
 
 if __name__ == "__main__":
     print(generate_sources_markdown())
+
