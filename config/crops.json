@@ -12,8 +12,8 @@
     "kc_ini": 1.05,
     "kc_mid": 1.20,
     "kc_end": 0.75,
-    "land_prep_mm": 200,
-    "percolation_mm_day": 3,
+    "land_prep_mm": 300,
+    "percolation_mm_day": 4,
     "salinity_threshold_ece_dsm": 3.0,
     "salinity_basis": "soil_water_submerged",
     "heat_threshold_c": 35.0,
@@ -21,7 +21,7 @@
       "kc": "FAO-56 Table 12 p.111 (Kc end range 0.90-0.60, 0.75 chosen)",
       "salinity": "FAO-56 Table 23 p.179, footnote 6",
       "heat": "Jagadish et al. 2007, J. Exp. Bot. 58(7):1627, abstract: spikelet sterility at >=33.7 °C tissue temperature at anthesis (chamber air setpoint 35 °C; tissue 0.4-1.8 °C below air).",
-      "water_extra": "assumption, source TODO"
+      "water_extra": "FAO Training Manual 3 (Brouwer & Heibloem 1986), Part II Sec. 4.4: SAT 200 mm + WL 100 mm (land_prep_mm = 300); PERC 4 mm/day for heavy clay (range 4-8 mm/day). Soil type at the Ba Tri point is assumed heavy clay, not verified."
     },
     "verified": false,
     "verified_params": ["kc", "salinity", "heat"]
