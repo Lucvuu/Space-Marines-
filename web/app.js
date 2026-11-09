@@ -501,7 +501,7 @@ function renderRotationCards(data) {
             const peffVal = ph.peff_mm !== null && ph.peff_mm !== undefined ? ph.peff_mm : "N/A";
             const wDefVal = ph.deficit_mm !== null && ph.deficit_mm !== undefined ? ph.deficit_mm : "N/A";
             const extraPart = (ph.assumed_extra_mm !== null && ph.assumed_extra_mm !== undefined && ph.assumed_extra_mm > 0)
-                ? ` + nước giả định (làm đất/thấm) ${ph.assumed_extra_mm} <span class="badge-unverified">giả định, chưa có nguồn</span>`
+                ? ` + nước làm đất, lớp nước và thấm (FAO TM3) ${ph.assumed_extra_mm} <span class="badge-unverified">loại đất giả định</span>`
                 : "";
             return `<li><strong>${ph.label}</strong> (${winStr}): ETc ${etcVal}${extraPart} − mưa hiệu quả ${peffVal} = thiếu hụt <strong>${wDefVal} mm</strong> <span style="color:#94a3b8; font-size:0.74rem;">(trung bình các năm)</span></li>`;
         }).join("");
