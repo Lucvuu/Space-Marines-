@@ -871,6 +871,32 @@ class TestAeroAgriFix6(unittest.TestCase):
         expected = generate_sources_markdown().strip()
         self.assertEqual(between, expected)
 
+    def test_fix6b_assumed_extra(self):
+        """
+        Fix 6B Bước 3:
+        - pha lúa có assumed_extra_mm > 0;
+        - pha đậu tương có assumed_extra_mm == 0;
+        - với mọi pha có mô hình: deficit_mm >= max(etc_mm + assumed_extra_mm - peff_mm, 0) - 0.2.
+        """
+        from core.rotation import evaluate_rotations
+
+        for reg_id in ["Ben_Tre_DBSCL", "Dak_Lak_Tay_Nguyen"]:
+            res = evaluate_rotations(reg_id, 0.0, 0.0)
+            for s in res["strategies"]:
+                for ph in s["phases"]:
+                    if not ph["modeled"]:
+                        self.assertIsNone(ph["assumed_extra_mm"])
+                        continue
+
+                    self.assertIsNotNone(ph["assumed_extra_mm"])
+                    if ph["crop"] == "rice":
+                        self.assertGreater(ph["assumed_extra_mm"], 0.0)
+                    elif ph["crop"] == "soybean":
+                        self.assertEqual(ph["assumed_extra_mm"], 0.0)
+
+                    lower_bound = max(ph["etc_mm"] + ph["assumed_extra_mm"] - ph["peff_mm"], 0.0) - 0.2
+                    self.assertGreaterEqual(ph["deficit_mm"], lower_bound)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

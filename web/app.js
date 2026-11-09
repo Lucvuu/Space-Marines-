@@ -465,7 +465,7 @@ function renderRotationCards(data) {
             labelColorMap[ph.label] = phaseColors[idx % phaseColors.length];
         });
 
-        const calHtml = (st.calendar_12m || []).map(mc => {
+        const calHtml = (st.calendar || st.calendar_12m || []).map(mc => {
             const isBare = mc.bare;
             const salClass = mc.salinity_month ? "salinity-border" : "";
             const bareClass = isBare ? "bare-cell" : "";
@@ -497,7 +497,13 @@ function renderRotationCards(data) {
                 return `<li><strong>${ph.label}:</strong> Chưa mô hình hóa (${ph.window ? ph.window.start + ' → ' + ph.window.end : ''})</li>`;
             }
             const winStr = ph.window && ph.window.start ? `${ph.window.start} → ${ph.window.end}` : "";
-            return `<li><strong>${ph.label}</strong> (${winStr}): thiếu hụt <strong>${ph.deficit_mm} mm</strong></li>`;
+            const etcVal = ph.etc_mm !== null && ph.etc_mm !== undefined ? ph.etc_mm : "N/A";
+            const peffVal = ph.peff_mm !== null && ph.peff_mm !== undefined ? ph.peff_mm : "N/A";
+            const wDefVal = ph.deficit_mm !== null && ph.deficit_mm !== undefined ? ph.deficit_mm : "N/A";
+            const extraPart = (ph.assumed_extra_mm !== null && ph.assumed_extra_mm !== undefined && ph.assumed_extra_mm > 0)
+                ? ` + nước giả định (làm đất/thấm) ${ph.assumed_extra_mm} <span class="badge-unverified">giả định, chưa có nguồn</span>`
+                : "";
+            return `<li><strong>${ph.label}</strong> (${winStr}): ETc ${etcVal}${extraPart} − mưa hiệu quả ${peffVal} = thiếu hụt <strong>${wDefVal} mm</strong> <span style="color:#94a3b8; font-size:0.74rem;">(trung bình các năm)</span></li>`;
         }).join("");
 
         const evidenceHtml = (st.evidence || []).map(ev => {

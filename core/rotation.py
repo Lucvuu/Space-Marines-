@@ -140,6 +140,14 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
                         exceed_days = int((sim_tmax > float(heat_thresh)).sum())
                         phase_heat_ratio = round(exceed_days / len(df_phase), 3)
 
+                mean_wreq = wb.get("mean_water_req_mm")
+                mean_etc = wb.get("mean_etc_mm")
+                assumed_extra_mm = (
+                    round(float(mean_wreq) - float(mean_etc), 1)
+                    if mean_wreq is not None and mean_etc is not None
+                    else None
+                )
+
                 phases_out.append({
                     "crop": crop_id,
                     "crop_name": c_info.get("name_vi", crop_id),
@@ -147,7 +155,8 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
                     "modeled": True,
                     "window": window,
                     "deficit_mm": wb.get("mean_deficit_mm"),
-                    "etc_mm": wb.get("mean_etc_mm"),
+                    "etc_mm": mean_etc,
+                    "assumed_extra_mm": assumed_extra_mm,
                     "peff_mm": wb.get("mean_peff_mm"),
                     "heat_ratio": phase_heat_ratio
                 })
@@ -163,6 +172,7 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
                     },
                     "deficit_mm": None,
                     "etc_mm": None,
+                    "assumed_extra_mm": None,
                     "peff_mm": None,
                     "heat_ratio": None
                 })
