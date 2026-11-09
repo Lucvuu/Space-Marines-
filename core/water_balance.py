@@ -180,7 +180,7 @@ def build_daily_kc(stages, kc_ini, kc_mid, kc_end, season_days):
             kc_array[day_idx] = kc_mid + fraction * (kc_end - kc_mid)
     return kc_array
 
-def calculate_water_balance(power_df, region_id, crop_id, delta_temp_c=0.0, delta_rain_pct=0.0):
+def calculate_water_balance(power_df, region_id, crop_id, delta_temp_c=0.0, delta_rain_pct=0.0, season_start=None):
     """
     Tính toán cân bằng nước cho 1 vùng và 1 loại cây trồng qua các năm.
     Trả về:
@@ -197,6 +197,8 @@ def calculate_water_balance(power_df, region_id, crop_id, delta_temp_c=0.0, delt
         raise ValueError(f"Cây trồng không tồn tại: {crop_id}")
 
     reg_info = regions_cfg[region_id]
+    if season_start is not None:
+        reg_info = {**reg_info, "crop_season_start": {crop_id: season_start}}
     crop_info = crops_cfg[crop_id]
 
     # Kiểm tra trường hợp cây đặc biệt không có Kc (ví dụ: rice_shrimp)

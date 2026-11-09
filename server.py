@@ -24,6 +24,7 @@ from core.loaders import get_data_status, load_csv
 from core.water_balance import load_config
 from core.eto import calculate_eto_series
 from core.scoring import evaluate_crop_suitability
+from core.rotation import evaluate_rotations
 from core.advisor import build_advice
 
 WEB_DIR = os.path.join(AERO_ROOT, "web")
@@ -168,6 +169,33 @@ class AeroAgriAPIHandler(SimpleHTTPRequestHandler):
                 d_rain = float(body.get("delta_rain_pct", 0.0))
 
                 res = evaluate_crop_suitability(reg_id, delta_temp_c=d_temp, delta_rain_pct=d_rain)
+                if not res.get("available"):
+                    self.send_error_json(404, res.get("error", f"chưa có dữ liệu POWER cho vùng {reg_id}"))
+                    return
+
+                self.send_json(200, res)
+                return
+
+            # 4b. POST /api/rotations
+            elif path == "/api/rotations":
+                reg_id = body.get("region")
+                if not reg_id:
+                    self.send_error_json(400, "Thiếu tham số 'region' trong body")
+                    return
+
+                try:
+                    d_temp = float(body.get("delta_temp_c", 0.0))
+                    d_rain = float(body.get("delta_rain_pct", 0.0))
+                except (ValueError, TypeError):
+                    self.send_error_json(400, "Tham số delta_temp_c hoặc delta_rain_pct không hợp lệ")
+                    return
+
+                try:
+                    res = evaluate_rotations(reg_id, delta_temp_c=d_temp, delta_rain_pct=d_rain)
+                except ValueError as ve:
+                    self.send_error_json(400, str(ve))
+                    return
+
                 if not res.get("available"):
                     self.send_error_json(404, res.get("error", f"chưa có dữ liệu POWER cho vùng {reg_id}"))
                     return

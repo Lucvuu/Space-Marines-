@@ -325,3 +325,147 @@ footer {
     margin-top: 24px;
 }
 
+/* Chiến lược luân canh (Fix 6) */
+.ndvi-strip-box {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.ndvi-strip-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 0.78rem;
+    color: #94a3b8;
+    margin-bottom: 6px;
+}
+
+.month-strip {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 4px;
+}
+
+.month-cell {
+    position: relative;
+    border-radius: 4px;
+    padding: 6px 2px;
+    text-align: center;
+    font-size: 0.72rem;
+    color: #f8fafc;
+    border: 1px solid #334155;
+    min-height: 36px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.month-cell.bare-cell {
+    background: #1e293b;
+    color: #94a3b8;
+}
+
+.month-cell.salinity-border {
+    border: 2px solid #ef4444;
+}
+
+.heat-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #f97316;
+    position: absolute;
+    top: 3px;
+    right: 3px;
+}
+
+.rotation-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 14px;
+}
+
+.rotation-card {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.rotation-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.rotation-card-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #f8fafc;
+}
+
+.badge-existing {
+    background: #0284c7;
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.badge-unverified {
+    background: #78350f;
+    color: #fde68a;
+    font-size: 0.68rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 4px;
+}
+
+.rotation-metrics {
+    background: #111827;
+    border: 1px solid #1f2937;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    line-height: 1.5;
+}
+
+.rotation-block {
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    line-height: 1.45;
+}
+
+.rotation-block-title {
+    font-weight: 600;
+    color: #38bdf8;
+    margin-bottom: 2px;
+}
+
+.rotation-block ul {
+    padding-left: 18px;
+    margin: 2px 0;
+}
+
+.assumptions-box {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    line-height: 1.5;
+}
+
+

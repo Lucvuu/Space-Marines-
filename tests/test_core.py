@@ -743,5 +743,116 @@ class TestAeroAgriStep7(unittest.TestCase):
         self.assertAlmostEqual(actual_half_apr, 42.0, places=6)
 
 
+class TestAeroAgriFix6(unittest.TestCase):
+    """Kiểm thử Bước 6 (Fix 6): Chiến lược luân canh cả năm, lịch 12 tháng, API /api/rotations."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls._tmp_dir = tempfile.TemporaryDirectory()
+        cls.old_data_dir = os.environ.get("AERO_DATA_DIR")
+        os.environ["AERO_DATA_DIR"] = cls._tmp_dir.name
+        from scripts.make_demo_data import generate_demo_dataset
+        generate_demo_dataset()
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls.old_data_dir:
+            os.environ["AERO_DATA_DIR"] = cls.old_data_dir
+        else:
+            os.environ.pop("AERO_DATA_DIR", None)
+        cls._tmp_dir.cleanup()
+
+    def test_fix6_1_ben_tre_s0_bare_months(self):
+        """1. Bến Tre, S0: bare_months == [2, 3, 4, 5, 9, 10]."""
+        from core.rotation import evaluate_rotations
+        res = evaluate_rotations("Ben_Tre_DBSCL", 0.0, 0.0)
+        s0 = next(s for s in res["strategies"] if s["id"] == "S0")
+        self.assertEqual(s0["bare_months"], [2, 3, 4, 5, 9, 10])
+
+    def test_fix6_2_ben_tre_s0_annual_deficit_sum(self):
+        """2. Bến Tre, S0: annual_deficit_mm bằng tổng 2 lần gọi calculate_water_balance với season_start '05-25' và '11-01' (sai số 0.1)."""
+        from core.rotation import evaluate_rotations
+        from core.water_balance import calculate_water_balance
+        from core.loaders import load_csv
+
+        res = evaluate_rotations("Ben_Tre_DBSCL", 0.0, 0.0)
+        s0 = next(s for s in res["strategies"] if s["id"] == "S0")
+
+        df_power, _ = load_csv("power", "Ben_Tre_DBSCL")
+        wb_ht = calculate_water_balance(df_power, "Ben_Tre_DBSCL", "rice", 0.0, 0.0, season_start="05-25")
+        wb_dx = calculate_water_balance(df_power, "Ben_Tre_DBSCL", "rice", 0.0, 0.0, season_start="11-01")
+        expected_sum = wb_ht["mean_deficit_mm"] + wb_dx["mean_deficit_mm"]
+
+        self.assertAlmostEqual(s0["annual_deficit_mm"], expected_sum, delta=0.1)
+
+    def test_fix6_3_ben_tre_s1_partial_shrimp(self):
+        """3. Bến Tre, S1: partial là true, pha tôm có modeled false, annual_deficit_mm không null."""
+        from core.rotation import evaluate_rotations
+        res = evaluate_rotations("Ben_Tre_DBSCL", 0.0, 0.0)
+        s1 = next(s for s in res["strategies"] if s["id"] == "S1")
+        self.assertTrue(s1["partial"])
+        shrimp_phase = next(p for p in s1["phases"] if p["crop"] is None)
+        self.assertFalse(shrimp_phase["modeled"])
+        self.assertIsNotNone(s1["annual_deficit_mm"])
+
+    def test_fix6_4_dak_lak_coffee_vs_cover_crop(self):
+        """4. Đắk Lắk: evaluate trả score khác null cho coffee và coffee_cover_crop; coffee_cover_crop có deficit lớn hơn coffee."""
+        from core.scoring import evaluate_crop_suitability
+        res = evaluate_crop_suitability("Dak_Lak_Tay_Nguyen", 0.0, 0.0)
+        c_map = {c["crop_id"]: c for c in res["crops"]}
+        self.assertIn("coffee", c_map)
+        self.assertIn("coffee_cover_crop", c_map)
+        self.assertIsNotNone(c_map["coffee"]["score"])
+        self.assertIsNotNone(c_map["coffee_cover_crop"]["score"])
+        self.assertGreater(c_map["coffee_cover_crop"]["deficit_mm"], c_map["coffee"]["deficit_mm"])
+
+    def test_fix6_5_api_rotations_structure(self):
+        """5. POST /api/rotations: Bến Tre trả 4 chiến lược, Đắk Lắk trả 2. Chiến lược nào cũng có đủ 5 trường chữ không rỗng, và đúng 1 chiến lược có is_existing true."""
+        import threading
+        import urllib.request
+        from http.server import HTTPServer
+        from server import AeroAgriAPIHandler
+
+        httpd = HTTPServer(("127.0.0.1", 0), AeroAgriAPIHandler)
+        port = httpd.server_address[1]
+        t = threading.Thread(target=httpd.serve_forever, daemon=True)
+        t.start()
+        try:
+            for reg_id, expected_count in [("Ben_Tre_DBSCL", 4), ("Dak_Lak_Tay_Nguyen", 2)]:
+                req = urllib.request.Request(
+                    f"http://127.0.0.1:{port}/api/rotations",
+                    data=json.dumps({"region": reg_id, "delta_temp_c": 0.0, "delta_rain_pct": 0.0}).encode("utf-8"),
+                    headers={"Content-Type": "application/json"},
+                    method="POST"
+                )
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    self.assertEqual(resp.status, 200)
+                    body = json.loads(resp.read().decode("utf-8"))
+
+                strategies = body["strategies"]
+                self.assertEqual(len(strategies), expected_count)
+                existing_count = sum(1 for s in strategies if s.get("is_existing") is True)
+                self.assertEqual(existing_count, 1)
+
+                for s in strategies:
+                    for field in ["why", "evidence", "benefits", "info_gaps", "risks"]:
+                        self.assertIn(field, s)
+                        self.assertTrue(bool(s[field]), f"Field {field} is empty in {s['id']}")
+        finally:
+            httpd.shutdown()
+            httpd.server_close()
+
+    def test_fix6_6_water_balance_season_start_none_compatible(self):
+        """6. Gọi calculate_water_balance với season_start=None cho kết quả y hệt cách gọi cũ."""
+        from core.water_balance import calculate_water_balance
+        from core.loaders import load_csv
+
+        df_power, _ = load_csv("power", "Ben_Tre_DBSCL")
+        res_old = calculate_water_balance(df_power, "Ben_Tre_DBSCL", "rice", 0.5, -10.0)
+        res_new = calculate_water_balance(df_power, "Ben_Tre_DBSCL", "rice", 0.5, -10.0, season_start=None)
+
+        self.assertEqual(res_old, res_new)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

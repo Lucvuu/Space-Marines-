@@ -8,6 +8,7 @@ let climateChart = null;
 let currentRegion = "Ben_Tre_DBSCL";
 let latestRegionStatus = {};
 let simDebounceTimer = null;
+let latestRotationsData = null;
 
 const REGIONS_DATA = {
     "Ben_Tre_DBSCL": {
@@ -61,6 +62,15 @@ function initControls() {
         valRain.textContent = `${val >= 0 ? "+" : ""}${val}%`;
         debouncedEvaluate();
     });
+
+    const prioSelect = document.getElementById("prioritySelect");
+    if (prioSelect) {
+        prioSelect.addEventListener("change", () => {
+            if (latestRotationsData) {
+                renderRotationCards(latestRotationsData);
+            }
+        });
+    }
 
     // Chat
     const btnAsk = document.getElementById("btnAsk");
@@ -185,6 +195,13 @@ async function loadRegionData() {
             chartEmpty.style.display = "block";
         }
 
+        const rotContent = document.getElementById("rotationsContent");
+        const rotEmpty = document.getElementById("rotationsEmpty");
+        if (rotContent && rotEmpty) {
+            rotContent.style.display = "none";
+            rotEmpty.style.display = "block";
+        }
+
         const tableWrapper = document.getElementById("cropTableWrapper");
         const tableEmpty = document.getElementById("evaluateEmpty");
         if (tableWrapper && tableEmpty) {
@@ -195,6 +212,7 @@ async function loadRegionData() {
     }
 
     await loadClimateChart();
+    await loadRotations();
     await evaluateCrops();
 }
 
@@ -336,14 +354,229 @@ async function loadClimateChart() {
 function debouncedEvaluate() {
     if (simDebounceTimer) clearTimeout(simDebounceTimer);
     simDebounceTimer = setTimeout(() => {
+        loadRotations();
         evaluateCrops();
     }, 300);
+}
+
+async function loadRotations() {
+    const rotContent = document.getElementById("rotationsContent");
+    const rotEmpty = document.getElementById("rotationsEmpty");
+    if (!rotContent || !rotEmpty) return;
+
+    const deltaTemp = parseFloat(document.getElementById("sliderTemp").value);
+    const deltaRain = parseFloat(document.getElementById("sliderRain").value);
+
+    try {
+        const res = await fetch("/api/rotations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                region: currentRegion,
+                delta_temp_c: deltaTemp,
+                delta_rain_pct: deltaRain
+            })
+        });
+
+        if (!res.ok) {
+            rotContent.style.display = "none";
+            rotEmpty.style.display = "block";
+            return;
+        }
+
+        const data = await res.json();
+        latestRotationsData = data;
+        rotContent.style.display = "block";
+        rotEmpty.style.display = "none";
+
+        renderNdviStrip(data.ndvi_monthly || {});
+        renderRotationCards(data);
+        renderAssumptionsBox(data);
+    } catch (e) {
+        rotContent.style.display = "none";
+        rotEmpty.style.display = "block";
+    }
+}
+
+function renderNdviStrip(ndviMonthly) {
+    const stripArea = document.getElementById("ndviStripArea");
+    if (!stripArea) return;
+
+    let cellsHtml = "";
+    for (let m = 1; m <= 12; m++) {
+        const val = ndviMonthly[String(m)] !== undefined ? ndviMonthly[String(m)] : ndviMonthly[m];
+        let bg = "#1e293b";
+        let valText = "N/A";
+        if (val !== null && val !== undefined) {
+            const norm = Math.max(0, Math.min(1, val));
+            const alpha = (0.15 + 0.75 * norm).toFixed(2);
+            bg = `rgba(16, 185, 129, ${alpha})`;
+            valText = Number(val).toFixed(2);
+        }
+        cellsHtml += `
+            <div class="month-cell" style="background: ${bg};" title="Tháng ${m}: NDVI = ${valText}">
+                <div style="font-weight: 600;">T${m}</div>
+                <div style="font-size: 0.68rem;">${valText}</div>
+            </div>
+        `;
+    }
+
+    stripArea.innerHTML = `
+        <div class="ndvi-strip-header">
+            <strong>NDVI quan sát (12 tháng)</strong>
+            <span>Ảnh vệ tinh MODIS: NDVI thấp = ít cây xanh / đất trống</span>
+        </div>
+        <div class="month-strip">${cellsHtml}</div>
+    `;
+}
+
+function renderRotationCards(data) {
+    const grid = document.getElementById("rotationCardsGrid");
+    if (!grid) return;
+
+    const prioSelect = document.getElementById("prioritySelect");
+    const priority = prioSelect ? prioSelect.value : "default";
+
+    const strategies = (data.strategies || []).slice();
+    if (priority === "water") {
+        strategies.sort((a, b) => {
+            const va = a.annual_deficit_mm;
+            const vb = b.annual_deficit_mm;
+            if (va === null || va === undefined) return 1;
+            if (vb === null || vb === undefined) return -1;
+            return va - vb;
+        });
+    } else if (priority === "bare") {
+        strategies.sort((a, b) => {
+            const ba = (a.bare_months || []).length;
+            const bb = (b.bare_months || []).length;
+            return ba - bb;
+        });
+    }
+
+    const phaseColors = ["#0369a1", "#047857", "#6d28d9", "#b45309"];
+
+    grid.innerHTML = strategies.map(st => {
+        const existingBadge = st.is_existing ? `<span class="badge-existing">Hiện trạng</span>` : "";
+
+        // Map phase labels to colors
+        const labelColorMap = {};
+        (st.phases || []).forEach((ph, idx) => {
+            labelColorMap[ph.label] = phaseColors[idx % phaseColors.length];
+        });
+
+        const calHtml = (st.calendar_12m || []).map(mc => {
+            const isBare = mc.bare;
+            const salClass = mc.salinity_month ? "salinity-border" : "";
+            const bareClass = isBare ? "bare-cell" : "";
+            const bgStyle = (!isBare && mc.phase_label)
+                ? `style="background: ${labelColorMap[mc.phase_label] || '#0369a1'};"`
+                : "";
+            const heatDot = (mc.heat_ratio !== null && mc.heat_ratio !== undefined && mc.heat_ratio > 0)
+                ? `<span class="heat-dot" title="Tỷ lệ ngày vượt ngưỡng nhiệt: ${(mc.heat_ratio * 100).toFixed(0)}%"></span>`
+                : "";
+            const shortLabel = isBare ? "Trống" : (mc.phase_label || "");
+
+            return `
+                <div class="month-cell ${bareClass} ${salClass}" ${bgStyle} title="Tháng ${mc.month}: ${isBare ? 'Đất trống' : mc.phase_label}${mc.salinity_month ? ' | Tháng mặn' : ''}">
+                    ${heatDot}
+                    <div style="font-weight: 600;">T${mc.month}</div>
+                    <div style="font-size: 0.62rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;">${shortLabel}</div>
+                </div>
+            `;
+        }).join("");
+
+        const defVal = (st.annual_deficit_mm !== null && st.annual_deficit_mm !== undefined)
+            ? `${st.annual_deficit_mm} mm`
+            : "N/A";
+        const partialNote = st.partial ? " (chưa tính vụ tôm)" : "";
+        const bareCount = (st.bare_months || []).length;
+
+        const phaseMetricsHtml = (st.phases || []).map(ph => {
+            if (!ph.modeled) {
+                return `<li><strong>${ph.label}:</strong> Chưa mô hình hóa (${ph.window ? ph.window.start + ' → ' + ph.window.end : ''})</li>`;
+            }
+            const winStr = ph.window && ph.window.start ? `${ph.window.start} → ${ph.window.end}` : "";
+            return `<li><strong>${ph.label}</strong> (${winStr}): thiếu hụt <strong>${ph.deficit_mm} mm</strong></li>`;
+        }).join("");
+
+        const evidenceHtml = (st.evidence || []).map(ev => {
+            const unvBadge = ev.verified === false ? `<span class="badge-unverified">chưa kiểm chứng</span>` : "";
+            return `<li>${ev.text} <span style="color:#94a3b8;">— Nguồn: ${ev.source}</span>${unvBadge}</li>`;
+        }).join("");
+
+        const benefitsHtml = (st.benefits || []).map(b => `<li>${b}</li>`).join("");
+        const gapsHtml = (st.info_gaps || []).map(g => `<li>${g}</li>`).join("");
+        const risksHtml = (st.risks || []).map(r => `<li>${r}</li>`).join("");
+
+        return `
+            <div class="rotation-card" data-strategy-id="${st.id}">
+                <div class="rotation-card-header">
+                    <div class="rotation-card-title">${st.id}: ${st.name_vi}</div>
+                    ${existingBadge}
+                </div>
+
+                <div class="month-strip">${calHtml}</div>
+
+                <div class="rotation-metrics">
+                    <div><strong>Thiếu hụt nước ngọt cả năm:</strong> ${defVal}${partialNote}</div>
+                    <div><strong>Số tháng đất trống:</strong> ${bareCount}</div>
+                    <ul style="padding-left: 18px; margin-top: 4px;">${phaseMetricsHtml}</ul>
+                </div>
+
+                <div class="rotation-block">
+                    <div class="rotation-block-title">Vì sao đề xuất</div>
+                    <div>${st.why}</div>
+                </div>
+
+                <div class="rotation-block">
+                    <div class="rotation-block-title">Bằng chứng</div>
+                    <ul>${evidenceHtml}</ul>
+                </div>
+
+                <div class="rotation-block">
+                    <div class="rotation-block-title">Lợi ích</div>
+                    <ul>${benefitsHtml}</ul>
+                </div>
+
+                <div class="rotation-block">
+                    <div class="rotation-block-title">Thiếu hụt thông tin</div>
+                    <ul>${gapsHtml}</ul>
+                </div>
+
+                <div class="rotation-block">
+                    <div class="rotation-block-title">Rủi ro cần nông dân và chuyên gia địa phương kiểm tra</div>
+                    <ul>${risksHtml}</ul>
+                </div>
+            </div>
+        `;
+    }).join("");
+}
+
+function renderAssumptionsBox(data) {
+    const box = document.getElementById("rotationAssumptionsBox");
+    if (!box) return;
+    const assumptions = data.assumptions || [];
+    const displayRule = data.display_rule || "";
+    const salSource = data.salinity_months_source
+        ? `<li><strong>Nguồn tháng mặn:</strong> ${data.salinity_months_source}</li>`
+        : "";
+
+    box.innerHTML = `
+        <div style="font-weight: 600; color: #38bdf8; margin-bottom: 4px;">Giả định</div>
+        <ul style="padding-left: 18px; margin: 0;">
+            ${assumptions.map(a => `<li>${a}</li>`).join("")}
+            ${salSource}
+            ${displayRule ? `<li><strong>Quy tắc hiển thị lịch 12 tháng:</strong> ${displayRule}</li>` : ""}
+        </ul>
+    `;
 }
 
 async function evaluateCrops() {
     const tableWrapper = document.getElementById("cropTableWrapper");
     const emptyEl = document.getElementById("evaluateEmpty");
     const tbody = document.getElementById("cropTableBody");
+    const waterNoteEl = document.getElementById("waterOnlyScoreNote");
 
     const deltaTemp = parseFloat(document.getElementById("sliderTemp").value);
     const deltaRain = parseFloat(document.getElementById("sliderRain").value);
@@ -379,6 +612,13 @@ async function evaluateCrops() {
             markers[currentRegion].setStyle({ fillColor: rkColor, color: "#ffffff" });
         }
 
+        const isWaterOnlyRegion = crops.length > 0 && crops.every(c =>
+            c.components && c.components.heat_ratio === null && c.components.salinity_exceed === null
+        );
+        if (waterNoteEl) {
+            waterNoteEl.style.display = isWaterOnlyRegion ? "block" : "none";
+        }
+
         crops.forEach(c => {
             const tr = document.createElement("tr");
 
@@ -387,12 +627,17 @@ async function evaluateCrops() {
             const comp = c.components;
             const wVal = comp.irrigation_share !== undefined && comp.irrigation_share !== null ? comp.irrigation_share : comp.water_stress;
             const wStress = wVal !== null && wVal !== undefined ? wVal.toFixed(2) : "<span style='color:#9ca3af;'>N/A</span>";
-            const hStress = comp.heat_ratio !== null ? comp.heat_ratio.toFixed(2) : "0.00";
+            const hStress = comp.heat_ratio !== null && comp.heat_ratio !== undefined ? comp.heat_ratio.toFixed(2) : "<span style='color:#9ca3af;'>N/A</span>";
             const sStress = comp.salinity_exceed !== null ? comp.salinity_exceed.toFixed(2) : "<span style='color:#9ca3af;'>N/A</span>";
             const defText = c.deficit_mm !== null ? `${c.deficit_mm}` : "N/A";
             const vsBase = (c.water_vs_baseline_pct === null || c.water_vs_baseline_pct === undefined)
                 ? "<span style='color:#9ca3af;'>N/A</span>"
                 : (c.water_vs_baseline_pct !== 0.0 ? `${c.water_vs_baseline_pct > 0 ? "+" : ""}${c.water_vs_baseline_pct}%` : "Baseline");
+
+            let riskCellHtml = `<span class="badge-risk ${rkClass}" title="tỷ lệ ngày mùa vụ vượt ngưỡng nhiệt/mặn">${c.risk_level}</span>`;
+            if (c.score !== null && (c.exceed_ratio_r === null || c.exceed_ratio_r === undefined)) {
+                riskCellHtml = `<span style="color:#94a3b8; font-size:0.8rem;">Chưa đánh giá (không có ngưỡng có nguồn)</span>`;
+            }
 
             let noteText = "";
             if (c.missing_components && c.missing_components.length > 0) {
@@ -407,7 +652,7 @@ async function evaluateCrops() {
                 <td><strong>${c.crop_name}</strong>${noteText}</td>
                 <td>${winText}</td>
                 <td><strong style="color:#38bdf8; font-size:1rem;">${scText}</strong></td>
-                <td><span class="badge-risk ${rkClass}" title="tỷ lệ ngày mùa vụ vượt ngưỡng nhiệt/mặn">${c.risk_level}</span></td>
+                <td>${riskCellHtml}</td>
                 <td>${defText}</td>
                 <td>${wStress}</td>
                 <td>${hStress}</td>

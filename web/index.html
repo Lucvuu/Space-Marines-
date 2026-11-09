@@ -101,8 +101,56 @@
                 </div>
             </div>
 
+            <!-- Mục mới: So sánh chiến lược luân canh (đặt TRÊN bảng hiện có) -->
+            <div id="rotationsSection" style="margin-top: 1.25rem; margin-bottom: 1.5rem;">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                    <span>So sánh chiến lược luân canh</span>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+                        <label for="prioritySelect" style="color: #cbd5e1;">Ưu tiên của tôi:</label>
+                        <select id="prioritySelect" style="background: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 6px; padding: 4px 8px;">
+                            <option value="default">Mặc định</option>
+                            <option value="water">Tiết kiệm nước ngọt</option>
+                            <option value="bare">Giảm thời gian đất trống</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="rotationsContent">
+                    <!-- 1. Hàng NDVI quan sát (12 ô) -->
+                    <div id="ndviStripArea" class="ndvi-strip-box" style="margin-bottom: 1rem;"></div>
+
+                    <!-- 2. Danh sách thẻ chiến lược luân canh -->
+                    <div id="rotationCardsGrid" class="rotation-cards-grid"></div>
+
+                    <!-- 4. Khung Giả định -->
+                    <div id="rotationAssumptionsBox" class="assumptions-box" style="margin-top: 1rem;"></div>
+
+                    <!-- 5. Dòng cố định cuối mục -->
+                    <p class="rotation-disclaimer" style="margin-top: 0.75rem; font-size: 0.85rem; color: #94a3b8; font-style: italic;">
+                        Công cụ giúp nhìn ra xu hướng và khả năng; không thay thế kinh nghiệm của nông dân và chuyên gia nông nghiệp địa phương.
+                    </p>
+
+                    <!-- 6. Khối <details> Giải thích thuật ngữ -->
+                    <details class="glossary-details" style="margin-top: 0.75rem; background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; padding: 0.75rem 1rem;">
+                        <summary style="cursor: pointer; font-weight: 600; color: #38bdf8;">Giải thích thuật ngữ</summary>
+                        <ul style="margin-top: 0.5rem; padding-left: 1.25rem; color: #cbd5e1; font-size: 0.85rem; line-height: 1.6;">
+                            <li><strong>ET (bốc thoát hơi nước):</strong> lượng nước mất qua mặt đất và lá cây. Tính từ nhiệt độ, độ ẩm, gió, bức xạ của NASA POWER theo FAO-56.</li>
+                            <li><strong>NDVI:</strong> chỉ số độ xanh của thực vật đo từ vệ tinh MODIS, từ −1 đến 1. Ruộng lúa đang xanh thường &gt; 0,7; đất trống hoặc ngập nước thấp hơn nhiều.</li>
+                            <li><strong>Vệ tinh và đo mặt đất:</strong> NASA POWER là ô lưới khoảng 50 km, MODIS là ô 250 m, nên phản ánh xu hướng vùng chứ không thay thế số đo tại ruộng. Kết hợp với trạm đo và quan sát của nông dân sẽ chính xác hơn.</li>
+                        </ul>
+                    </details>
+                </div>
+
+                <div id="rotationsEmpty" class="empty-state" style="display: none;">
+                    Chưa có dữ liệu khí tượng để so sánh chiến lược luân canh. Thả file vào <code>data/raw/power/&lt;vùng&gt;.csv</code> rồi tải lại.
+                </div>
+            </div>
+
             <!-- Bảng kết quả thích nghi cây trồng -->
             <div id="cropResultsArea">
+                <div class="card-title" style="margin-bottom: 0.5rem;">
+                    <span>Chi tiết từng cây: ô vụ Đông Xuân (Bến Tre) / mùa khô (Đắk Lắk)</span>
+                </div>
                 <div id="cropTableWrapper">
                     <table>
                         <thead>
@@ -120,6 +168,9 @@
                         </thead>
                         <tbody id="cropTableBody"></tbody>
                     </table>
+                    <div id="waterOnlyScoreNote" style="display: none; margin-top: 0.5rem; font-size: 0.82rem; color: #94a3b8; font-style: italic;">
+                        Điểm chỉ dựa trên thiếu hụt nước, so tương đối giữa các cây trong vùng (cây thiếu nước nhiều nhất = 0).
+                    </div>
                 </div>
                 <div id="evaluateEmpty" class="empty-state" style="display: none;">
                     Chưa có dữ liệu để đánh giá thích nghi. Thả file vào <code>data/raw/power/&lt;vùng&gt;.csv</code> rồi tải lại.
