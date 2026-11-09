@@ -428,6 +428,65 @@ Dak_Lak_Tay_Nguyen   | salinity        | CHƯA CÓ      | 0        | -          
 | `Dak_Lak_Tay_Nguyen` | `(+2°C, -30% mưa)` | **D0** | Hiện trạng: cà phê vối đất trần | **393.0 mm** | `False` | `[]` (0 tháng) | • Cà phê (đất trần) (`01-01 → 04-30`): **393.0 mm** (`heat_ratio = None`) |
 | `Dak_Lak_Tay_Nguyen` | `(+2°C, -30% mưa)` | **D1** | Cà phê vối có cây che phủ đất / thảm cỏ | **463.5 mm** | `False` | `[]` (0 tháng) | • Cà phê + cây phủ (`01-01 → 04-30`): **463.5 mm** (`heat_ratio = None`) |
 
+---
+
+## 11. Fix 6B (Auto-Generated Config Source Table, Unfabricated Citations & Assumed Rice Extra Water Breakdown)
+
+### 11.1. Commit Hash của từng bước (Bước 1 → Bước 3 + Report)
+
+| Bước | Commit Hash | Commit Message | Nội dung chính |
+|---|---|---|---|
+| **Bước 1** | `0292e08` | `docs: generate SUBMISSION_NOTES source table from config, remove fabricated citations` | Tạo `scripts/gen_sources_table.py` tự động sinh 2 bảng nguồn trực tiếp từ `config/rotations.json` và `config/crops.json`; thay bảng viết tay trong mục 2.4 của `docs/SUBMISSION_NOTES.md` bằng khối giữa `<!-- BEGIN SOURCES ... -->` và `<!-- END SOURCES -->`; sửa câu mô tả `_display_rule` (`at least 15 days`); thêm unit test `test_fix6b_sources_table_in_sync`. |
+| **Bước 2** | `6b4a731` | `docs: fix validation quote, limitations, README strategy order` | Thay nguyên văn mục Validation 2 và các mục Known Limitations (pha tôm `03-01 → 07-31`, tháng mặn `[2, 3, 4]`, ngưỡng nhiệt, nước giả định của lúa) trong `docs/SUBMISSION_NOTES.md`; sửa thứ tự `S2`/`S3` và nguồn lịch thời vụ trong `README.md`. |
+| **Bước 3** | `3fa8bcf` | `feat: show assumed rice land-prep/percolation water separately` | Thêm `assumed_extra_mm = round(mean_water_req_mm - mean_etc_mm, 1)` vào mỗi pha có mô hình trong `core/rotation.py`; cập nhật `web/app.js` hiển thị công thức `ETc X + nước giả định (làm đất/thấm) Y [giả định, chưa có nguồn] − mưa hiệu quả Z = thiếu hụt W mm (trung bình các năm)` (bỏ cụm `+ nước giả định...` khi `Y = 0`); thêm unit test `test_fix6b_assumed_extra`. |
+| **Kết thúc** | *(commit hiện tại)* | `fix6b report` | Ghi báo cáo mục **11. Fix 6B** vào `MORNING_REPORT.md`. |
+
+---
+
+### 11.2. Output `python -m pytest -q`
+
+```text
+........................................                                 [100%]
+40 passed, 1 warning in 22.65s
+```
+
+---
+
+### 11.3. Output lệnh `grep` kiểm tra trích dẫn bịa ở Bước 2
+
+Lệnh kiểm tra trên `docs/`, `README.md` và `web/`:
+```bash
+grep -rnE "1705|Nhân Dân|VnEconomy|VietnamPlus|Báo Chính phủ|Soils Bulletin|Yoshida|Dupuis|Sánchez|Hatfield|Sở NN&PTNT Bến Tre|01-15 → 05-15|ge 10" docs/ README.md web/
+```
+Kết quả:
+```text
+(rỗng — 0 dòng khớp)
+```
+
+---
+
+### 11.4. Bảng chi tiết các pha Bến Tre (`Ben_Tre_DBSCL`) chạy trên dữ liệu thật (`data/raw/power/`, 2015–2025)
+
+| Kịch bản | Chiến lược | Pha (`label`) | Khung mùa vụ (`window`) | `modeled` | `etc_mm` (mm) | `assumed_extra_mm` (mm) | `peff_mm` (mm) | `deficit_mm` (mm, trung bình các năm) |
+|---|---:|---|---|:---:|---:|---:|---:|---:|
+| **(0°C, 0% mưa)** | `S0` | Lúa Hè Thu | `05-25 → 09-06` | `True` | `443.7` | **515.0** | `491.9` | **466.8** |
+| **(0°C, 0% mưa)** | `S0` | Lúa Đông Xuân sớm | `11-01 → 02-13` | `True` | `436.9` | **515.0** | `192.6` | **759.4** |
+| **(0°C, 0% mưa)** | `S1` | Lúa mùa mưa | `09-01 → 12-14` | `True` | `404.3` | **515.0** | `443.9` | **475.5** |
+| **(0°C, 0% mưa)** | `S1` | Tôm sú (nước lợ) | `03-01 → 07-31` | `False` | `None` | `None` | `None` | `None` |
+| **(0°C, 0% mưa)** | `S2` | Lúa Hè Thu | `05-25 → 09-06` | `True` | `443.7` | **515.0** | `491.9` | **466.8** |
+| **(0°C, 0% mưa)** | `S2` | Đậu tương | `11-01 → 02-08` | `True` | `310.9` | **0.0** | `191.4` | **119.9** |
+| **(0°C, 0% mưa)** | `S3` | Lúa Hè Thu | `05-25 → 09-06` | `True` | `443.7` | **515.0** | `491.9` | **466.8** |
+| **(0°C, 0% mưa)** | `S3` | Ngô | `11-01 → 02-08` | `True` | `305.2` | **0.0** | `191.4` | **114.8** |
+| **(+2°C, -30% mưa)** | `S0` | Lúa Hè Thu | `05-25 → 09-06` | `True` | `469.2` | **515.0** | `416.3` | **567.9** |
+| **(+2°C, -30% mưa)** | `S0` | Lúa Đông Xuân sớm | `11-01 → 02-13` | `True` | `463.9` | **515.0** | `146.1` | **832.8** |
+| **(+2°C, -30% mưa)** | `S1` | Lúa mùa mưa | `09-01 → 12-14` | `True` | `428.2` | **515.0** | `374.9` | **568.4** |
+| **(+2°C, -30% mưa)** | `S1` | Tôm sú (nước lợ) | `03-01 → 07-31` | `False` | `None` | `None` | `None` | `None` |
+| **(+2°C, -30% mưa)** | `S2` | Lúa Hè Thu | `05-25 → 09-06` | `True` | `469.2` | **515.0** | `416.3` | **567.9** |
+| **(+2°C, -30% mưa)** | `S2` | Đậu tương | `11-01 → 02-08` | `True` | `330.2` | **0.0** | `145.3` | **184.9** |
+| **(+2°C, -30% mưa)** | `S3` | Lúa Hè Thu | `05-25 → 09-06` | `True` | `469.2` | **515.0** | `416.3` | **567.9** |
+| **(+2°C, -30% mưa)** | `S3` | Ngô | `11-01 → 02-08` | `True` | `324.1` | **0.0** | `145.3` | **178.9** |
+
+
 
 
 
