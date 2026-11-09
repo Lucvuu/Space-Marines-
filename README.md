@@ -4,9 +4,9 @@
 ---
 
 ## 1. Giới thiệu
-**AERO-AGRI** là công cụ hỗ trợ ra quyết định luân canh và chuyển đổi cây trồng dựa trên dữ liệu quan sát Trái Đất của NASA (NASA POWER, MODIS `MOD13Q1`) kết hợp với mô hình cân bằng nước nông học chuẩn **FAO-56 Penman-Monteith** và **USDA-SCS**, tập trung vào 2 vùng thí điểm tại Việt Nam:
-- **Bến Tre (Đồng bằng Sông Cửu Long):** Vùng ven biển chịu rủi ro hạn mặn mùa khô (`rice`, `soybean`, `maize`, `rice_shrimp`).
-- **Đắk Lắk (Tây Nguyên):** Vùng cao nguyên đất bazan chịu rủi ro khô hạn mùa khô (`coffee`, `coffee_cover_crop`, `maize`).
+**AERO-AGRI** là công cụ hỗ trợ ra quyết định luân canh cả năm và chuyển đổi cây trồng dựa trên dữ liệu quan sát Trái Đất của NASA (NASA POWER, MODIS `MOD13Q1`) kết hợp với mô hình cân bằng nước nông học chuẩn **FAO-56 Penman-Monteith** và **USDA-SCS**, tập trung vào 2 vùng thí điểm tại Việt Nam:
+- **Bến Tre (Đồng bằng Sông Cửu Long):** So sánh 4 chiến lược luân canh cả năm (`S0` 2 vụ lúa, `S1` lúa–tôm, `S2` lúa Hè Thu + ngô Đông Xuân, `S3` lúa Hè Thu + đậu tương Đông Xuân) và bảng chi tiết các cây trong ô vụ Đông Xuân bắt đầu từ `11-01` (`rice`, `soybean`, `maize`, `rice_shrimp`).
+- **Đắk Lắk (Tây Nguyên):** So sánh 2 chiến lược quản lý mặt đất vườn cà phê vối lâu năm (`D0` cà phê đất trần vs `D1` cà phê có cây che phủ đất / thảm cỏ) trong mùa khô (`coffee`, `coffee_cover_crop`).
 
 ---
 
@@ -18,7 +18,7 @@
    - *(Hoặc tạo dữ liệu mẫu để chạy thử offline: `python scripts/make_demo_data.py`)*
 3. **Kiểm tra trạng thái dữ liệu:** `python scripts/check_data.py`
 4. **Khởi chạy ứng dụng web:** `python run.py` (tự động mở trình duyệt tại `http://127.0.0.1:8050`).
-5. **Chạy bộ kiểm thử tự động (32 tests):** `python -m pytest -q`
+5. **Chạy bộ kiểm thử tự động (38 tests):** `python -m pytest -q`
 
 ---
 
@@ -28,19 +28,21 @@
 aero-agri/
 ├── README.md                     # Tài liệu tổng quan, hướng dẫn chạy & giả định kỹ thuật (Tiếng Việt)
 ├── LICENSE                       # Giấy phép nguồn mở Apache License 2.0
-├── MORNING_REPORT.md             # Báo cáo kiểm toán số liệu, kết quả test và lịch sử các vòng sửa (Task 0–6, Vòng 3, Prep 6)
+├── MORNING_REPORT.md             # Báo cáo kiểm toán số liệu, kết quả test và lịch sử các vòng sửa (Task 0–6, Vòng 3, Prep 6, Fix 6)
 ├── docs/
 │   └── SUBMISSION_NOTES.md       # Hồ sơ kỹ thuật nộp NASA Space Apps (Tiếng Anh: nguồn dữ liệu, phương trình, trích dẫn, giới hạn)
 ├── config/
 │   ├── regions.json              # Tọa độ vùng, ndvi_point (3x3 km), season_start, crop_season_start, candidate_crops
-│   ├── crops.json                # Hệ số Kc theo giai đoạn, ngưỡng mặn + salinity_basis, ngưỡng nhiệt, nguồn trích dẫn FAO-56
+│   ├── crops.json                # Hệ số Kc theo giai đoạn, ngưỡng mặn + salinity_basis, ngưỡng nhiệt có nguồn, nguồn trích dẫn
+│   ├── rotations.json            # Định nghĩa các chiến lược luân canh cả năm, bằng chứng, lợi ích, khoảng trống thông tin & rủi ro
 │   └── scoring.json              # Trọng số (w_water, w_salinity, w_heat), ngưỡng rủi ro tuyệt đối r, chặn dưới gió u2_min_ms
 ├── core/
 │   ├── loaders.py                # Đọc & kiểm tra hợp đồng schema CSV, quản lý manifest.json, cô lập qua AERO_DATA_DIR
 │   ├── power_fetch.py            # Tải dữ liệu ngày NASA POWER API (T2M_MAX, T2M_MIN, RH2M, WS2M, ALLSKY_SFC_SW_DWN, PRECTOTCORR)
 │   ├── ndvi_fetch.py             # Tải dữ liệu MODIS MOD13Q1 v061 qua ORNL DAAC API (lọc mây pixel_reliability, median 3x3 km)
 │   ├── eto.py                    # Bốc thoát hơi nước tham chiếu FAO-56 Penman-Monteith (Eq. 6)
-│   ├── water_balance.py          # Cửa sổ mùa vụ (hỗ trợ vắt qua năm), nội suy Kc, mưa hiệu quả USDA-SCS phân bổ tháng lẻ
+│   ├── water_balance.py          # Cửa sổ mùa vụ (hỗ trợ vắt qua năm & ghi đè season_start theo pha), nội suy Kc, Peff tháng lẻ
+│   ├── rotation.py               # Đánh giá chiến lược luân canh cả năm (evaluate_rotations), lịch 12 tháng & NDVI quan sát
 │   ├── scoring.py                # Tính điểm so sánh tương đối (0–100) và phân loại cấp rủi ro tuyệt đối (LOW..CRITICAL)
 │   └── advisor.py                # Sinh báo cáo khuyến nghị 3 phần tất định từ số liệu đã tính (không bịa số)
 ├── data/
@@ -49,15 +51,15 @@ aero-agri/
 ├── scripts/
 │   ├── check_data.py             # In bảng trạng thái từng nguồn dữ liệu × từng vùng
 │   └── make_demo_data.py         # Sinh dữ liệu mẫu (is_synthetic: true, seed cố định) phục vụ kiểm thử & demo
-├── server.py                     # Máy chủ HTTP & REST API (/api/status, /api/regions, /api/climate, /api/evaluate, /api/advise)
+├── server.py                     # Máy chủ HTTP & REST API (/api/status, /api/regions, /api/climate, /api/evaluate, /api/rotations, /api/advise)
 ├── run.py                        # Điểm vào 1 lệnh: kiểm tra dữ liệu -> mở server cổng 8050 -> mở trình duyệt
 ├── tests/
-│   ├── test_core.py              # Bộ 32 unit & regression tests
+│   ├── test_core.py              # Bộ 38 unit & regression tests
 │   └── fixtures/                 # Fixture kiểm thử MODIS subset (modis_subset_sample.json) & mốc regression (regression_baseline.json)
 └── web/
-    ├── index.html                # Giao diện bảng điều khiển Tiếng Việt (Offline-first)
+    ├── index.html                # Giao diện bảng điều khiển Tiếng Việt (So sánh chiến lược luân canh + Bảng chi tiết từng cây)
     ├── style.css                 # Giao diện nền tối, đáp ứng màn hình di động >= 360px
-    ├── app.js                    # Logic bản đồ Leaflet circleMarker, biểu đồ Chart.js 2 trục, Simulator & Cố vấn
+    ├── app.js                    # Logic bản đồ Leaflet circleMarker, dải 12 tháng luân canh, biểu đồ Chart.js, Simulator & Cố vấn
     └── vendor/                   # Thư viện Leaflet 1.9.4 & Chart.js 4.4.1 lưu cục bộ (không phụ thuộc CDN)
 ```
 
@@ -80,10 +82,13 @@ aero-agri/
    - Tỉ số bức xạ sóng ngắn tương đối $R_s / R_{so}$ được chặn trên ở `1.0` trước khi tính bức xạ sóng dài ròng $R_{nl}$ (Eq. 39).
    - Tốc độ gió ở độ cao 2 m được chặn dưới tại $u_2 = \max(u_2, 0.5\text{ m/s})$ theo chuẩn **FAO-56 Ch. 3, p. 63** (`verified: true`) để khắc phục sai lệch gió thấp của dữ liệu tái phân tích trên địa hình gồ ghề.
 3. **Lịch thời vụ cấu hình được (`season_start` / `crop_season_start`) & Mưa hiệu quả tháng lẻ:**
-   - Cây hằng năm (`perennial: false`): bắt đầu từ ngày `season_start` (`MM-DD`, mặc định `"01-01"`, có thể ghi đè riêng cho từng cây qua `crop_season_start` trong `config/regions.json`) và kéo dài `season_days` ngày (hỗ trợ mùa vụ vắt qua năm sau, ví dụ `"11-01"` kéo sang tháng 2 năm sau).
-   - Cây lâu năm (`perennial: true`, gồm `coffee` và `coffee_cover_crop`): đánh giá trong các tháng mùa khô `dry_season_months` với hệ số $K_c = K_{c,\text{mid}}$ cố định (theo FAO-56 Table 12 p. 112: đất trần `0.95`, có cây phủ/cỏ `1.10`).
+   - Cây hằng năm (`perennial: false`): tại Bến Tre, bảng chi tiết từng cây so sánh trong ô vụ Đông Xuân bắt đầu từ `season_start = "11-01"` (`01/11` đến giữa tháng 2 năm sau, tránh cao điểm xâm nhập mặn theo lịch thời vụ Sở NN&PTNT Bến Tre), có thể ghi đè theo từng cây qua `crop_season_start` hoặc theo từng pha luân canh qua tham số `season_start` của `calculate_water_balance`.
+   - Cây lâu năm (`perennial: true`, gồm `coffee` và `coffee_cover_crop`): đánh giá trong các tháng mùa khô `dry_season_months` (`1..4`) với hệ số $K_c = K_{c,\text{mid}}$ cố định (theo FAO-56 Table 12 p. 112: đất trần `0.95`, có cây phủ/cỏ `1.10`). Vì không có ngưỡng $T_{max}$ ngày theo kiểu bậc thang cho cà phê vối (Kath et al., 2020), `heat_threshold_c` của cà phê đặt `null` và chỉ so sánh nhu cầu nước.
    - Lượng mưa hiệu quả tháng theo công thức **USDA-SCS** được tính trên tổng mưa **cả tháng**, sau đó phân bổ theo tỷ lệ số ngày thực tế thuộc mùa vụ trong tháng đó ($\text{days\_in\_season} / \text{days\_in\_month}$).
-4. **Nhu cầu nước phụ trợ của lúa nước (`land_prep_mm`, `percolation_mm_day`):**
+4. **Chiến lược luân canh cả năm (`core/rotation.py`, `config/rotations.json`, `POST /api/rotations`):**
+   - Mỗi chiến lược gồm nhiều pha trong năm (ví dụ Bến Tre: `S0` 2 vụ lúa Hè Thu `05-25` + Đông Xuân `11-01`, `S1` lúa mùa mưa `09-01` + tôm nước lợ `03-01..07-31`, `S2` lúa Hè Thu + đậu tương Đông Xuân, `S3` lúa Hè Thu + ngô Đông Xuân; Đắk Lắk: `D0` cà phê đất trần vs `D1` cà phê có cây phủ).
+   - Trình bày trực tiếp số liệu thô (`annual_deficit_mm`, `bare_months`, thiếu hụt từng pha, lịch 12 tháng kèm tháng mặn và chấm nhiệt, hàng NDVI quan sát 12 tháng) cùng 5 khối thông tin định tính có trích dẫn nguồn (**Vì sao đề xuất / Bằng chứng / Lợi ích / Thiếu hụt thông tin / Rủi ro cần nông dân và chuyên gia địa phương kiểm tra**), không tự đặt trọng số gộp điểm giữa các chiến lược.
+5. **Nhu cầu nước phụ trợ của lúa nước (`land_prep_mm`, `percolation_mm_day`):**
    - Tổng nhu cầu nước $W_{\text{req}} = \sum ET_c + W_{\text{land\_prep}} + d_{\text{season}} \cdot W_{\text{percolation}}$ (với lúa nước giả định làm đất `200 mm` và thấm lọc `3 mm/ngày`; cây cạn đặt `null` $\rightarrow 0$).
 5. **Quy đổi ngưỡng độ mặn (`salinity_basis` — FAO-56 Table 23 pp. 178–179):**
    - Với lúa ngập nước (`salinity_basis = "soil_water_submerged"`): theo Footnote 6 của FAO-56 Table 23 (p. 179), ngưỡng `3.0 dS/m` của lúa đã là độ dẫn điện của nước ruộng khi ngập, do đó đổi trực tiếp sang phần nghìn: $\text{ppt} = EC / 1.56 \approx 1.923\text{ ‰}$.

@@ -351,5 +351,83 @@ Dak_Lak_Tay_Nguyen   | salinity        | CHƯA CÓ      | 0        | -          
 | `Dak_Lak_Tay_Nguyen` | `coffee_cover_crop` (lâu năm) | `01-01 → 04-30` | `838.7` | **838.7** | `889.6` | **889.6** |
 | `Dak_Lak_Tay_Nguyen` | `maize` (100 ngày) | `01-01 → 04-10` | `518.6` | **518.8** | `550.3` | **550.5** |
 
+---
+
+## 10. Fix 6 (Whole-Year Rotation Strategies, Sourced Heat Thresholds & 12-Month Calendar)
+
+### 10.1. Commit Hash của từng bước (Bước 1 → Bước 7)
+
+| Bước | Commit Hash | Commit Message | Nội dung chính |
+|---|---|---|---|
+| **Bước 1** | `5115adc` | `fix: Ben Tre Dong Xuan window, sourced heat thresholds, drop unsourced coffee heat` | Đặt `Ben_Tre_DBSCL.season_start = "11-01"` (vụ Đông Xuân sớm) kèm `season_start_source`; bỏ `maize` khỏi `Dak_Lak_Tay_Nguyen.candidate_crops`; cập nhật nguồn nhiệt có trích dẫn khoa học cho `rice` (`35.0°C`, `verified_params` thêm `"heat"`), `maize` (`35.0°C`), `soybean` (`35.0°C`), và đặt `heat_threshold_c = null` cho `coffee`, `coffee_cover_crop`. Cập nhật `regression_baseline.json` và mở rộng khoảng ngày dữ liệu giả trong `test_step5_water_balance_rice_vs_soybean` (`2023-11-01..2024-06-30`, giữ nguyên mọi assert). |
+| **Bước 2–6** | `6f2e9dc` | `feat: whole-year rotation strategies with evidence, gaps, risks and 12-month calendar` | Thêm tham số `season_start=None` vào `calculate_water_balance`; tạo `config/rotations.json` nguyên văn; cài đặt `core/rotation.py` (`evaluate_rotations`); thêm endpoint `POST /api/rotations` trong `server.py`; bổ sung giao diện **So sánh chiến lược luân canh** (hàng NDVI 12 tháng, thẻ chiến lược với dải 12 tháng, bộ lọc ưu tiên, khung giả định, `<details>` giải thích thuật ngữ) và cập nhật bảng chi tiết từng cây; thêm 6 unit tests trong `TestAeroAgriFix6`. |
+| **Bước 7** | *(commit hiện tại)* | `fix6 report` | Bổ sung mục `Rotation strategies`, `Validation`, `Known Limitations` vào `docs/SUBMISSION_NOTES.md`; cập nhật mục 1 & 4 của `README.md`; ghi báo cáo mục **Fix 6** vào `MORNING_REPORT.md`. |
+
+---
+
+### 10.2. Output `python -m pytest -q`
+
+```text
+......................................                                   [100%]
+38 passed, 1 warning in 20.31s
+```
+
+---
+
+### 10.3. Bảng Baseline Trước và Sau Bước 1
+
+#### A. Trên dữ liệu Demo (`tests/fixtures/regression_baseline.json`, Seed 42)
+
+| Vùng | Kịch bản | Cây trồng (`crop_id`) | `season_window` (Trước → Sau) | `score` (Trước → Sau) | `risk_level` (Trước → Sau) | `r` (Trước → Sau) | `deficit_mm` (Trước → Sau) | `water_vs_baseline_pct` (Trước → Sau) |
+|---|---|---|---|---|---|---|---|---|
+| `Ben_Tre_DBSCL` | `(0°C, 0%)` | `rice` | `01-01→04-15` → **`11-01→02-13`** | `17.0` → **`35.8`** | `CRITICAL` → **`SEVERE`** | `0.58` → **`0.485`** | `1124.1` → **`721.5`** | `0.0%` → **`0.0%`** |
+| `Ben_Tre_DBSCL` | `(0°C, 0%)` | `soybean` | `01-01→04-10` → **`11-01→02-08`** | `48.2` → **`82.3`** | `CRITICAL` → **`MODERATE`** | `0.57` → **`0.224`** | `429.3` → **`67.3`** | `+61.8%` → **`+90.7%`** |
+| `Ben_Tre_DBSCL` | `(0°C, 0%)` | `maize` | `01-01→04-10` → **`11-01→02-08`** | `50.6` → **`77.6`** | `SEVERE` → **`SEVERE`** | `0.48` → **`0.47`** | `418.6` → **`63.6`** | `+62.8%` → **`+91.2%`** |
+| `Ben_Tre_DBSCL` | `(0°C, 0%)` | `rice_shrimp` | `01-01→04-30` → **`11-01→02-28`** | `None` → **`None`** | `INSUFFICIENT_DATA` | `0.57` → **`0.24`** | `None` → **`None`** | `None` → **`None`** |
+| `Ben_Tre_DBSCL` | `(+2°C, -30%)` | `rice` | `01-01→04-15` → **`11-01→02-13`** | `5.7` → **`29.1`** | `CRITICAL` → **`CRITICAL`** | `0.81` → **`0.629`** | `1173.7` → **`803.8`** | `0.0%` → **`0.0%`** |
+| `Ben_Tre_DBSCL` | `(+2°C, -30%)` | `soybean` | `01-01→04-10` → **`11-01→02-08`** | `36.2` → **`71.8`** | `CRITICAL` → **`SEVERE`** | `0.81` → **`0.46`** | `467.5` → **`140.6`** | `+60.2%` → **`+82.5%`** |
+| `Ben_Tre_DBSCL` | `(+2°C, -30%)` | `maize` | `01-01→04-10` → **`11-01→02-08`** | `40.6` → **`67.1`** | `CRITICAL` → **`CRITICAL`** | `0.72` → **`0.62`** | `456.1` → **`136.7`** | `+61.1%` → **`+83.0%`** |
+| `Dak_Lak_Tay_Nguyen` | `(0°C, 0%)` | `coffee` | `01-01→04-30` → **`01-01→04-30`** | `27.8` → **`13.7`** | `SEVERE` → **`INSUFFICIENT_DATA`** | `0.37` → **`None`** | `723.5` → **`723.5`** | `0.0%` → **`0.0%`** |
+| `Dak_Lak_Tay_Nguyen` | `(0°C, 0%)` | `coffee_cover_crop` | `01-01→04-30` → **`01-01→04-30`** | `18.0` → **`0.0`** | `SEVERE` → **`INSUFFICIENT_DATA`** | `0.37` → **`None`** | `838.7` → **`838.7`** | `-15.9%` → **`-15.9%`** |
+| `Dak_Lak_Tay_Nguyen` | `(0°C, 0%)` | `maize` | `01-01→04-10` → *(đã bỏ)* | `49.9` → *(đã bỏ)* | `LOW` → *(đã bỏ)* | `0.09` → *(đã bỏ)* | `518.8` → *(đã bỏ)* | `+28.3%` → *(đã bỏ)* |
+| `Dak_Lak_Tay_Nguyen` | `(+2°C, -30%)` | `coffee` | `01-01→04-30` → **`01-01→04-30`** | `14.6` → **`13.7`** | `CRITICAL` → **`INSUFFICIENT_DATA`** | `0.73` → **`None`** | `767.7` → **`767.7`** | `0.0%` → **`0.0%`** |
+| `Dak_Lak_Tay_Nguyen` | `(+2°C, -30%)` | `coffee_cover_crop` | `01-01→04-30` → **`01-01→04-30`** | `4.8` → **`0.0`** | `CRITICAL` → **`INSUFFICIENT_DATA`** | `0.73` → **`None`** | `889.6` → **`889.6`** | `-15.9%` → **`-15.9%`** |
+
+#### B. Trên dữ liệu thật NASA POWER (`data/raw/power/`, 2015–2025)
+
+| Vùng | Kịch bản | Cây trồng (`crop_id`) | `season_window` (Trước → Sau) | `score` (Trước → Sau) | `risk_level` (Trước → Sau) | `r` (Trước → Sau) | `deficit_mm` (Trước → Sau) | `water_vs_baseline_pct` (Trước → Sau) |
+|---|---|---|---|---|---|---|---|---|
+| `Ben_Tre_DBSCL` | `(0°C, 0%)` | `rice` | `01-01→04-15` → **`11-01→02-13`** | `22.7` → **`28.5`** | `MODERATE` → **`LOW`** | `0.206` → **`0.002`** | `1060.1` → **`759.4`** | `0.0%` → **`0.0%`** |
+| `Ben_Tre_DBSCL` | `(0°C, 0%)` | `soybean` | `01-01→04-10` → **`11-01→02-08`** | `67.6` → **`88.7`** | `MODERATE` → **`LOW`** | `0.206` → **`0.002`** | `394.9` → **`119.9`** | `+62.7%` → **`+84.2%`** |
+| `Ben_Tre_DBSCL` | `(0°C, 0%)` | `maize` | `01-01→04-10` → **`11-01→02-08`** | `71.2` → **`89.2`** | `LOW` → **`LOW`** | `0.091` → **`0.002`** | `390.4` → **`114.8`** | `+63.2%` → **`+84.9%`** |
+| `Ben_Tre_DBSCL` | `(0°C, 0%)` | `rice_shrimp` | `01-01→04-30` → **`11-01→02-28`** | `None` → **`None`** | `INSUFFICIENT_DATA` | `0.206` → **`0.008`** | `None` → **`None`** | `None` → **`None`** |
+| `Ben_Tre_DBSCL` | `(+2°C, -30%)` | `rice` | `01-01→04-15` → **`11-01→02-13`** | `13.4` → **`27.2`** | `CRITICAL` → **`LOW`** | `0.530` → **`0.048`** | `1114.8` → **`832.8`** | `0.0%` → **`0.0%`** |
+| `Ben_Tre_DBSCL` | `(+2°C, -30%)` | `soybean` | `01-01→04-10` → **`11-01→02-08`** | `56.9` → **`83.2`** | `CRITICAL` → **`LOW`** | `0.530` → **`0.033`** | `438.4` → **`184.9`** | `+60.7%` → **`+77.8%`** |
+| `Ben_Tre_DBSCL` | `(+2°C, -30%)` | `maize` | `01-01→04-10` → **`11-01→02-08`** | `61.7` → **`83.7`** | `SEVERE` → **`LOW`** | `0.370` → **`0.033`** | `433.6` → **`178.9`** | `+61.1%` → **`+78.5%`** |
+| `Dak_Lak_Tay_Nguyen` | `(0°C, 0%)` | `coffee` | `01-01→04-30` → **`01-01→04-30`** | `34.4` → **`16.1`** | `MODERATE` → **`INSUFFICIENT_DATA`** | `0.200` → **`None`** | `351.3` → **`351.3`** | `0.0%` → **`0.0%`** |
+| `Dak_Lak_Tay_Nguyen` | `(0°C, 0%)` | `coffee_cover_crop` | `01-01→04-30` → **`01-01→04-30`** | `22.9` → **`0.0`** | `MODERATE` → **`INSUFFICIENT_DATA`** | `0.200` → **`None`** | `418.5` → **`418.5`** | `-19.1%` → **`-19.1%`** |
+| `Dak_Lak_Tay_Nguyen` | `(+2°C, -30%)` | `coffee` | `01-01→04-30` → **`01-01→04-30`** | `28.9` → **`15.2`** | `SEVERE` → **`INSUFFICIENT_DATA`** | `0.367` → **`None`** | `393.0` → **`393.0`** | `0.0%` → **`0.0%`** |
+| `Dak_Lak_Tay_Nguyen` | `(+2°C, -30%)` | `coffee_cover_crop` | `01-01→04-30` → **`01-01→04-30`** | `18.1` → **`0.0`** | `SEVERE` → **`INSUFFICIENT_DATA`** | `0.367` → **`None`** | `463.5` → **`463.5`** | `-17.9%` → **`-17.9%`** |
+
+---
+
+### 10.4. Bảng kết quả thật (`data/raw/` NASA POWER 2015–2025) cho từng chiến lược luân canh (`evaluate_rotations`)
+
+| Vùng | Kịch bản | Mã | Tên chiến lược (`name_vi`) | `annual_deficit_mm` | `partial` | `bare_months` | Chi tiết `deficit_mm` từng pha |
+|---|---|---|---|---:|:---:|:---:|---|
+| `Ben_Tre_DBSCL` | `(0°C, 0% mưa)` | **S0** | Hiện trạng: 2 vụ lúa (Hè Thu + Đông Xuân sớm) | **1226.2 mm** | `False` | `[2, 3, 4, 5, 9, 10]` (6 tháng) | • Lúa Hè Thu (`05-25 → 09-06`): **466.8 mm** (`heat_ratio = 0.007`)<br>• Lúa Đông Xuân sớm (`11-01 → 02-13`): **759.4 mm** (`heat_ratio = 0.002`) |
+| `Ben_Tre_DBSCL` | `(0°C, 0% mưa)` | **S1** | Lúa – tôm (lúa mùa mưa, tôm sú mùa khô) | **475.5 mm** *(chưa tính vụ tôm)* | `True` | `[1, 2, 8, 12]` (4 tháng) | • Lúa mùa mưa (`09-01 → 12-14`): **475.5 mm** (`heat_ratio = 0.000`)<br>• Tôm sú (nước lợ) (`03-01 → 07-31`): `modeled = False` (`deficit_mm = None`) |
+| `Ben_Tre_DBSCL` | `(0°C, 0% mưa)` | **S2** | Lúa Hè Thu + đậu tương thay vụ Đông Xuân | **586.7 mm** | `False` | `[2, 3, 4, 5, 9, 10]` (6 tháng) | • Lúa Hè Thu (`05-25 → 09-06`): **466.8 mm** (`heat_ratio = 0.007`)<br>• Đậu tương (`11-01 → 02-08`): **119.9 mm** (`heat_ratio = 0.002`) |
+| `Ben_Tre_DBSCL` | `(0°C, 0% mưa)` | **S3** | Lúa Hè Thu + ngô thay vụ Đông Xuân | **581.6 mm** | `False` | `[2, 3, 4, 5, 9, 10]` (6 tháng) | • Lúa Hè Thu (`05-25 → 09-06`): **466.8 mm** (`heat_ratio = 0.007`)<br>• Ngô (`11-01 → 02-08`): **114.8 mm** (`heat_ratio = 0.002`) |
+| `Ben_Tre_DBSCL` | `(+2°C, -30% mưa)` | **S0** | Hiện trạng: 2 vụ lúa (Hè Thu + Đông Xuân sớm) | **1400.7 mm** | `False` | `[2, 3, 4, 5, 9, 10]` (6 tháng) | • Lúa Hè Thu (`05-25 → 09-06`): **567.9 mm** (`heat_ratio = 0.023`)<br>• Lúa Đông Xuân sớm (`11-01 → 02-13`): **832.8 mm** (`heat_ratio = 0.048`) |
+| `Ben_Tre_DBSCL` | `(+2°C, -30% mưa)` | **S1** | Lúa – tôm (lúa mùa mưa, tôm sú mùa khô) | **568.4 mm** *(chưa tính vụ tôm)* | `True` | `[1, 2, 8, 12]` (4 tháng) | • Lúa mùa mưa (`09-01 → 12-14`): **568.4 mm** (`heat_ratio = 0.000`)<br>• Tôm sú (nước lợ) (`03-01 → 07-31`): `modeled = False` (`deficit_mm = None`) |
+| `Ben_Tre_DBSCL` | `(+2°C, -30% mưa)` | **S2** | Lúa Hè Thu + đậu tương thay vụ Đông Xuân | **752.8 mm** | `False` | `[2, 3, 4, 5, 9, 10]` (6 tháng) | • Lúa Hè Thu (`05-25 → 09-06`): **567.9 mm** (`heat_ratio = 0.023`)<br>• Đậu tương (`11-01 → 02-08`): **184.9 mm** (`heat_ratio = 0.033`) |
+| `Ben_Tre_DBSCL` | `(+2°C, -30% mưa)` | **S3** | Lúa Hè Thu + ngô thay vụ Đông Xuân | **746.8 mm** | `False` | `[2, 3, 4, 5, 9, 10]` (6 tháng) | • Lúa Hè Thu (`05-25 → 09-06`): **567.9 mm** (`heat_ratio = 0.023`)<br>• Ngô (`11-01 → 02-08`): **178.9 mm** (`heat_ratio = 0.033`) |
+| `Dak_Lak_Tay_Nguyen` | `(0°C, 0% mưa)` | **D0** | Hiện trạng: cà phê vối đất trần | **351.3 mm** | `False` | `[]` (0 tháng) | • Cà phê (đất trần) (`01-01 → 04-30`): **351.3 mm** (`heat_ratio = None`) |
+| `Dak_Lak_Tay_Nguyen` | `(0°C, 0% mưa)` | **D1** | Cà phê vối có cây che phủ đất / thảm cỏ | **418.5 mm** | `False` | `[]` (0 tháng) | • Cà phê + cây phủ (`01-01 → 04-30`): **418.5 mm** (`heat_ratio = None`) |
+| `Dak_Lak_Tay_Nguyen` | `(+2°C, -30% mưa)` | **D0** | Hiện trạng: cà phê vối đất trần | **393.0 mm** | `False` | `[]` (0 tháng) | • Cà phê (đất trần) (`01-01 → 04-30`): **393.0 mm** (`heat_ratio = None`) |
+| `Dak_Lak_Tay_Nguyen` | `(+2°C, -30% mưa)` | **D1** | Cà phê vối có cây che phủ đất / thảm cỏ | **463.5 mm** | `False` | `[]` (0 tháng) | • Cà phê + cây phủ (`01-01 → 04-30`): **463.5 mm** (`heat_ratio = None`) |
+
+
 
 
