@@ -6,6 +6,7 @@
     "assumptions": [
       "Ngày gieo là ngày đại diện (Hè Thu 25/5, Đông Xuân 1/11); thực tế dao động theo năm.",
       "Nước thêm cho lúa theo FAO Training Manual 3 (1986), mục 4.4: bão hòa đất 200 mm + lớp nước 100 mm + thấm 4 mm/ngày (mức đất sét nặng). Loại đất tại Ba Tri là giả định, chưa kiểm chứng. Phần nước này chiếm phần lớn nhu cầu nước của lúa.",
+      "Một nghiên cứu cân bằng nước ở Bến Tre dùng mức thấm 2 mm/ngày, dẫn theo TCVN 9168:2012 (chưa đọc được bản gốc). Nếu dùng 2 mm/ngày, nước thêm cho mỗi vụ lúa 105 ngày là 510 mm thay vì 720 mm.",
       "App chưa có dữ liệu độ mặn theo trạm; tháng mặn lấy từ văn bản, không phải đo đạc."
     ],
     "strategies": [
@@ -52,10 +53,11 @@
         "why": "Đậu tương không cần nước làm đất và thấm như lúa ngập, chịu mặn tốt hơn ngô, và là cây họ đậu cố định đạm.",
         "evidence": [
           {"text": "Ngưỡng ECe: đậu tương 5,0 dS/m; ngô 1,7 dS/m.", "source": "FAO-56, Bảng 23, tr.178–179", "verified": true},
-          {"text": "Bến Tre có chính sách hỗ trợ chuyển đất lúa sang cây màu: QĐ 1353/QĐ-UBND ngày 11/07/2014.", "source": "caselaw.vn (chưa đọc toàn văn)", "verified": false}
+          {"text": "Bến Tre có chính sách hỗ trợ chuyển đất lúa sang cây màu: QĐ 1353/QĐ-UBND ngày 11/07/2014.", "source": "caselaw.vn (chưa đọc toàn văn)", "verified": false},
+          {"text": "Xã Long Khánh, Cai Lậy, Tiền Giang (đất lúa 3 vụ trong đê bao, vùng ngọt): trồng đậu xanh vụ Hè Thu thì lúa vụ sau hấp thu 98 kg N/ha từ đất, so với 69 kg N/ha ở ruộng 3 vụ lúa liên tục; năng suất lúa vụ sau 4,6 tấn/ha, so với 3 tấn/ha. Cây thử là đậu xanh, không phải đậu tương.", "source": "Võ Thị Gương, Nguyễn Minh Đông, Châu Minh Khôi (2010). Tạp chí Khoa học ĐH Cần Thơ 16b: 147–154, tr.152", "verified": true}
         ],
-        "benefits": ["Giảm nhu cầu nước ngọt so với lúa (xem số liệu mô hình).", "Cây họ đậu: cố định đạm sinh học."],
-        "info_gaps": ["Lịch gieo đậu tương trên đất lúa ven biển Bến Tre: chưa tìm thấy nguồn; app giả định 1/11, 100 ngày.", "Lượng đạm cố định và lượng phân đạm giảm được trên đất lúa ĐBSCL: chưa có số đo đạc.", "Đầu ra và giá đậu tương tại địa phương."],
+        "benefits": ["Giảm nhu cầu nước ngọt so với lúa (xem số liệu mô hình).", "Cây họ đậu: luân canh với lúa làm tăng đạm đất cung cấp cho lúa vụ sau (số đo với đậu xanh ở vùng ngọt Tiền Giang)."],
+        "info_gaps": ["Lịch gieo đậu tương trên đất lúa ven biển Bến Tre: chưa tìm thấy nguồn; app giả định 1/11, 100 ngày.", "Số đo cho đậu tương trên đất lúa nhiễm mặn ven biển: chưa có. Số đo đang dùng là của đậu xanh ở Tiền Giang (vùng ngọt).", "Đầu ra và giá đậu tương tại địa phương."],
         "risks": ["Đất lúa dễ úng: cần lên luống, thoát nước (cần khuyến nông địa phương hướng dẫn).", "Cuối vụ (tháng 1–2) mặn bắt đầu vào sông: nước tưới có thể nhiễm mặn.", "Nông dân chưa quen kỹ thuật."]
       },
       {
@@ -67,9 +69,11 @@
         ],
         "why": "Ngô không cần nước làm đất và thấm như lúa ngập; có thể dùng làm thức ăn chăn nuôi.",
         "evidence": [
-          {"text": "Ngưỡng ECe của ngô 1,7 dS/m, thấp nhất trong các cây được so sánh.", "source": "FAO-56, Bảng 23, tr.179", "verified": true}
+          {"text": "Ngưỡng ECe của ngô 1,7 dS/m, thấp nhất trong các cây được so sánh.", "source": "FAO-56, Bảng 23, tr.179", "verified": true},
+          {"text": "Ba Tri, tiểu vùng mặn thấp (4/2012–6/2013): đã thử nghiệm mô hình bắp–lúa–lúa, cùng với dưa hấu–lúa–lúa và đậu bắp–lúa–lúa, so với 3 vụ lúa. Mô hình đậu bắp–lúa–lúa cho hiệu quả kinh tế cao nhất.", "source": "Nguyễn Mỹ Hoa và cs. (2014). Tạp chí Khoa học ĐH Cần Thơ, số chuyên đề Nông nghiệp: 31–37 (tóm tắt)", "verified": true},
+          {"text": "Cùng thí nghiệm ở Cai Lậy, Tiền Giang (vùng ngọt): luân canh bắp rau thì lúa vụ sau hấp thu 105 kg N/ha, so với 69 kg N/ha ở ruộng 3 vụ lúa; năng suất 4,0 tấn/ha, so với 3 tấn/ha. Cây thử là bắp rau, không phải ngô hạt.", "source": "Võ Thị Gương, Nguyễn Minh Đông, Châu Minh Khôi (2010). Tạp chí Khoa học ĐH Cần Thơ 16b: 147–154, tr.152", "verified": true}
         ],
-        "benefits": ["Giảm nhu cầu nước ngọt so với lúa (xem số liệu mô hình).", "Có giá trị làm thức ăn chăn nuôi."],
+        "benefits": ["Giảm nhu cầu nước ngọt so với lúa (xem số liệu mô hình).", "Có giá trị làm thức ăn chăn nuôi.", "Luân canh cây cạn với lúa làm tăng năng suất lúa vụ sau (số đo với bắp rau ở vùng ngọt Tiền Giang)."],
         "info_gaps": ["Lịch gieo ngô trên đất lúa ven biển Bến Tre: chưa tìm thấy nguồn; app giả định 1/11, 100 ngày.", "Đầu ra và giá ngô tại địa phương."],
         "risks": ["Ngô rất nhạy mặn: rủi ro cao nếu nước tưới nhiễm mặn cuối vụ.", "Không cố định đạm."]
       }
@@ -104,11 +108,12 @@
         "why": "Khuyến nông khuyến cáo 'trồng cây che phủ đất' và chống xói mòn trên đất dốc.",
         "evidence": [
           {"text": "'Tăng cường hệ thống cây che bóng, cây chắn gió, trồng cây che phủ đất…'; 'Ở đất dốc, bố trí rãnh, băng hoặc hố thu nước theo đường đồng mức để tăng khả năng giữ nước, hạn chế dòng chảy mặt và xói mòn.'", "source": "Trung tâm Khuyến nông QG, tờ gấp hạn mặn cà phê – hồ tiêu (2026)", "verified": true},
-          {"text": "Kc cà phê có cỏ 1,05 / 1,10 / 1,10.", "source": "FAO-56, Bảng 12, tr.112", "verified": true}
+          {"text": "Kc cà phê có cỏ 1,05 / 1,10 / 1,10.", "source": "FAO-56, Bảng 12, tr.112", "verified": true},
+          {"text": "Quy trình WASI: 'làm sạch cỏ từ 3 – 4 lần/năm'; 'Đối với đất dốc: làm cỏ theo băng, không làm cỏ trắng toàn bộ diện tích'; đầu mùa khô 'diệt cỏ dại xung quanh vườn cà phê để chống cháy'; cuối mùa mưa 'tủ gốc, ép xanh'.", "source": "WASI, Quy trình ICM cà phê vối giai đoạn kinh doanh, QĐ 26/QĐ-VNLT-KHKH ngày 04/3/2013", "verified": true}
         ],
         "benefits": ["Che phủ đất, hạn chế dòng chảy mặt và xói mòn.", "Có thể tăng chất hữu cơ cho đất (cần số đo đạc tại chỗ)."],
         "info_gaps": ["Chưa có số đo tại Tây Nguyên về ảnh hưởng của cây phủ tới nhu cầu tưới; FAO-56 giả định cỏ làm tăng ETc.", "Loài cây phủ phù hợp và cách quản lý trong mùa khô."],
-        "risks": ["Cây phủ có thể tranh nước với cà phê trong mùa khô (xem số liệu mô hình).", "Cách quản lý cây phủ trong mùa khô (cắt, tủ gốc) cần chuyên gia địa phương hướng dẫn."]
+        "risks": ["Cây phủ có thể tranh nước với cà phê trong mùa khô (xem số liệu mô hình).", "Cách quản lý cây phủ trong mùa khô (cắt, tủ gốc) cần chuyên gia địa phương hướng dẫn.", "Quy trình WASI không khuyến cáo giữ thảm cỏ phủ kín vườn trong mùa khô, mà làm cỏ theo băng. Kc 'có cỏ' của FAO-56 giả định cỏ phủ kín, nên số liệu D1 là cận trên của nhu cầu nước."]
       }
     ]
   }
