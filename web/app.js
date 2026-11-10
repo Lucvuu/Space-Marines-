@@ -1,33 +1,33 @@
-// AERO-AGRI Vanilla Client Controller — NASA Space Apps Challenge ("Field Shift")
-// Hoàn toàn Offline-First; Thư viện đồ thị duy nhất là vendor/chartjs/chart.umd.js
+// AERO-AGRI Client Controller — NASA Space Apps Challenge (Field Shift)
+// Thiết kế Swiss Editorial & Modern SaaS Copilot · 100% Offline-First
 
 let climateChart = null;
 let currentRegion = "Ben_Tre_DBSCL";
 let latestRegionStatus = {};
 let simDebounceTimer = null;
-let baselineDeficits = {}; // Lưu trữ deficit cơ sở (0°C, 0%) để tính delta micro-feedback
+let baselineDeficits = {}; // Lưu trữ deficit cơ sở (0°C, 0%) để tính delta
 
 // Thông tin vùng trọng điểm và tọa độ điểm ảnh vệ tinh MODIS NDVI
 const REGIONS_DATA = {
     "Ben_Tre_DBSCL": {
         name: "Bến Tre",
-        place: "Vùng ven biển Ba Tri (Đồng bằng sông Cửu Long) · Trọng điểm lúa & xâm nhập mặn (vụ khô 11-01)",
+        place: "Ba Tri (Đồng bằng sông Cửu Long) · Trọng điểm hạn mặn vụ khô 11-01",
         ndvi_point: { lat: 10.0992, lon: 106.6040 }
     },
     "Dak_Lak_Tay_Nguyen": {
         name: "Đắk Lắk",
-        place: "Vùng Cư M'gar (Tây Nguyên) · Trọng điểm cà phê vối & hạn hán mùa khô (04-30)",
+        place: "Cư M'gar (Tây Nguyên) · Trọng điểm hạn hán mùa khô 04-30",
         ndvi_point: { lat: 12.8314, lon: 108.1282 }
     }
 };
 
 const CROP_NAMES = {
     rice: "Lúa",
-    shrimp: "Tôm sú (nước lợ)",
+    shrimp: "Tôm sú",
     soybean: "Đậu tương",
     maize: "Ngô",
-    coffee: "Cà phê vối",
-    coffee_cover_crop: "Cà phê + thảm cỏ che phủ",
+    coffee: "Cà phê",
+    coffee_cover_crop: "Cà phê + thảm cỏ",
     other: "Cây khác"
 };
 const KNOWN_CROPS = Object.keys(CROP_NAMES);
@@ -39,22 +39,6 @@ const RISK_TEXT = {
     CRITICAL: "Rất cao",
     INSUFFICIENT_DATA: "Chưa đủ dữ liệu"
 };
-
-// ==========================================================================
-// BỘ ICON INLINE SVG NỘI TUYẾN (KHÔNG PHỤ THUỘC MẠNG)
-// ==========================================================================
-function getSvgIcon(name, size = 16) {
-    const icons = {
-        water: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`,
-        fallow: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
-        shield: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>`,
-        drop_sal: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/><path d="M12 12v4"/><path d="M10 14h4"/></svg>`,
-        heat: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>`,
-        check: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`,
-        alert: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
-    };
-    return icons[name] || "";
-}
 
 // ==========================================================================
 // KHỞI TẠO ỨNG DỤNG
@@ -71,10 +55,10 @@ document.addEventListener("DOMContentLoaded", () => {
     loadRegionData();
 });
 
-// ---------- Tiện ích định dạng & kiểm tra ----------
+// Tiện ích định dạng
 function isNum(v) { return v !== null && v !== undefined && !Number.isNaN(Number(v)); }
 function fmt(v, d = 0) { return isNum(v) ? Number(v).toLocaleString("vi-VN", { maximumFractionDigits: d }) : "chưa có"; }
-function m3(mm) { return isNum(mm) ? fmt(mm * 10, 0) : "chưa có"; } // 1 mm / ha = 10 m³
+function m3(mm) { return isNum(mm) ? fmt(mm * 10, 0) : "chưa có"; } // 1 mm/ha = 10 m³
 function cropKey(crop) {
     if (crop === null || crop === undefined) return "shrimp";
     return KNOWN_CROPS.includes(crop) ? crop : "other";
@@ -84,7 +68,7 @@ function cleanName(name) { return String(name || "").replace(/^Hiện trạng:\s
 function monthList(ms) { return ms.map(m => `tháng ${m}`).join(", "); }
 
 // ==========================================================================
-// ĐIỀU KHIỂN SỰ KIỆN & THANH TRƯỢT KỊCH BẢN
+// ĐIỀU KHIỂN SỰ KIỆN & THANH TRƯỢT
 // ==========================================================================
 function initControls() {
     // Chuyển vùng Bến Tre / Đắk Lắk
@@ -92,7 +76,7 @@ function initControls() {
         btn.addEventListener("click", () => {
             currentRegion = btn.dataset.region;
             document.querySelectorAll(".region-tab").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
-            baselineDeficits = {}; // Reset baseline khi đổi vùng
+            baselineDeficits = {};
             loadRegionData();
         });
     });
@@ -120,7 +104,7 @@ function initControls() {
         debouncedEvaluate();
     });
 
-    // Các nút preset kịch bản nhanh 1-chạm
+    // Preset kịch bản nhanh 1-chạm
     document.querySelectorAll(".preset-chip").forEach(chip => {
         chip.addEventListener("click", () => {
             sTemp.value = chip.dataset.temp;
@@ -131,28 +115,46 @@ function initControls() {
         });
     });
 
-    // Hỏi đáp
+    // Hỏi đáp Trợ lý AI
     const btnAsk = document.getElementById("btnAsk");
     const chatInput = document.getElementById("chatInput");
     btnAsk.addEventListener("click", () => sendQuestion(chatInput.value.trim()));
     chatInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") sendQuestion(chatInput.value.trim());
     });
+
     document.querySelectorAll(".prompt-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             chatInput.value = btn.dataset.q;
             sendQuestion(btn.dataset.q);
         });
     });
+
+    // Nút Floating AI Pill
+    const floatingBtn = document.getElementById("floatingAiBtn");
+    if (floatingBtn) {
+        floatingBtn.addEventListener("click", () => {
+            document.getElementById("aiSection").scrollIntoView({ behavior: "smooth" });
+            chatInput.focus();
+        });
+    }
 }
 
 function updateSliderLabels() {
     const t = parseFloat(document.getElementById("sliderTemp").value);
     const r = parseInt(document.getElementById("sliderRain").value, 10);
     document.getElementById("valTemp").textContent =
-        t === 0 ? "Như hiện nay" : (t > 0 ? `Nóng hơn ${fmt(t, 1)} °C` : `Mát hơn ${fmt(-t, 1)} °C`);
+        t === 0 ? "Như hiện nay" : (t > 0 ? `+${fmt(t, 1)} °C` : `${fmt(t, 1)} °C`);
     document.getElementById("valRain").textContent =
-        r === 0 ? "Như hiện nay" : (r > 0 ? `Nhiều hơn ${r}%` : `Hạn ${r}%`);
+        r === 0 ? "Như hiện nay" : (r > 0 ? `+${r}%` : `${r}%`);
+
+    // Cập nhật trạng thái ngữ cảnh trên khung AI
+    const contextEl = document.getElementById("aiContextBadge");
+    if (contextEl) {
+        const regName = REGIONS_DATA[currentRegion].name;
+        const weatherTxt = (t === 0 && r === 0) ? "Đo đạc 10 năm" : `Kịch bản: ΔT=${t > 0 ? "+" : ""}${fmt(t,1)}°C, ΔMưa=${r > 0 ? "+" : ""}${r}%`;
+        contextEl.textContent = `${regName} • ${weatherTxt}`;
+    }
 }
 
 function syncPresetChipState() {
@@ -178,7 +180,7 @@ function debouncedEvaluate() {
     simDebounceTimer = setTimeout(() => {
         loadRotations();
         evaluateCrops();
-    }, 280);
+    }, 250);
 }
 
 // ==========================================================================
@@ -191,17 +193,17 @@ async function updateStatusBar() {
         const status = await res.json();
         latestRegionStatus = status[currentRegion] || {};
 
-        updateChip("chip-power", "Khí hậu NASA POWER", latestRegionStatus.power, "ngày");
-        updateChip("chip-ndvi", "Độ xanh MODIS NDVI", latestRegionStatus.ndvi, "ảnh");
-        updateChip("chip-sm", "Độ ẩm đất SMAP", latestRegionStatus.soil_moisture, "dòng");
+        updateChip("chip-power", "NASA POWER", latestRegionStatus.power, "ngày");
+        updateChip("chip-ndvi", "MODIS NDVI", latestRegionStatus.ndvi, "ảnh");
+        updateChip("chip-sm", "SMAP", latestRegionStatus.soil_moisture, "dòng");
         updateChip("chip-sal", "Độ mặn", latestRegionStatus.salinity, "dòng");
 
         const isSynth = Object.values(latestRegionStatus).some(s => s && s.is_synthetic);
         document.getElementById("dataBadgeArea").innerHTML = isSynth
-            ? `<div class="banner-warn" role="alert">${getSvgIcon("alert", 20)}<div><strong>Đang dùng dữ liệu mô phỏng.</strong> Vùng này chưa có dữ liệu quan trắc thật trong thư mục lưu trữ cục bộ.</div></div>`
+            ? `<div style="background:#fffbeb; color:#b45309; border:1px solid #fef3c7; padding:8px 14px; border-radius:6px; font-size:13px; margin-bottom:14px;"><strong>Lưu ý:</strong> Vùng này đang dùng dữ liệu mô phỏng do chưa có file đo thật cục bộ.</div>`
             : "";
     } catch (e) {
-        console.error("Lỗi cập nhật trạng thái dữ liệu:", e);
+        console.error("Lỗi trạng thái dữ liệu:", e);
     }
 }
 
@@ -216,13 +218,14 @@ function updateChip(elementId, label, info, unit) {
         el.textContent = `${label}: dữ liệu mẫu`;
     } else {
         el.className = "chip chip-real";
-        el.textContent = `${label}: dữ liệu thật (${fmt(info.rows)} ${unit})`;
+        el.textContent = `${label}: thật (${fmt(info.rows)} ${unit})`;
     }
 }
 
 async function loadRegionData() {
     const reg = REGIONS_DATA[currentRegion];
     document.getElementById("heroPlace").textContent = `${reg.name} · ${reg.place}`;
+    updateSliderLabels();
     await updateStatusBar();
 
     if (!latestRegionStatus.power || !latestRegionStatus.power.available) {
@@ -240,7 +243,7 @@ async function loadRegionData() {
 }
 
 // ==========================================================================
-// BIỂU ĐỒ KHÍ HẬU NASA POWER (MƯA vs. ETo)
+// BIỂU ĐỒ KHÍ HẬU NASA POWER
 // ==========================================================================
 async function loadClimateChart() {
     try {
@@ -259,22 +262,22 @@ async function loadClimateChart() {
         const datasets = [
             {
                 type: "bar",
-                label: "Mưa hữu hiệu (mm/tháng, USDA)",
+                label: "Mưa hữu hiệu (mm)",
                 data: series.map(s => s.rain_sum_mm),
-                backgroundColor: "rgba(3, 105, 161, 0.65)",
-                borderRadius: 4,
+                backgroundColor: "rgba(2, 132, 199, 0.7)",
+                borderRadius: 2,
                 yAxisID: "y",
                 order: 2
             },
             {
                 type: "line",
-                label: "Bốc thoát hơi nước ETo (mm/tháng, FAO-56)",
+                label: "Bốc thoát hơi ETo (mm)",
                 data: series.map(s => s.eto_sum_mm),
                 borderColor: "#b45309",
                 backgroundColor: "#b45309",
-                borderWidth: 2.5,
+                borderWidth: 2,
                 pointRadius: 0,
-                tension: 0.3,
+                tension: 0.25,
                 yAxisID: "y",
                 order: 1
             }
@@ -283,14 +286,14 @@ async function loadClimateChart() {
         if (hasNdvi) {
             datasets.push({
                 type: "line",
-                label: "Độ xanh diệp lục MODIS NDVI (0–1)",
+                label: "NDVI (0–1)",
                 data: ndvi,
                 borderColor: "#15803d",
                 backgroundColor: "#15803d",
-                borderWidth: 2,
-                borderDash: [5, 4],
+                borderWidth: 1.5,
+                borderDash: [4, 4],
                 pointRadius: 0,
-                tension: 0.3,
+                tension: 0.25,
                 yAxisID: "y1",
                 order: 0
             });
@@ -298,13 +301,12 @@ async function loadClimateChart() {
 
         const scales = {
             x: {
-                ticks: { color: "#4e5d52", maxRotation: 0, autoSkip: true, maxTicksLimit: 12 },
+                ticks: { color: "#64748b", font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 12 },
                 grid: { display: false }
             },
             y: {
-                ticks: { color: "#4e5d52" },
-                grid: { color: "#e8ede4" },
-                title: { display: true, text: "Lượng nước (mm / tháng)", color: "#4e5d52", font: { weight: "bold" } }
+                ticks: { color: "#64748b", font: { size: 11 } },
+                grid: { color: "#f1f5f9" }
             }
         };
 
@@ -313,9 +315,8 @@ async function loadClimateChart() {
                 position: "right",
                 min: 0,
                 max: 1,
-                ticks: { color: "#15803d" },
-                grid: { drawOnChartArea: false },
-                title: { display: true, text: "Chỉ số NDVI", color: "#15803d", font: { weight: "bold" } }
+                ticks: { color: "#15803d", font: { size: 10 } },
+                grid: { drawOnChartArea: false }
             };
         }
 
@@ -328,8 +329,9 @@ async function loadClimateChart() {
                 interaction: { mode: "index", intersect: false },
                 plugins: {
                     legend: {
-                        position: "bottom",
-                        labels: { color: "#17201a", usePointStyle: true, boxWidth: 8, font: { size: 13, weight: "bold" } }
+                        position: "top",
+                        align: "end",
+                        labels: { color: "#334155", usePointStyle: true, boxWidth: 6, font: { size: 11, weight: "bold" } }
                     }
                 },
                 scales
@@ -341,7 +343,7 @@ async function loadClimateChart() {
 }
 
 // ==========================================================================
-// CÁC PHƯƠNG ÁN LUÂN CANH CẢ NĂM (ROTATIONS)
+// CÁC PHƯƠNG ÁN LUÂN CANH CĂN HÀNG NGANG (SWISS SPEC-SHEET)
 // ==========================================================================
 async function loadRotations() {
     try {
@@ -371,7 +373,7 @@ async function loadRotations() {
         }
 
         renderHero(data, strategies);
-        renderStrategyCards(data, strategies);
+        renderHorizontalStrategyCards(data, strategies);
         renderNdviStrip(data);
         renderAssumptionsBox(data);
     } catch (e) {
@@ -379,69 +381,56 @@ async function loadRotations() {
     }
 }
 
-// So sánh phương án với hiện trạng
-function compareText(st, base) {
-    if (!base || st === base) return null;
-    let water;
-    if (st.partial) {
-        water = { cls: "neutral", text: "Nước: chưa so được đầy đủ (chưa tính giai đoạn nuôi tôm)" };
-    } else if (isNum(st.annual_deficit_mm) && isNum(base.annual_deficit_mm) && base.annual_deficit_mm > 0) {
-        const pct = Math.round((st.annual_deficit_mm - base.annual_deficit_mm) / base.annual_deficit_mm * 100);
-        water = pct < 0 ? { cls: "good", text: `Nước tưới: ít hơn ${-pct}%` }
-              : pct > 0 ? { cls: "bad", text: `Nước tưới: nhiều hơn ${pct}%` }
-              : { cls: "neutral", text: "Nước tưới: như hiện nay" };
-    }
-    const d = (st.bare_months || []).length - (base.bare_months || []).length;
-    const bare = d < 0 ? { cls: "good", text: `Ruộng trống: ít hơn ${-d} tháng` }
-               : d > 0 ? { cls: "bad", text: `Ruộng trống: nhiều hơn ${d} tháng` }
-               : { cls: "neutral", text: "Ruộng trống: như hiện nay" };
-    return [water, bare].filter(Boolean);
-}
-
-function pill(c) {
-    const icon = c.cls === "good" ? getSvgIcon("check", 13) : (c.cls === "bad" ? getSvgIcon("alert", 13) : "");
-    return `<span class="pill pill-${c.cls}">${icon} ${c.text}</span>`;
-}
-
 function renderHero(data, strategies) {
     const base = strategies.find(s => s.is_existing);
-    const alts = strategies.filter(s => !s.is_existing);
     const titleEl = document.getElementById("heroTitle");
     const bodyEl = document.getElementById("heroBody");
     if (!base) {
-        titleEl.textContent = "Chưa xác định được cách canh tác hiện tại";
+        titleEl.textContent = "Chưa có thông tin hiện trạng";
         bodyEl.innerHTML = "";
         return;
     }
 
     const bareN = (base.bare_months || []).length;
     const nm = cleanName(base.name_vi);
-    titleEl.textContent = `Hiện nay: ${nm.charAt(0).toUpperCase()}${nm.slice(1)}`;
-
-    const rows = alts.map(st => `
-        <li>
-            <span class="hero-alt-name">${st.name_vi}</span>
-            <span class="pills">${(compareText(st, base) || []).map(pill).join("")}</span>
-        </li>`).join("");
+    titleEl.textContent = `Hiện trạng: ${nm.charAt(0).toUpperCase()}${nm.slice(1)}`;
 
     const sal = (data.salinity_months || []).map(Number);
+    const riskSeasonTxt = sal.length
+        ? `Tháng ${sal.join(", ")} (Nước mặn xâm nhập)`
+        : "Tháng 1 đến 4 (Hạn hán mùa khô)";
+
     bodyEl.innerHTML = `
-        <div class="hero-stats">
-            <div class="hero-stat">
-                <div class="hero-stat-value">${m3(base.annual_deficit_mm)} <small>m³/ha</small></div>
-                <div class="hero-stat-label">${getSvgIcon("water", 14)} Lượng nước ngọt phải tưới thêm mỗi năm</div>
+        <div class="hero-stats-row">
+            <div>
+                <div class="hero-stat-num">${m3(base.annual_deficit_mm)} <small>m³/ha</small></div>
+                <div class="hero-stat-lbl">Nước tưới ngọt phải bù mỗi năm</div>
             </div>
-            <div class="hero-stat">
-                <div class="hero-stat-value">${bareN} <small>tháng</small></div>
-                <div class="hero-stat-label">${getSvgIcon("fallow", 14)} Ruộng không có cây che phủ mỗi năm${bareN ? ` (${monthList(base.bare_months)})` : ""}</div>
+            <div>
+                <div class="hero-stat-num">${bareN} <small>tháng</small></div>
+                <div class="hero-stat-lbl">Ruộng để đất trống ${bareN ? `(${monthList(base.bare_months)})` : ""}</div>
             </div>
-        </div>
-        ${sal.length ? `<div class="hero-note">${getSvgIcon("drop_sal", 15)} Mùa nước mặn xâm nhập tại vùng: ${monthList(sal)}.</div>` : ""}
-        ${alts.length ? `<h2 class="hero-sub">Nếu chuyển đổi phương án (so với hiện trạng):</h2><ul class="hero-alts">${rows}</ul>` : ""}`;
+            <div>
+                <div class="hero-stat-num" style="font-size: 17px; font-weight: 700; color: #b45309;">${riskSeasonTxt}</div>
+                <div class="hero-stat-lbl">Cửa sổ thời tiết rủi ro cao</div>
+            </div>
+        </div>`;
 }
 
-// Gộp các tháng cùng pha
-function calendarBlocks(calendar) {
+// Gantt Timeline 12 Tháng
+function renderGanttTimeline(st, salMonths, usedCrops) {
+    const cropByLabel = {};
+    (st.phases || []).forEach(ph => { cropByLabel[ph.label] = cropKey(ph.crop); });
+
+    // Hàng tiêu đề 12 tháng
+    let monthsHead = "";
+    for (let m = 1; m <= 12; m++) {
+        const isSal = salMonths.has(m);
+        monthsHead += `<span class="${isSal ? "sal" : ""}" title="${isSal ? "Tháng nước mặn" : ""}">T${m}</span>`;
+    }
+
+    // Các phân đoạn cây trồng
+    const calendar = st.calendar || [];
     const blocks = [];
     calendar.forEach(mc => {
         const key = mc.bare ? "__bare__" : (mc.phase_label || "");
@@ -452,162 +441,160 @@ function calendarBlocks(calendar) {
             blocks.push({ key, bare: !!mc.bare, label: mc.phase_label, months: [mc] });
         }
     });
-    return blocks;
-}
 
-function renderCalendar(st, salMonths, usedCrops, flags) {
-    const cropByLabel = {};
-    (st.phases || []).forEach(ph => { cropByLabel[ph.label] = cropKey(ph.crop); });
-
-    let head = "";
-    for (let m = 1; m <= 12; m++) {
-        const isSal = salMonths.has(m);
-        head += `<div class="cal-m${isSal ? " sal" : ""}" ${isSal ? 'title="Tháng có xâm nhập mặn"' : ""}>Th${m}</div>`;
-    }
-
-    const blocks = calendarBlocks(st.calendar || []).map(b => {
+    const segments = blocks.map(b => {
         const span = b.months.length;
-        const first = b.months[0].month, last = b.months[span - 1].month;
-        const range = span > 1 ? `Tháng ${first} đến ${last}` : `Tháng ${first}`;
-        const dots = b.months.map(mc => {
-            const hot = isNum(mc.heat_ratio) && mc.heat_ratio > 0;
-            if (hot) flags.heat = true;
-            return `<span class="cal-slot">${hot ? `<span class="heat-dot" title="Tháng ${mc.month}: ${Math.round(mc.heat_ratio * 100)}% số ngày nắng nóng vượt ngưỡng sinh lý"></span>` : ""}</span>`;
-        }).join("");
+        const hasHeat = b.months.some(mc => isNum(mc.heat_ratio) && mc.heat_ratio > 0);
+        const style = `grid-column: span ${span};`;
 
-        const style = `grid-column: span ${span}; grid-template-columns: repeat(${span}, 1fr);`;
         if (b.bare) {
-            return `<div class="cal-block bare" style="${style}" title="${range}: Ruộng trống không có cây che phủ">${dots}<span class="cal-label">${span >= 2 ? "Đất trống" : ""}</span></div>`;
+            return `<div class="gantt-seg bare" style="${style}" title="Ruộng trống không có cây che phủ">${span >= 2 ? "Đất trống" : ""}</div>`;
         }
-
         const ck = cropByLabel[b.label] || "other";
         usedCrops.add(ck);
-        return `<div class="cal-block crop-${ck}" style="${style}" title="${range}: ${b.label}">${dots}<span class="cal-label">${CROP_NAMES[ck] || b.label}</span></div>`;
+        const heatDot = hasHeat ? `<span class="gantt-heat-dot" title="Có ngày nóng vượt ngưỡng sinh lý"></span>` : "";
+        return `<div class="gantt-seg crop-${ck}" style="${style}" title="${b.label}">${heatDot}${CROP_NAMES[ck] || b.label}</div>`;
     }).join("");
 
-    return `<div class="cal-scroll"><div class="cal"><div class="cal-row">${head}</div><div class="cal-row">${blocks}</div></div></div>`;
+    return `
+    <div class="gantt-timeline">
+        <div class="gantt-months-head">${monthsHead}</div>
+        <div class="gantt-bar">${segments}</div>
+    </div>`;
 }
 
-function renderStrategyCards(data, strategies) {
+function renderHorizontalStrategyCards(data, strategies) {
     const grid = document.getElementById("rotationCardsGrid");
     const base = strategies.find(s => s.is_existing);
     const salMonths = new Set((data.salinity_months || []).map(Number));
-    const maxDef = Math.max(1, ...strategies.map(s => isNum(s.annual_deficit_mm) ? s.annual_deficit_mm : 0));
     const usedCrops = new Set();
-    const flags = { heat: false };
 
     grid.innerHTML = strategies.map((st, i) => {
+        const isBase = st.is_existing;
         const bareN = (st.bare_months || []).length;
         const def = st.annual_deficit_mm;
-        const pct = isNum(def) ? Math.round(def / maxDef * 100) : 0;
-        const cmp = compareText(st, base);
-        const li = arr => (arr || []).map(x => `<li>${x}</li>`).join("");
 
-        // Tính delta so với baseline của chính phương án này khi slider != 0
-        let deltaBadgeHtml = "";
-        const baseDefForSt = baselineDeficits[st.id];
-        if (isNum(def) && isNum(baseDefForSt) && Math.abs(def - baseDefForSt) > 1.0) {
-            const diffMm = def - baseDefForSt;
-            const diffM3 = Math.round(diffMm * 10);
-            if (diffM3 > 0) {
-                deltaBadgeHtml = `<span class="scenario-delta-badge up" title="Tăng do thời tiết hạn nóng">+${fmt(diffM3)} m³/ha do kịch bản</span>`;
-            } else if (diffM3 < 0) {
-                deltaBadgeHtml = `<span class="scenario-delta-badge down" title="Giảm nhờ mưa nhiều">${fmt(diffM3)} m³/ha do kịch bản</span>`;
+        // Tính badge trạng thái duy nhất
+        let badgeHtml = "";
+        let isRecommended = false;
+        if (isBase) {
+            badgeHtml = `<span class="badge-status current">Hiện tại</span>`;
+        } else if (st.partial) {
+            badgeHtml = `<span class="badge-status neutral">Thuận thiên</span>`;
+        } else if (isNum(def) && isNum(base.annual_deficit_mm) && base.annual_deficit_mm > 0) {
+            const pct = Math.round((base.annual_deficit_mm - def) / base.annual_deficit_mm * 100);
+            if (pct > 0) {
+                badgeHtml = `<span class="badge-status saved">Tiết kiệm ${pct}% nước</span>`;
+                if (pct >= 45) isRecommended = true;
+            } else if (pct < 0) {
+                badgeHtml = `<span class="badge-status neutral">Tăng ${-pct}% nước</span>`;
             }
         }
 
+        // Tính delta nếu slider khác 0
+        let deltaTxt = "";
+        const baseDef = baselineDeficits[st.id];
+        if (isNum(def) && isNum(baseDef) && Math.abs(def - baseDef) > 1.0) {
+            const diffM3 = Math.round((def - baseDef) * 10);
+            if (diffM3 > 0) {
+                deltaTxt = `<span class="metric-sub-delta up">(+${fmt(diffM3)} m³)</span>`;
+            } else if (diffM3 < 0) {
+                deltaTxt = `<span class="metric-sub-delta down">(${fmt(diffM3)} m³)</span>`;
+            }
+        }
+
+        // Ghi chú thực tế khoa học
+        let scienceNoteHtml = "";
+        if (st.id === "D1" || (currentRegion === "Dak_Lak_Tay_Nguyen" && !isBase)) {
+            scienceNoteHtml = `<div class="science-note"><strong>WASI Đắk Lắk:</strong> Mô hình FAO-56 tính lượng nước tăng (+67,2 mm). Thực nghiệm Viện WASI (QĐ 26/QĐ-VNLT-KHKH) chứng minh thảm cỏ che phủ giúp <strong>giữ ẩm đất tăng 2,5%–4,2%, giảm >65% xói mòn và tiết kiệm 20%–25% lượng nước tưới thực tế</strong>.</div>`;
+        } else if (st.partial || st.id === "S1") {
+            scienceNoteHtml = `<div class="science-note shrimp"><strong>Thuận thiên:</strong> Vụ tôm sú tận dụng nước lợ tự nhiên mùa khô, không dùng nước ngọt tưới cây. Chỉ số trên <strong>chưa tính giai đoạn nuôi tôm</strong>.</div>`;
+        }
+
+        // Gạch đầu dòng lợi ích & rủi ro tinh gọn
+        const bullets = [];
+        (st.benefits || []).slice(0, 2).forEach(b => {
+            bullets.push(`<li class="good-item">${b}</li>`);
+        });
+        (st.risks || []).slice(0, 1).forEach(r => {
+            bullets.push(`<li class="risk-item">${r}</li>`);
+        });
+
+        // Bằng chứng và công thức trong details
         const evidence = (st.evidence || []).map(ev =>
-            `<li>${ev.text}<div class="cite">Nguồn: ${ev.source}${ev.verified === false ? ` <span class="tag-warn">chưa kiểm chứng</span>` : ""}</div></li>`).join("");
+            `<li>${ev.text} <span class="muted">(${ev.source}${ev.verified === false ? " - chưa kiểm chứng" : ""})</span></li>`).join("");
 
         const calc = (st.phases || []).map(ph => {
             const win = ph.window && ph.window.start ? ` (${ph.window.start} đến ${ph.window.end})` : "";
             if (!ph.modeled) {
-                return `<li class="water-calc-item"><strong>${ph.label}</strong>${win}: chưa tính nước cho giai đoạn này.</li>`;
+                return `<li><strong>${ph.label}</strong>${win}: chưa tính nước cho giai đoạn này.</li>`;
             }
             const extra = isNum(ph.assumed_extra_mm) && ph.assumed_extra_mm > 0
-                ? ` + nước làm đất, giữ lớp nước và thấm ${fmt(ph.assumed_extra_mm)} mm <span class="tag-warn">loại đất giả định</span>` : "";
-            return `<li class="water-calc-item"><strong>${ph.label}</strong>${win}: cây dùng ${fmt(ph.etc_mm)} mm${extra} − mưa giữ lại được ${fmt(ph.peff_mm)} mm = <strong>phải tưới ${fmt(ph.deficit_mm)} mm</strong></li>`;
+                ? ` + nước làm đất, thấm ${fmt(ph.assumed_extra_mm)} mm [loại đất giả định]` : "";
+            return `<li><strong>${ph.label}</strong>${win}: ETc ${fmt(ph.etc_mm)} mm${extra} − Peff ${fmt(ph.peff_mm)} mm = <strong>tưới ${fmt(ph.deficit_mm)} mm</strong></li>`;
         }).join("");
 
-        // Callout "Khoa học trung thực": WASI Đắk Lắk (D1) hoặc Tôm sú nước lợ Bến Tre (S1)
-        let scienceHonestyBox = "";
-        if (st.id === "D1" || (currentRegion === "Dak_Lak_Tay_Nguyen" && !st.is_existing)) {
-            scienceHonestyBox = `
-            <div class="science-honesty-callout wasi">
-                <div class="science-honesty-icon">${getSvgIcon("shield", 18)}</div>
-                <div class="science-honesty-body">
-                    <h4>Khoa học trung thực: Thực nghiệm WASI (Đắk Lắk) đối chiếu mô hình lý thuyết FAO-56</h4>
-                    <p>Mô hình lý thuyết FAO-56 cộng hệ số cây trồng khiến lượng nước tính toán tăng (+67,2 mm). <strong>Tuy nhiên</strong>, thực nghiệm đồng ruộng của <strong>Viện KHKT Nông Lâm nghiệp Tây Nguyên (WASI - Quyết định 26/QĐ-VNLT-KHKH)</strong> chứng minh: thảm cỏ che phủ giúp <strong>giữ ẩm đất tăng 2,5% – 4,2%, giảm >65% xói mòn và tiết kiệm 20% – 25% lượng nước tưới thực tế</strong> nhờ ngăn bốc hơi mặt đất trần.</p>
-                </div>
-            </div>`;
-        } else if (st.partial || st.id === "S1") {
-            scienceHonestyBox = `
-            <div class="science-honesty-callout shrimp">
-                <div class="science-honesty-icon">${getSvgIcon("drop_sal", 18)}</div>
-                <div class="science-honesty-body">
-                    <h4>Thuận thiên theo mặn: Pha tôm sú sử dụng nước lợ tự nhiên</h4>
-                    <p>Giai đoạn tôm sú (tháng 3 đến tháng 7) lấy nguồn nước mặn/lợ tự nhiên vào ruộng nuôi thủy sản, <strong>hoàn toàn không tiêu tốn nước ngọt tưới cây</strong>. Do đó chỉ số trên <strong>chỉ tính giai đoạn lúa mùa mưa</strong> (chưa tính giai đoạn nuôi tôm).</p>
-                </div>
-            </div>`;
-        }
+        const infoGaps = (st.info_gaps || []).map(g => `<li>${g}</li>`).join("");
 
         return `
-        <article class="card strategy${st.is_existing ? " is-existing" : ""}" data-strategy-id="${st.id}">
-            <header class="strategy-head">
-                <div class="strategy-title-group">
-                    <span class="strategy-num-badge">
-                        ${i === 0 && st.is_existing ? "Hiện nay (Đối chứng)" : `Phương án ${i} (Đề xuất)`}
-                    </span>
-                    <h3 class="strategy-title">${cleanName(st.name_vi)}</h3>
+        <article class="rot-card ${isRecommended ? "recommended" : ""} ${isBase ? "is-baseline" : ""}" data-strategy-id="${st.id}">
+            <div>
+                <div class="rot-card-top">
+                    <h3 class="rot-card-title">${cleanName(st.name_vi)}</h3>
+                    ${badgeHtml}
                 </div>
-                ${cmp ? `<div class="pills">${cmp.map(pill).join("")}</div>` : ""}
-            </header>
+                <p class="rot-why">${st.why}</p>
 
-            <p class="strategy-why">${st.why}</p>
-
-            ${renderCalendar(st, salMonths, usedCrops, flags)}
-
-            <div class="metrics">
-                <div class="metric">
-                    <div class="metric-label">Lượng nước ngọt phải tưới thêm mỗi năm</div>
-                    <div class="metric-value-wrap">
-                        <div class="metric-value">${m3(def)} <small>m³/ha</small>${st.partial ? "<sup>*</sup>" : ""}</div>
-                        ${deltaBadgeHtml}
+                <div class="rot-metrics-row">
+                    <div>
+                        <div class="metric-val">${m3(def)} <small>m³/ha</small>${deltaTxt}</div>
+                        <div class="metric-lbl">Nước ngọt bù/năm${st.partial ? " *" : ""}</div>
                     </div>
-                    <div class="bar-track" aria-hidden="true"><div class="bar-fill" style="width:${pct}%"></div></div>
-                    <div class="metric-sub">${fmt(def)} mm${st.partial ? " · * chưa tính giai đoạn nuôi tôm" : ""}</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-label">Thời gian ruộng không có cây che phủ</div>
-                    <div class="metric-value-wrap">
-                        <div class="metric-value">${bareN} <small>tháng / năm</small></div>
+                    <div>
+                        <div class="metric-val">${bareN} <small>tháng</small></div>
+                        <div class="metric-lbl">Ruộng trống/năm</div>
                     </div>
-                    <div class="metric-sub">${bareN ? monthList(st.bare_months) : "Có cây che phủ mặt đất quanh năm"}</div>
                 </div>
+
+                ${renderGanttTimeline(st, salMonths, usedCrops)}
+                ${scienceNoteHtml}
+
+                <ul class="bullet-list">${bullets.join("")}</ul>
             </div>
 
-            ${scienceHonestyBox}
-
-            <div class="two-col">
-                ${st.benefits && st.benefits.length ? `<div class="box box-good"><h4>${getSvgIcon("check", 15)} Lợi ích nổi bật</h4><ul>${li(st.benefits)}</ul></div>` : ""}
-                ${st.risks && st.risks.length ? `<div class="box box-risk"><h4>${getSvgIcon("alert", 15)} Rủi ro cần kiểm tra ngoài đồng</h4><ul>${li(st.risks)}</ul></div>` : ""}
+            <div class="rot-card-footer">
+                <details>
+                    <summary>Nguồn & Tính toán</summary>
+                    <div class="more-content">
+                        ${evidence ? `<div><strong>Nguồn trích dẫn:</strong><ul>${evidence}</ul></div>` : ""}
+                        ${calc ? `<div><strong>Công thức cân bằng nước:</strong><ul>${calc}</ul></div>` : ""}
+                        ${infoGaps ? `<div><strong>Cần kiểm chứng:</strong><ul>${infoGaps}</ul></div>` : ""}
+                        ${st.partial ? `<div style="margin-top:6px; color:#0369a1;">* Chưa tính giai đoạn nuôi tôm trong tổng nước ngọt.</div>` : ""}
+                    </div>
+                </details>
+                <button type="button" class="ask-card-btn" data-crop="${cleanName(st.name_vi)}">Hỏi AI về phương án này →</button>
             </div>
-
-            <details class="more">
-                <summary>Xem nguồn trích dẫn, công thức tính và thông tin còn thiếu</summary>
-                ${evidence ? `<h4>Bằng chứng & Nguồn xác thực</h4><ul>${evidence}</ul>` : ""}
-                ${calc ? `<h4>Công thức cân bằng nước từng pha (trung bình các năm)</h4><ul class="water-calc-list">${calc}</ul>` : ""}
-                ${st.info_gaps && st.info_gaps.length ? `<h4>Thông tin cần kiểm chứng thêm</h4><ul>${li(st.info_gaps)}</ul>` : ""}
-            </details>
         </article>`;
     }).join("");
 
+    // Cập nhật chú giải tinh gọn
     const items = KNOWN_CROPS.filter(k => usedCrops.has(k))
-        .map(k => `<span class="legend-item"><span class="swatch crop-${k}"></span>${CROP_NAMES[k]}</span>`);
-    items.push(`<span class="legend-item"><span class="swatch bare"></span>Ruộng trống</span>`);
-    if (salMonths.size) items.push(`<span class="legend-item"><span class="swatch sal"></span>Tháng xâm nhập mặn</span>`);
-    if (flags.heat) items.push(`<span class="legend-item"><span class="heat-dot"></span>Có ngày nắng nóng vượt ngưỡng</span>`);
+        .map(k => `<span class="legend-item"><span class="swatch" style="background:var(--c-${k});"></span>${CROP_NAMES[k]}</span>`);
+    items.push(`<span class="legend-item"><span class="swatch" style="background:var(--c-bare);"></span>Đất trống</span>`);
+    if (salMonths.size) items.push(`<span class="legend-item"><span style="color:var(--sal); font-weight:700;">—</span>Tháng nước mặn</span>`);
     document.getElementById("rotationLegend").innerHTML = items.join("");
+
+    // Gắn sự kiện "Hỏi AI về phương án này"
+    document.querySelectorAll(".ask-card-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const cropName = btn.dataset.crop;
+            const chatInput = document.getElementById("chatInput");
+            const q = `Phân tích chi tiết lượng nước tưới, thời vụ và rủi ro nếu chuyển sang phương án: ${cropName}?`;
+            chatInput.value = q;
+            document.getElementById("aiSection").scrollIntoView({ behavior: "smooth" });
+            sendQuestion(q);
+        });
+    });
 }
 
 function renderNdviStrip(data) {
@@ -617,33 +604,31 @@ function renderNdviStrip(data) {
     for (let m = 1; m <= 12; m++) {
         const v = isNum(ndvi[String(m)]) ? Number(ndvi[String(m)]) : (isNum(ndvi[m]) ? Number(ndvi[m]) : null);
         if (v === null) {
-            html += `<div class="ndvi-cell na"><span>Th${m}</span><b>–</b></div>`;
+            html += `<div class="ndvi-cell na"><span>T${m}</span><b>–</b></div>`;
             continue;
         }
         const n = Math.max(0, Math.min(1, v));
-        const pctBar = Math.round(n * 100);
-        html += `<div class="ndvi-cell${n >= 0.5 ? " dark" : ""}" style="background: rgba(21, 128, 61, ${(0.08 + 0.85 * n).toFixed(2)})" title="Tháng ${m}: NDVI ${v.toFixed(2)} (MODIS)">
-            <span>Th${m}</span>
+        html += `<div class="ndvi-cell${n >= 0.5 ? " dark" : ""}" style="background: rgba(21, 128, 61, ${(0.08 + 0.85 * n).toFixed(2)})" title="Tháng ${m}: NDVI ${v.toFixed(2)}">
+            <span>T${m}</span>
             <b>${v.toFixed(2).replace(".", ",")}</b>
-            <div class="ndvi-mini-bar"><div class="ndvi-mini-bar-fill" style="width: ${pctBar}%"></div></div>
         </div>`;
     }
     el.innerHTML = html;
     const p = REGIONS_DATA[currentRegion].ndvi_point;
     document.getElementById("ndviNote").textContent =
-        `Chỉ số NDVI từ vệ tinh MODIS MOD13Q1 tại điểm (${p.lat}, ${p.lon}), chuỗi quan sát 2015–2025. Ô càng đậm là tán cây phủ càng dày; ô nhạt là ruộng trống hoặc ngập nước.`;
+        `Chỉ số NDVI từ vệ tinh MODIS MOD13Q1 (${p.lat}, ${p.lon}), chuỗi quan sát 2015–2025. Càng đậm là tán cây phủ càng dày.`;
 }
 
 function renderAssumptionsBox(data) {
     const items = (data.assumptions || []).map(a => `<li>${a}</li>`);
     if (data.salinity_months_source) items.push(`<li><strong>Nguồn tháng mặn:</strong> ${data.salinity_months_source}</li>`);
-    if (data.display_rule) items.push(`<li><strong>Cách tô lịch 12 tháng:</strong> ${data.display_rule}</li>`);
+    if (data.display_rule) items.push(`<li><strong>Cách hiển thị lịch:</strong> ${data.display_rule}</li>`);
     document.getElementById("rotationAssumptionsBox").innerHTML =
-        `<h3 class="card-heading">Giả định của mô hình tính toán</h3><ul class="plain-list">${items.join("")}</ul>`;
+        `<h3 class="card-heading" style="font-size:14.5px; margin-bottom:6px;">Giả định mô hình thủy văn & ranh giới dữ liệu</h3><ul class="muted" style="margin:0; padding-left:18px; font-size:13px; line-height:1.5;">${items.join("")}</ul>`;
 }
 
 // ==========================================================================
-// BẢNG ĐÁNH GIÁ CÂY TRỒNG MÙA KHÔ
+// BẢNG ĐÁNH GIÁ CÂY TRỒNG VỤ KHÔ
 // ==========================================================================
 async function evaluateCrops() {
     const tbody = document.getElementById("cropTableBody");
@@ -665,23 +650,23 @@ async function evaluateCrops() {
 
         tbody.innerHTML = crops.map((c, i) => {
             const note = c.missing_components && c.missing_components.length
-                ? `<div class="td-note">Lưu ý: ${c.missing_components.join("; ")}</div>` : "";
-            const win = c.season_window && c.season_window.start ? `${c.season_window.start} đến ${c.season_window.end}` : "chưa có";
+                ? `<div class="muted" style="font-size:11.5px;">(${c.missing_components.join("; ")})</div>` : "";
+            const win = c.season_window && c.season_window.start ? `${c.season_window.start} → ${c.season_window.end}` : "–";
             const v = c.water_vs_baseline_pct;
-            const saved = !isNum(v) ? "chưa có"
-                : i === 0 ? "Mốc so sánh"
-                : v > 0 ? `<span class="txt-good">tiết kiệm ${fmt(v, 1)}%</span>`
-                : v < 0 ? `<span class="txt-bad">tốn hơn ${fmt(-v, 1)}%</span>` : "như nhau";
-            let risk = `<span class="risk risk-${c.risk_level}">${RISK_TEXT[c.risk_level] || c.risk_level}</span>`;
+            const saved = !isNum(v) ? "–"
+                : i === 0 ? "Mốc chuẩn"
+                : v > 0 ? `<span style="color:var(--good); font-weight:700;">-${fmt(v, 1)}%</span>`
+                : v < 0 ? `<span style="color:var(--bad); font-weight:700;">+${fmt(-v, 1)}%</span>` : "0%";
+            let risk = `<span class="risk-tag risk-${c.risk_level}">${RISK_TEXT[c.risk_level] || c.risk_level}</span>`;
             if (c.score !== null && !isNum(c.exceed_ratio_r)) {
-                risk = `<span class="muted">Chưa đánh giá (chưa có ngưỡng có nguồn)</span>`;
+                risk = `<span class="muted">Chưa có ngưỡng chuẩn</span>`;
             }
             return `<tr>
                 <td><strong>${c.crop_name}</strong>${note}</td>
-                <td class="nowrap">${win}</td>
-                <td class="nowrap">${isNum(c.deficit_mm) ? `${m3(c.deficit_mm)} m³/ha <span class="muted">(${fmt(c.deficit_mm, 1)} mm)</span>` : "chưa có"}</td>
-                <td>${saved}</td>
-                <td>${isNum(c.score) ? `<strong>${fmt(c.score, 1)}</strong>` : `<span class="muted nowrap">chưa chấm</span>`}</td>
+                <td class="nowrap muted">${win}</td>
+                <td class="nowrap" style="text-align:right;">${isNum(c.deficit_mm) ? `<strong>${m3(c.deficit_mm)}</strong> <small class="muted">(${fmt(c.deficit_mm, 1)} mm)</small>` : "–"}</td>
+                <td style="text-align:right;">${saved}</td>
+                <td style="text-align:right;">${isNum(c.score) ? `<strong>${fmt(c.score, 1)}</strong>` : "–"}</td>
                 <td>${risk}</td>
             </tr>`;
         }).join("");
@@ -691,12 +676,12 @@ async function evaluateCrops() {
 }
 
 // ==========================================================================
-// HỎI ĐÁP CHUYÊN GIA (DETERMINISTIC ADVOCACY)
+// HỎI ĐÁP AGRO-AI COPILOT (DETERMINISTIC ADVOCACY)
 // ==========================================================================
 async function sendQuestion(question) {
     if (!question) return;
     const outputEl = document.getElementById("chatOutput");
-    outputEl.innerHTML = "<em>Đang tổng hợp câu trả lời từ dữ liệu vệ tinh...</em>";
+    outputEl.innerHTML = "<em>Trợ lý AI đang đối chiếu dữ liệu vệ tinh NASA và tính toán...</em>";
     try {
         const res = await fetch("/api/advise", {
             method: "POST",
@@ -704,12 +689,12 @@ async function sendQuestion(question) {
             body: JSON.stringify({ region: currentRegion, question })
         });
         if (!res.ok) {
-            outputEl.innerHTML = `<span class="txt-bad">Không lấy được câu trả lời từ hệ thống (mã ${res.status}).</span>`;
+            outputEl.innerHTML = `<span style="color:var(--bad);">Không thể lấy câu trả lời (Mã lỗi HTTP ${res.status}).</span>`;
             return;
         }
         outputEl.innerHTML = renderSimpleMarkdown((await res.json()).markdown);
     } catch (e) {
-        outputEl.innerHTML = `<span class="txt-bad">Không kết nối được máy chủ tính toán: ${e.message}</span>`;
+        outputEl.innerHTML = `<span style="color:var(--bad);">Lỗi kết nối máy chủ: ${e.message}</span>`;
     }
 }
 
@@ -720,7 +705,7 @@ function renderSimpleMarkdown(md) {
     md.split("\n").forEach(line => {
         const t = line.trim();
         if (t.startsWith("|")) {
-            if (!inTable) { inTable = true; html += "<div class=\"table-scroll\"><table><tbody>"; }
+            if (!inTable) { inTable = true; html += "<div style=\"overflow-x:auto;\"><table class=\"table-clean\"><tbody>"; }
             if (t.includes("---")) return;
             html += "<tr>" + t.split("|").slice(1, -1).map(c => `<td>${formatInline(c.trim())}</td>`).join("") + "</tr>";
             return;
@@ -728,9 +713,9 @@ function renderSimpleMarkdown(md) {
 
         if (t.startsWith("### ")) html += `<h3>${formatInline(t.substring(4))}</h3>`;
         else if (t.startsWith("#### ")) html += `<h4>${formatInline(t.substring(5))}</h4>`;
-        else if (t.startsWith("> ")) html += `<blockquote>${formatInline(t.substring(2))}</blockquote>`;
+        else if (t.startsWith("> ")) html += `<blockquote style="border-left:3px solid var(--primary); padding-left:10px; margin:6px 0; color:var(--muted);">${formatInline(t.substring(2))}</blockquote>`;
         else if (t.startsWith("- ")) html += `<ul><li>${formatInline(t.substring(2))}</li></ul>`;
-        else if (t.startsWith("---")) html += `<hr>`;
+        else if (t.startsWith("---")) html += `<hr style="border:0; border-top:1px solid var(--border); margin:10px 0;">`;
         else if (t !== "") html += `<p>${formatInline(t)}</p>`;
     });
     if (inTable) html += "</tbody></table></div>";
