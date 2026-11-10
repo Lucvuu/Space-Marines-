@@ -604,8 +604,47 @@ web/app.js:468:        const calHtml = (st.calendar || st.calendar_12m || []).ma
 | `Dak_Lak_Tay_Nguyen` | **D0**: Hiện trạng: cà phê vối đất trần | **351.3 mm** | `False` | `[]` | Cà phê (đất trần) | `01-01 → 04-30` | `425.4` | **0.0** | `74.1` | **351.3** |
 | `Dak_Lak_Tay_Nguyen` | **D1**: Cà phê vối có cây che phủ đất / thảm cỏ | **418.5 mm** | `False` | `[]` | Cà phê + cây phủ | `01-01 → 04-30` | `492.6` | **0.0** | `74.1` | **418.5** |
 
+---
 
+## 13. Fix 6D (Verified Soil-Health Evidence in `S2`, `S3`, `D1` & TCVN 9168:2012 Percolation Sensitivity Note)
 
+### 13.1. Commit Hash của từng bước (Bước 1 → Bước 2 + Report)
 
+| Bước | Commit Hash | Commit Message | Nội dung chính |
+|---|---|---|---|
+| **Bước 1** | `e089625` | `config: add verified soil-health evidence to S2, S3, D1` | Bổ sung nguyên văn giả định độ nhạy thấm `2 mm/ngày` (TCVN 9168:2012 qua Nguyễn Trung Nam, 2022–2023) vào `Ben_Tre_DBSCL.assumptions`; bổ sung bằng chứng Võ Thị Gương et al. (2010) và Nguyễn Mỹ Hoa và cs. (2014) vào `S2` và `S3`; bổ sung bằng chứng Quyết định 26/QĐ-VNLT-KHKH (04/3/2013, WASI) và ghi chú rủi ro cỏ dại vào `D1` trong `config/rotations.json`. |
+| **Bước 2** | `5db991a` | `docs: sync sources table, note TCVN percolation sensitivity` | Chạy `python scripts/gen_sources_table.py` đồng bộ bảng nguồn tự động và bổ sung câu ghi chú độ nhạy `2 mm/day` (`510 mm` so với `720 mm`) vào mục Limitations 5 trong `docs/SUBMISSION_NOTES.md`. |
+| **Kết thúc** | *(commit hiện tại)* | `fix6d report` | Ghi báo cáo mục **13. Fix 6D** vào `MORNING_REPORT.md`. |
 
+---
+
+### 13.2. Output `python -m pytest -q`
+
+```text
+........................................                                 [100%]
+40 passed, 1 warning in 26.19s
+```
+
+---
+
+### 13.3. Output `git diff --stat` của 2 commit
+
+- **Bước 1 (`e089625` — `git diff --stat e089625~1..e089625`)**:
+```text
+ config/rotations.json | 19 ++++++++++++-------
+ 1 file changed, 12 insertions(+), 7 deletions(-)
+```
+
+- **Bước 2 (`5db991a` — `git diff --stat 5db991a~1..5db991a`)**:
+```text
+ docs/SUBMISSION_NOTES.md | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+```
+
+- **Tổng hợp cả 2 bước (`git diff --stat e089625~1..5db991a`)**:
+```text
+ config/rotations.json    | 19 ++++++++++++-------
+ docs/SUBMISSION_NOTES.md |  6 +++++-
+ 2 files changed, 17 insertions(+), 8 deletions(-)
+```
 
