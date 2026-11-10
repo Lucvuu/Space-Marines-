@@ -3,68 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AERO-AGRI | Chọn cách luân canh</title>
+    <title>AERO-AGRI | Lựa Chọn Mô Hình Luân Canh Nông Nghiệp Khí Hậu Vệ Tinh NASA</title>
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
+    <!-- THANH ĐIỀU HƯỚNG TRÊN CÙNG -->
     <header class="topbar">
         <div class="topbar-inner">
             <div class="brand">
                 <div class="brand-mark" aria-hidden="true">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M12 12C12 7 8 4 3 4c0 5 3 8 9 8z"/><path d="M12 14c0-4 3-7 9-7 0 4-3 7-9 7z"/></svg>
+                    <!-- Icon vệ tinh NASA & mầm cây nông nghiệp -->
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22V12"/>
+                        <path d="M12 12C12 7 8 4 3 4c0 5 3 8 9 8z"/>
+                        <path d="M12 14c0-4 3-7 9-7 0 4-3 7-9 7z"/>
+                        <circle cx="19" cy="5" r="2"/>
+                        <path d="M15 9l4-4"/>
+                    </svg>
                 </div>
                 <div>
-                    <div class="brand-name">AERO-AGRI</div>
-                    <div class="brand-sub">So sánh cách luân canh bằng dữ liệu vệ tinh NASA</div>
+                    <div class="brand-row">
+                        <span class="brand-name">AERO-AGRI</span>
+                        <a href="#techSection" class="nasa-satellite-badge" title="Cuộn tới nguồn dữ liệu và kiểm chứng kỹ thuật">
+                            <span class="pulse-dot"></span> Dữ liệu vệ tinh NASA POWER & MODIS (2015–2025)
+                        </a>
+                    </div>
+                    <div class="brand-sub">Hệ thống gợi ý luân canh thích ứng biến đổi khí hậu · Không hộp đen</div>
                 </div>
             </div>
+
+            <!-- CHỌN VÙNG TRỌNG ĐIỂM -->
             <nav class="region-tabs" aria-label="Chọn vùng">
-                <button type="button" class="region-tab" data-region="Ben_Tre_DBSCL" aria-pressed="true">Bến Tre<small>Lúa vùng ven biển</small></button>
-                <button type="button" class="region-tab" data-region="Dak_Lak_Tay_Nguyen" aria-pressed="false">Đắk Lắk<small>Cà phê Tây Nguyên</small></button>
+                <button type="button" class="region-tab" data-region="Ben_Tre_DBSCL" aria-pressed="true">
+                    <span class="region-tab-title">Bến Tre</span>
+                    <small>Lúa ven biển · Xâm nhập mặn</small>
+                </button>
+                <button type="button" class="region-tab" data-region="Dak_Lak_Tay_Nguyen" aria-pressed="false">
+                    <span class="region-tab-title">Đắk Lắk</span>
+                    <small>Cà phê vối · Hạn mùa khô</small>
+                </button>
             </nav>
         </div>
     </header>
 
     <main class="container">
+        <!-- Khu vực cảnh báo dữ liệu mẫu nếu có -->
         <div id="dataBadgeArea"></div>
 
-        <!-- 1. Tóm tắt + thử thời tiết -->
+        <!-- 1. TÓM TẮT TỔNG QUAN & BẢNG ĐIỀU KHIỂN KỊCH BẢN THỜI TIẾT -->
         <section class="intro-grid">
+            <!-- Thẻ Hiện Trạng & So Sánh Tóm Tắt -->
             <div class="card hero" id="heroCard">
-                <p class="hero-kicker" id="heroPlace">Đang tải...</p>
+                <div class="hero-header-row">
+                    <p class="hero-kicker" id="heroPlace">Đang tải...</p>
+                    <span class="badge-role">Hiện trạng đồng ruộng</span>
+                </div>
                 <h1 class="hero-title" id="heroTitle">Đang tải dữ liệu vùng...</h1>
                 <div id="heroBody"></div>
             </div>
 
-            <div class="card scenario">
-                <h2 class="card-heading">Thử nếu thời tiết thay đổi</h2>
-                <p class="muted">Kéo thanh trượt, kết quả bên dưới tự tính lại.</p>
+            <!-- Bảng Thử Nghiệm Kịch Bản Khí Hậu (Sticky Panel) -->
+            <div class="card scenario" id="scenarioCard">
+                <div class="scenario-head">
+                    <div class="scenario-icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="card-heading">Mô phỏng kịch bản thời tiết</h2>
+                        <p class="muted">Kéo thanh trượt hoặc bấm chọn nhanh, kết quả tự tính lại tức thì</p>
+                    </div>
+                </div>
+
+                <!-- Các nút kịch bản khí hậu 1-chạm -->
+                <div class="preset-chips" aria-label="Kịch bản mẫu">
+                    <button type="button" class="preset-chip active" data-temp="0" data-rain="0">Mặc định (0°C, 0%)</button>
+                    <button type="button" class="preset-chip" data-temp="1.5" data-rain="-20">El Niño (+1.5°C, -20%)</button>
+                    <button type="button" class="preset-chip" data-temp="2.5" data-rain="-35">Khắc nghiệt (+2.5°C, -35%)</button>
+                </div>
+
+                <!-- Thanh trượt Nhiệt độ -->
                 <div class="slider-block">
                     <div class="slider-header">
-                        <label for="sliderTemp">Nhiệt độ</label>
+                        <label for="sliderTemp">Nhiệt độ trung bình</label>
                         <strong id="valTemp" class="slider-value">Như hiện nay</strong>
                     </div>
                     <input type="range" id="sliderTemp" min="-1.0" max="3.0" step="0.5" value="0.0">
-                    <div class="slider-scale"><span>Mát hơn 1 °C</span><span>Nóng hơn 3 °C</span></div>
+                    <div class="slider-scale">
+                        <span>Mát hơn 1 °C</span>
+                        <span class="scale-zero">0°C</span>
+                        <span>Nóng hơn 3 °C</span>
+                    </div>
                 </div>
+
+                <!-- Thanh trượt Lượng mưa -->
                 <div class="slider-block">
                     <div class="slider-header">
-                        <label for="sliderRain">Lượng mưa</label>
+                        <label for="sliderRain">Lượng mưa hàng tháng</label>
                         <strong id="valRain" class="slider-value">Như hiện nay</strong>
                     </div>
                     <input type="range" id="sliderRain" min="-50" max="30" step="10" value="0">
-                    <div class="slider-scale"><span>Ít hơn 50%</span><span>Nhiều hơn 30%</span></div>
+                    <div class="slider-scale">
+                        <span>Hạn nặng -50%</span>
+                        <span class="scale-zero">0%</span>
+                        <span>Mưa nhiều +30%</span>
+                    </div>
                 </div>
-                <button type="button" id="btnReset" class="btn-ghost">Đưa về thời tiết hiện nay</button>
+
+                <div class="scenario-actions">
+                    <button type="button" id="btnReset" class="btn-ghost">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                        Đưa về thời tiết đo được
+                    </button>
+                </div>
             </div>
         </section>
 
-        <!-- 2. Các phương án -->
+        <!-- 2. CÁC PHƯƠNG ÁN CANH TÁC & SO SÁNH LUÂN CANH -->
         <section id="rotationsSection">
             <div class="section-head">
-                <h2 class="section-title">Các cách canh tác</h2>
-                <p class="section-desc">Phương án đầu tiên là cách đang làm, các phương án sau dùng để so sánh với nó. Lượng nước là phần <strong>phải tưới thêm ngoài nước mưa</strong>, tính trung bình nhiều năm.</p>
+                <div class="section-title-wrap">
+                    <h2 class="section-title">Các phương án canh tác & luân canh cả năm</h2>
+                    <span class="section-subtitle">Phương án đầu tiên là cách đang làm tại địa phương. Các phương án sau dùng để so sánh hiệu quả tiết kiệm nước và cải tạo đất.</span>
+                </div>
                 <div class="legend" id="rotationLegend"></div>
             </div>
             <div id="rotationsContent">
@@ -75,31 +138,35 @@
             </div>
         </section>
 
-        <!-- 3. Hỏi đáp -->
+        <!-- 3. HỎI ĐÁP CHUYÊN GIA NÔNG NGHIỆP THÔNG MINH (DETERMINISTIC) -->
         <section>
             <div class="section-head">
-                <h2 class="section-title">Hỏi nhanh</h2>
-                <p class="section-desc">Câu trả lời được ghép từ chính các số liệu trên trang, không dùng AI tạo chữ.</p>
+                <h2 class="section-title">Hỏi nhanh khuyến nông & khí hậu</h2>
+                <p class="section-desc">Câu trả lời được phân tích trực tiếp từ dữ liệu vệ tinh và mô hình tính toán đang hiển thị, cam kết không bịa đặt.</p>
             </div>
-            <div class="card">
+            <div class="card qa-card">
                 <div class="quick-prompts">
                     <button type="button" class="prompt-btn" data-q="Vụ khô tới tôi có nên tiếp tục gieo sạ lúa không?">Vụ khô tới có nên gieo lúa?</button>
                     <button type="button" class="prompt-btn" data-q="Nếu chuyển sang trồng đậu tương thì tiết kiệm được bao nhiêu nước?">Đổi sang đậu tương tiết kiệm bao nhiêu nước?</button>
                     <button type="button" class="prompt-btn" data-q="Cây nào có mức độ rủi ro thấp nhất dưới thời tiết nắng nóng?">Cây nào chịu nóng tốt nhất?</button>
                 </div>
                 <div class="chat-input-row">
-                    <input type="text" id="chatInput" aria-label="Câu hỏi" placeholder="Hoặc gõ câu hỏi của bạn...">
-                    <button type="button" id="btnAsk" class="btn-primary">Hỏi</button>
+                    <input type="text" id="chatInput" aria-label="Câu hỏi" placeholder="Hoặc gõ câu hỏi cụ thể của bạn (ví dụ: đất mặn trồng gì, nước tưới lúa)...">
+                    <button type="button" id="btnAsk" class="btn-primary">
+                        <span>Hỏi chuyên gia</span>
+                    </button>
                 </div>
-                <div class="chat-output" id="chatOutput" role="status" aria-live="polite">Bấm một câu hỏi ở trên để xem câu trả lời.</div>
+                <div class="chat-output" id="chatOutput" role="status" aria-live="polite">Bấm một câu hỏi ở trên để xem khuyến cáo được tính toán trực tiếp từ dữ liệu.</div>
             </div>
         </section>
 
-        <!-- 4. Số liệu kỹ thuật -->
-        <section class="tech">
+        <!-- 4. SỐ LIỆU CHI TIẾT & KIỂM CHỨNG KỸ THUẬT NASA -->
+        <section class="tech" id="techSection">
             <div class="section-head">
-                <h2 class="section-title">Số liệu chi tiết</h2>
-                <p class="section-desc">Dành cho cán bộ kỹ thuật và ban giám khảo: nguồn dữ liệu, cách tính và giả định.</p>
+                <div class="section-title-wrap">
+                    <h2 class="section-title">Số liệu chi tiết & Kiểm chứng khoa học</h2>
+                    <span class="section-subtitle">Dành cho cán bộ kỹ thuật, chuyên gia nông nghiệp và Ban Giám Khảo NASA Space Apps: nguồn dữ liệu chuỗi 10 năm, công thức FAO-56 và giả định.</span>
+                </div>
                 <div class="status-bar" id="statusBar" aria-label="Trạng thái dữ liệu">
                     <span class="chip chip-missing" id="chip-power">Khí hậu NASA POWER: đang kiểm tra</span>
                     <span class="chip chip-missing" id="chip-ndvi">Độ xanh MODIS NDVI: đang kiểm tra</span>
@@ -108,35 +175,37 @@
                 </div>
             </div>
 
+            <!-- Biểu đồ mưa/ETo và Dải vệ tinh MODIS NDVI đồng bộ 12 tháng -->
             <div class="tech-grid">
                 <div class="card">
-                    <h3 class="card-heading">Mưa và nước bốc hơi theo tháng</h3>
-                    <p class="muted">Cột xanh là mưa. Đường vàng là lượng nước ruộng mất do bốc hơi (ETo, FAO-56). Tháng nào đường vàng cao hơn cột xanh là tháng thiếu nước.</p>
+                    <h3 class="card-heading">Mưa và bốc thoát hơi nước theo tháng (NASA POWER)</h3>
+                    <p class="muted">Cột xanh là lượng mưa (USDA Peff). Đường nâu là bốc hơi nước tham chiếu ETo (FAO-56). Tháng nào đường nâu vượt cột xanh là tháng đất ruộng thiếu hụt nước ngọt.</p>
                     <div class="chart-container" id="chartWrapper"><canvas id="climateChart"></canvas></div>
                     <div id="climateEmpty" class="empty-state" hidden>Chưa có dữ liệu khí tượng.</div>
                 </div>
 
                 <div class="card">
-                    <h3 class="card-heading">Độ xanh của ruộng nhìn từ vệ tinh</h3>
-                    <p class="muted" id="ndviNote">Chỉ số NDVI từ vệ tinh MODIS, trung bình nhiều năm. Ô càng đậm là ruộng càng nhiều cây xanh; ô nhạt là ruộng trống hoặc ngập nước.</p>
+                    <h3 class="card-heading">Chu kỳ độ xanh thực vật nhìn từ vệ tinh (MODIS NDVI)</h3>
+                    <p class="muted" id="ndviNote">Chỉ số NDVI từ vệ tinh MODIS MOD13Q1 (250 m), trung bình nhiều năm. Ô càng xanh đậm là cây phủ nhiều sinh khối; ô nhạt là đất trống hoặc ngập nước.</p>
                     <div id="ndviStrip" class="ndvi-strip"></div>
                 </div>
             </div>
 
+            <!-- Bảng đánh giá rủi ro từng cây trồng cho vụ khô -->
             <div class="card">
-                <h3 class="card-heading">Đánh giá từng cây cho vụ khô</h3>
-                <p class="muted">Bến Tre: vụ Đông Xuân. Đắk Lắk: mùa khô.</p>
+                <h3 class="card-heading">Đánh giá đa chỉ tiêu từng cây trồng cho mùa khô</h3>
+                <p class="muted">So sánh khả năng chịu hạn, lượng nước tiết kiệm, ngưỡng nhiệt sinh lý và nguy cơ xâm nhập mặn.</p>
                 <div id="cropTableWrapper">
                     <div class="table-scroll">
                         <table class="crop-table">
                             <thead>
                                 <tr>
                                     <th>Cây trồng</th>
-                                    <th>Thời gian</th>
-                                    <th>Nước tưới cần thêm</th>
-                                    <th>Tiết kiệm nước so với cây đầu</th>
-                                    <th class="nowrap">Điểm /100</th>
-                                    <th>Rủi ro nóng, mặn</th>
+                                    <th>Cửa sổ mùa vụ</th>
+                                    <th>Nước ngọt cần thêm</th>
+                                    <th>Tiết kiệm so với cây đầu</th>
+                                    <th class="nowrap">Điểm thích ứng /100</th>
+                                    <th>Rủi ro hạn, mặn, nhiệt</th>
                                 </tr>
                             </thead>
                             <tbody id="cropTableBody"></tbody>
@@ -147,24 +216,26 @@
                 <div id="evaluateEmpty" class="empty-state" hidden>Chưa có dữ liệu để đánh giá.</div>
             </div>
 
+            <!-- Giả định mô hình và Giải thích thuật ngữ -->
             <div class="tech-grid">
                 <div id="rotationAssumptionsBox" class="card"></div>
                 <div class="card">
-                    <h3 class="card-heading">Giải thích thuật ngữ</h3>
+                    <h3 class="card-heading">Giải thích thuật ngữ & Nguồn gốc khoa học</h3>
                     <ul class="plain-list">
-                        <li><strong>Nước tưới cần thêm:</strong> lượng nước cây cần trừ đi phần mưa giữ lại được trong ruộng. 1 mm trên 1 ha bằng 10 m³ nước.</li>
-                        <li><strong>ETo, ETc (bốc thoát hơi nước):</strong> nước mất qua mặt đất và lá cây, tính từ nhiệt độ, độ ẩm, gió, nắng của NASA POWER theo FAO-56.</li>
-                        <li><strong>NDVI:</strong> chỉ số độ xanh đo từ vệ tinh MODIS, từ −1 đến 1. Lúa đang xanh thường trên 0,7.</li>
-                        <li><strong>Vệ tinh và đo tại ruộng:</strong> NASA POWER là ô lưới khoảng 50 km, MODIS là ô 250 m. Số liệu cho thấy xu hướng của vùng, không thay thế số đo tại từng thửa ruộng.</li>
+                        <li><strong>Nước ngọt phải tưới thêm:</strong> Lượng nước cây cần trừ đi phần mưa hữu hiệu giữ lại được trên đồng ruộng (USDA SCS). Cứ 1 mm trên 1 ha tương đương 10 m³ nước ngọt.</li>
+                        <li><strong>ETo, ETc (Bốc thoát hơi nước):</strong> Lượng nước bốc hơi qua đất và thoát hơi qua mặt lá, tính toán từ nhiệt độ, bức xạ mặt trời, độ ẩm và tốc độ gió của vệ tinh NASA POWER theo tiêu chuẩn FAO-56 Penman-Monteith.</li>
+                        <li><strong>Nước làm đất & thấm ở lúa:</strong> Khác với cây cạn, lúa nước cần thêm lượng nước làm đất, duy trì lớp nước mặt ruộng và tổn thất thấm (FAO Training Manual 3 xác định 720 mm cho vụ 105 ngày đất bùn pha).</li>
+                        <li><strong>Chỉ số NDVI:</strong> Đo độ xanh và sức khỏe diệp lục từ vệ tinh MODIS (từ −1 đến +1). Thảm cây phát triển mạnh thường đạt từ 0,6 đến 0,85.</li>
                     </ul>
                 </div>
             </div>
         </section>
     </main>
 
+    <!-- FOOTER CHÂN TRANG -->
     <footer>
-        <p>Công cụ giúp nhìn ra xu hướng và khả năng, không thay thế kinh nghiệm của nông dân và chuyên gia nông nghiệp địa phương.</p>
-        <p class="muted">NASA International Space Apps Challenge 2026 · Field Shift · Đội AI20K</p>
+        <p>AERO-AGRI cung cấp thông tin khí hậu vệ tinh định lượng, hỗ trợ cán bộ khuyến nông và nông dân ra quyết định thích ứng, không thay thế khuyến cáo thực địa của cơ quan chuyên ngành.</p>
+        <p class="muted">NASA International Space Apps Challenge · Field Shift Challenge · Đội ngũ phát triển AI20K</p>
     </footer>
 
     <script src="vendor/chartjs/chart.umd.js"></script>
