@@ -27,6 +27,7 @@
 ```text
 aero-agri/
 ├── README.md                     # Tài liệu tổng quan, hướng dẫn chạy & giả định kỹ thuật (Tiếng Việt)
+├── DESIGN.md                     # Đặc tả hệ thống thiết kế giao diện theo chuẩn google-labs-code/design.md (bắt buộc đọc trước khi sửa web/)
 ├── LICENSE                       # Giấy phép nguồn mở Apache License 2.0
 ├── MORNING_REPORT.md             # Báo cáo kiểm toán số liệu, kết quả test và lịch sử các vòng sửa (Task 0–6, Vòng 3, Prep 6, Fix 6)
 ├── docs/
@@ -67,6 +68,7 @@ aero-agri/
 | Tài liệu | Mục đích | Ngôn ngữ |
 |---|---|---|
 | [`README.md`](README.md) | Hướng dẫn cài đặt, vận hành, cấu trúc thư mục và các giả định kỹ thuật cốt lõi. | Tiếng Việt |
+| [`DESIGN.md`](DESIGN.md) | Quy chuẩn thiết kế giao diện theo đặc tả `google-labs-code/design.md` (Swiss Editorial Agro-Climate, luật chống AI Slop, token màu & 28 DOM invariants). Bắt buộc đọc trước khi sửa `web/`. | Tiếng Việt / YAML |
 | [`docs/SUBMISSION_NOTES.md`](docs/SUBMISSION_NOTES.md) | Tài liệu kỹ thuật phục vụ chấm thi NASA Space Apps (bảng sản phẩm NASA, công thức toán học, trích dẫn khoa học, phiên bản thư viện, các giới hạn mô hình). | Tiếng Anh |
 | [`MORNING_REPORT.md`](MORNING_REPORT.md) | Nhật ký kỹ thuật chi tiết các bản vá (Task 0–6, Vòng 3 Fix 0–5, Prep 6 Bước 0–3), bảng kiểm tra tính nhất quán trên dữ liệu thật và danh sách quyết định mở. | Tiếng Việt |
 | [`LICENSE`](LICENSE) | Giấy phép mã nguồn mở Apache License, Version 2.0. | Tiếng Anh |
