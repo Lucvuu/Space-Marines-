@@ -648,3 +648,78 @@ web/app.js:468:        const calHtml = (st.calendar || st.calendar_12m || []).ma
  2 files changed, 17 insertions(+), 8 deletions(-)
 ```
 
+
+
+---
+
+## 14. Fix 7 (NDVI theo đúng giai đoạn đã kiểm chứng, ghi rõ tháng được tính nước, đổi ô hỏi đáp thành báo cáo)
+
+### 14.1. Commit Hash của từng bước (Bước 1 → Bước 3 + Report)
+
+| Bước | Commit Hash | Commit Message | Nội dung chính |
+|---|---|---|---|
+| **Bước 1** | `befd8e9` | `rotation: NDVI reference years, water_months per strategy` | Thêm `ndvi_years: [2022, 2024]` và nguồn vào `Ben_Tre_DBSCL` trong `config/rotations.json`; lọc NDVI theo khoảng năm nếu cấu hình có; đặt ngưỡng hiển thị pha `MIN_PHASE_DAYS_FOR_DISPLAY = 15`; thêm cờ `ignore_perennial` khi tính tháng có cây trồng để tránh cây lâu năm chiếm trọn 12 tháng lịch; trả về `water_months`, `water_full_year`, `ndvi_years`, `ndvi_years_source` trong kết quả chiến lược; thêm 3 unit tests (`test_fix7_1_ndvi_monthly_year_filter`, `test_fix7_2_water_months`, `test_fix7_3_ben_tre_ndvi_years`). |
+| **Bước 2** | `59cb280` | `advise: follow scenario sliders, drop emoji` | Endpoint `/api/advise` đọc `delta_temp_c` và `delta_rain_pct` từ request body và truyền vào `evaluate_crop_suitability`; xoá toàn bộ emoji trong `core/advisor.py`. |
+| **Bước 3** | `c582d40` | `web: report button, water-month label, NDVI years` | Thay ô hỏi đáp tự do bằng nút `#btnReport` ("Tạo báo cáo cho vùng này"); hiển thị báo cáo trong `#chatOutput`; reset báo cáo khi đổi vùng hoặc kéo slider kịch bản; hiển thị nhãn nước động `${waterLabel(st)}` (ghi rõ các tháng được tính nước nếu không đủ năm kèm chú thích "các tháng khác chưa tính"); chú thích năm tính NDVI MODIS; cập nhật mô tả file trong `README.md`. |
+| **Kết thúc** | *(commit hiện tại)* | `fix7 report` | Ghi báo cáo mục **14. Fix 7** vào `MORNING_REPORT.md`. |
+
+---
+
+### 14.2. Output `python -m pytest -q`
+
+```text
+...........................................                              [100%]
+============================== warnings summary ===============================
+C:\Users\LucVuu\AppData\Local\Programs\Python\Python313\Lib\site-packages\anyio\pytest_plugin.py:14
+  C:\Users\LucVuu\AppData\Local\Programs\Python\Python313\Lib\site-packages\anyio\pytest_plugin.py:14: PytestRemovedIn10Warning: _pytest.python.CallSpec2 has been renamed to CallSpec.
+  The CallSpec2 alias will be removed in pytest 10.
+  Update imports to use CallSpec instead.
+  See https://docs.pytest.org/en/stable/deprecations.html#callspec2-renamed
+    from _pytest.python import CallSpec2
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+43 passed, 1 warning in 28.70s
+```
+
+---
+
+### 14.3. Output 3 lệnh gọi API ở Bước 4 (kiểm tra trên dữ liệu thật)
+
+#### 1. `POST /api/rotations` (`{"region": "Ben_Tre_DBSCL", "delta_temp_c": 0, "delta_rain_pct": 0}`)
+- `ndvi_years`: `[2022, 2024]`
+- `ndvi_monthly`: `[0.835, 0.617, 0.35, 0.454, 0.452, 0.613, 0.795, 0.737, 0.433, 0.447, 0.403, 0.781]`
+- `annual_deficit_mm`:
+  * `S0`: `1636.2`
+  * `S1`: `680.5`
+  * `S2`: `791.7`
+  * `S3`: `786.6`
+
+#### 2. `POST /api/rotations` (`{"region": "Dak_Lak_Tay_Nguyen", "delta_temp_c": 0, "delta_rain_pct": 0}`)
+- `D0`:
+  * `water_months`: `[1, 2, 3, 4]`
+  * `water_full_year`: `false`
+  * `annual_deficit_mm`: `351.3`
+- `D1`:
+  * `water_months`: `[1, 2, 3, 4]`
+  * `water_full_year`: `false`
+  * `annual_deficit_mm`: `418.5`
+
+#### 3. `POST /api/advise` (`{"region": "Ben_Tre_DBSCL", "delta_temp_c": 2, "delta_rain_pct": -20}`)
+- Chứa `Kịch bản mô phỏng`: **Đúng** (`*Kịch bản mô phỏng:* Nhiệt độ thay đổi `+2.0 °C`, lượng mưa thay đổi `-20%`.`)
+- Chứa emoji (`[\U0001F300-\U0001FAFF\u2600-\u27bf]`): **Không (0 emoji)**
+
+---
+
+### 14.4. Output `git diff --stat` của 3 commit (`befd8e9~1..c582d40`)
+
+```text
+ README.md             |  4 +--
+ config/rotations.json |  2 ++
+ core/advisor.py       |  6 ++--
+ core/rotation.py      | 73 ++++++++++++++++++++++++++++++++++---------
+ server.py             |  5 ++-
+ tests/test_core.py    | 42 +++++++++++++++++++++++++
+ web/app.js            | 85 +++++++++++++++++++--------------------------------
+ web/index.html        | 48 ++++++++---------------------
+ 8 files changed, 154 insertions(+), 111 deletions(-)
+```
