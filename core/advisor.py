@@ -25,7 +25,7 @@ def build_advice(region_id, eval_results, question=""):
     if not eval_results or not eval_results.get("available"):
         err_msg = eval_results.get("error", "chưa có đủ dữ liệu để đánh giá")
         return {
-            "markdown": f"### ⚠️ Chưa thể đưa ra khuyến nghị\n\nLý do: **{err_msg}**.\n\nHướng dẫn: Vui lòng nạp tệp dữ liệu NASA POWER cho vùng vào thư mục `data/raw/power/{region_id}.csv`.",
+            "markdown": f"### Chưa thể đưa ra khuyến nghị\n\nLý do: **{err_msg}**.\n\nHướng dẫn: Vui lòng nạp tệp dữ liệu NASA POWER cho vùng vào thư mục `data/raw/power/{region_id}.csv`.",
             "used_llm": False
         }
 
@@ -47,7 +47,7 @@ DỮ LIỆU JSON ĐÁNH GIÁ:
 
     # 2. Sinh văn bản từ template số liệu chuẩn xác
     # Phần 1: Hiện trạng số liệu
-    synth_banner = "\n> ⚠️ **CẢNH BÁO:** Dữ liệu tính toán dựa trên **DỮ LIỆU MẪU (SYNTHETIC DEMO)**. Cần nạp dữ liệu quan sát thực tế trước khi áp dụng thực địa.\n" if is_synthetic else ""
+    synth_banner = "\n> **CẢNH BÁO:** Dữ liệu tính toán dựa trên **DỮ LIỆU MẪU (SYNTHETIC DEMO)**. Cần nạp dữ liệu quan sát thực tế trước khi áp dụng thực địa.\n" if is_synthetic else ""
 
     sim_note = ""
     d_temp = sim.get("delta_temp_c", 0.0)
@@ -123,7 +123,7 @@ DỮ LIỆU JSON ĐÁNH GIÁ:
         src_lines.append(f"- File `{d.get('file', 'N/A')}`: {d.get('source', 'nguồn chưa khai báo')} (Mẫu: {d.get('is_synthetic', False)})")
     sources_block = "\n".join(src_lines)
 
-    markdown = f"""### 🌾 Báo Cáo Tư Vấn Chuyển Đổi Mùa Vụ AERO-AGRI
+    markdown = f"""### Báo cáo tư vấn chuyển đổi mùa vụ AERO-AGRI
 **Khu vực phân tích:** {reg_name}  
 **Câu hỏi của người dùng:** *"{question if question else 'Đánh giá thích nghi mùa khô'}"*
 {synth_banner}{sim_note}

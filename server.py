@@ -210,8 +210,11 @@ class AeroAgriAPIHandler(SimpleHTTPRequestHandler):
                     self.send_error_json(400, "Thiếu tham số 'region' trong body")
                     return
 
+                d_temp = float(body.get("delta_temp_c", 0.0))
+                d_rain = float(body.get("delta_rain_pct", 0.0))
+
                 question = body.get("question", "")
-                eval_res = evaluate_crop_suitability(reg_id)
+                eval_res = evaluate_crop_suitability(reg_id, delta_temp_c=d_temp, delta_rain_pct=d_rain)
                 advice = build_advice(reg_id, eval_res, question=question)
                 self.send_json(200, advice)
                 return
