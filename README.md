@@ -59,8 +59,8 @@ aero-agri/
 │   └── fixtures/                 # Fixture kiểm thử MODIS subset (modis_subset_sample.json) & mốc regression (regression_baseline.json)
 └── web/
     ├── index.html                # Giao diện bảng điều khiển Tiếng Việt (So sánh chiến lược luân canh + Bảng chi tiết từng cây)
-    ├── style.css                 # Giao diện nền tối, đáp ứng màn hình di động >= 360px
-    ├── app.js                    # Logic bản đồ Leaflet circleMarker, dải 12 tháng luân canh, biểu đồ Chart.js, Simulator & Cố vấn
+    ├── style.css                 # Giao diện nền sáng, chữ to, đáp ứng màn hình điện thoại
+    ├── app.js                    # Tóm tắt so với hiện trạng, lịch 12 tháng từng phương án, biểu đồ Chart.js, kịch bản thời tiết, báo cáo tư vấn
     └── vendor/                   # Thư viện Leaflet 1.9.4 & Chart.js 4.4.1 lưu cục bộ (không phụ thuộc CDN)
 ```
 

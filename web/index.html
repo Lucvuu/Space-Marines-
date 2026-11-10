@@ -26,9 +26,9 @@
             </nav>
 
             <div class="header-actions">
-                <a href="#aiSection" class="top-ask-btn">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    Hỏi Trợ lý AI
+                <a href="#chatOutput" class="top-ask-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    Báo cáo tư vấn
                 </a>
             </div>
         </div>
@@ -94,33 +94,15 @@
             </div>
         </section>
 
-        <!-- 4. AGRO-AI COPILOT: TRUNG TÂM HỎI ĐÁP KHUYẾN NÔNG THÔNG MINH -->
-        <section class="ai-section" id="aiSection">
-            <div class="ai-copilot-card">
-                <div class="ai-copilot-head">
-                    <div class="ai-title-wrap">
-                        <span class="ai-tag-pulse">AI Copilot</span>
-                        <h2 class="card-heading" style="font-size: 16px;">Trợ lý nông nghiệp thích ứng khí hậu</h2>
-                    </div>
-                    <span class="ai-context-indicator" id="aiContextBadge">Đang đọc dữ liệu vệ tinh NASA (2015–2025)</span>
-                </div>
-
-                <!-- Các nút câu hỏi gợi ý nhanh -->
-                <div class="quick-prompts-bar">
-                    <button type="button" class="prompt-btn" data-q="Vụ khô tới tôi có nên tiếp tục gieo sạ lúa không?">Vụ khô tới có nên gieo lúa?</button>
-                    <button type="button" class="prompt-btn" data-q="Nếu chuyển sang trồng đậu tương thì tiết kiệm được bao nhiêu nước?">Đổi sang đậu tương tiết kiệm bao nhiêu nước?</button>
-                    <button type="button" class="prompt-btn" data-q="Cây nào có mức độ rủi ro thấp nhất dưới thời tiết nắng nóng?">Cây nào chịu nóng tốt nhất?</button>
-                </div>
-
-                <!-- Khung nhập câu hỏi dạng Copilot -->
-                <div class="chat-input-wrapper">
-                    <input type="text" id="chatInput" aria-label="Câu hỏi" placeholder="Gõ câu hỏi về nước tưới, thời vụ hoặc rủi ro đồng ruộng...">
-                    <button type="button" id="btnAsk" class="btn-ask-ai">Hỏi AI</button>
-                </div>
-
-                <div class="chat-output-box" id="chatOutput" role="status" aria-live="polite">
-                    Bấm một câu hỏi gợi ý ở trên hoặc bấm nút <em>"Hỏi AI về phương án này"</em> trên từng thẻ để phân tích số liệu chi tiết.
-                </div>
+        <!-- 3. Báo cáo tư vấn -->
+        <section>
+            <div class="section-head">
+                <h2 class="section-title">Báo cáo tư vấn</h2>
+                <p class="section-desc">Báo cáo được ghép từ chính các số liệu trên trang, theo vùng và kịch bản thời tiết đang chọn. Không dùng AI tạo chữ.</p>
+            </div>
+            <div class="card">
+                <button type="button" id="btnReport" class="btn-primary">Tạo báo cáo cho vùng này</button>
+                <div class="chat-output" id="chatOutput" role="status" aria-live="polite">Bấm nút để tạo báo cáo.</div>
             </div>
         </section>
 
@@ -177,12 +159,6 @@
             <div class="card" id="rotationAssumptionsBox"></div>
         </section>
     </main>
-
-    <!-- Nút Floating AI Pill ở góc dưới màn hình -->
-    <button type="button" class="floating-ai-pill" id="floatingAiBtn" title="Mở nhanh khung hỏi đáp Trợ lý AI">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        Hỏi AI
-    </button>
 
     <!-- FOOTER -->
     <footer>

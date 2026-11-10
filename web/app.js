@@ -67,6 +67,16 @@ function show(id, on) { const el = document.getElementById(id); if (el) el.hidde
 function cleanName(name) { return String(name || "").replace(/^Hiện trạng:\s*/, ""); }
 function monthList(ms) { return ms.map(m => `tháng ${m}`).join(", "); }
 
+function monthRange(ms) {
+    const ok = ms.length > 1 && ms.every((m, i) => i === 0 || m === ms[i - 1] + 1);
+    return ok ? `tháng ${ms[0]}–${ms[ms.length - 1]}` : monthList(ms);
+}
+function waterLabel(st) {
+    return st.water_full_year === false && st.water_months && st.water_months.length
+        ? `Nước ngọt phải tưới thêm trong ${monthRange(st.water_months)}`
+        : "Nước ngọt phải tưới thêm mỗi năm";
+}
+
 // ==========================================================================
 // ĐIỀU KHIỂN SỰ KIỆN & THANH TRƯỢT
 // ==========================================================================
@@ -115,29 +125,8 @@ function initControls() {
         });
     });
 
-    // Hỏi đáp Trợ lý AI
-    const btnAsk = document.getElementById("btnAsk");
-    const chatInput = document.getElementById("chatInput");
-    btnAsk.addEventListener("click", () => sendQuestion(chatInput.value.trim()));
-    chatInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") sendQuestion(chatInput.value.trim());
-    });
-
-    document.querySelectorAll(".prompt-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            chatInput.value = btn.dataset.q;
-            sendQuestion(btn.dataset.q);
-        });
-    });
-
-    // Nút Floating AI Pill
-    const floatingBtn = document.getElementById("floatingAiBtn");
-    if (floatingBtn) {
-        floatingBtn.addEventListener("click", () => {
-            document.getElementById("aiSection").scrollIntoView({ behavior: "smooth" });
-            chatInput.focus();
-        });
-    }
+    // Báo cáo tư vấn
+    document.getElementById("btnReport").addEventListener("click", loadReport);
 }
 
 function updateSliderLabels() {
@@ -176,6 +165,7 @@ function scenarioBody() {
 }
 
 function debouncedEvaluate() {
+    resetReport();
     if (simDebounceTimer) clearTimeout(simDebounceTimer);
     simDebounceTimer = setTimeout(() => {
         loadRotations();
@@ -223,6 +213,7 @@ function updateChip(elementId, label, info, unit) {
 }
 
 async function loadRegionData() {
+    resetReport();
     const reg = REGIONS_DATA[currentRegion];
     document.getElementById("heroPlace").textContent = `${reg.name} · ${reg.place}`;
     updateSliderLabels();
@@ -373,7 +364,7 @@ async function loadRotations() {
         }
 
         renderHero(data, strategies);
-        renderHorizontalStrategyCards(data, strategies);
+        renderStrategyCards(data, strategies);
         renderNdviStrip(data);
         renderAssumptionsBox(data);
     } catch (e) {
@@ -404,7 +395,7 @@ function renderHero(data, strategies) {
         <div class="hero-stats-row">
             <div>
                 <div class="hero-stat-num">${m3(base.annual_deficit_mm)} <small>m³/ha</small></div>
-                <div class="hero-stat-lbl">Nước tưới ngọt phải bù mỗi năm</div>
+                <div class="hero-stat-lbl">${waterLabel(base).toLowerCase()}</div>
             </div>
             <div>
                 <div class="hero-stat-num">${bareN} <small>tháng</small></div>
@@ -463,7 +454,7 @@ function renderGanttTimeline(st, salMonths, usedCrops) {
     </div>`;
 }
 
-function renderHorizontalStrategyCards(data, strategies) {
+function renderStrategyCards(data, strategies) {
     const grid = document.getElementById("rotationCardsGrid");
     const base = strategies.find(s => s.is_existing);
     const salMonths = new Set((data.salinity_months || []).map(Number));
@@ -548,7 +539,8 @@ function renderHorizontalStrategyCards(data, strategies) {
                 <div class="rot-metrics-row">
                     <div>
                         <div class="metric-val">${m3(def)} <small>m³/ha</small>${deltaTxt}</div>
-                        <div class="metric-lbl">Nước ngọt bù/năm${st.partial ? " *" : ""}</div>
+                        <div class="metric-lbl">${waterLabel(st)}</div>
+                        <div class="muted" style="font-size:11px; margin-top:2px;">${fmt(def)} mm${st.partial ? " · * chưa tính giai đoạn nuôi tôm" : ""}${st.water_full_year === false ? " · các tháng khác chưa tính" : ""}</div>
                     </div>
                     <div>
                         <div class="metric-val">${bareN} <small>tháng</small></div>
@@ -572,7 +564,6 @@ function renderHorizontalStrategyCards(data, strategies) {
                         ${st.partial ? `<div style="margin-top:6px; color:#0369a1;">* Chưa tính giai đoạn nuôi tôm trong tổng nước ngọt.</div>` : ""}
                     </div>
                 </details>
-                <button type="button" class="ask-card-btn" data-crop="${cleanName(st.name_vi)}">Hỏi AI về phương án này →</button>
             </div>
         </article>`;
     }).join("");
@@ -583,18 +574,6 @@ function renderHorizontalStrategyCards(data, strategies) {
     items.push(`<span class="legend-item"><span class="swatch" style="background:var(--c-bare);"></span>Đất trống</span>`);
     if (salMonths.size) items.push(`<span class="legend-item"><span style="color:var(--sal); font-weight:700;">—</span>Tháng nước mặn</span>`);
     document.getElementById("rotationLegend").innerHTML = items.join("");
-
-    // Gắn sự kiện "Hỏi AI về phương án này"
-    document.querySelectorAll(".ask-card-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const cropName = btn.dataset.crop;
-            const chatInput = document.getElementById("chatInput");
-            const q = `Phân tích chi tiết lượng nước tưới, thời vụ và rủi ro nếu chuyển sang phương án: ${cropName}?`;
-            chatInput.value = q;
-            document.getElementById("aiSection").scrollIntoView({ behavior: "smooth" });
-            sendQuestion(q);
-        });
-    });
 }
 
 function renderNdviStrip(data) {
@@ -615,13 +594,15 @@ function renderNdviStrip(data) {
     }
     el.innerHTML = html;
     const p = REGIONS_DATA[currentRegion].ndvi_point;
+    const yrs = data.ndvi_years ? `${data.ndvi_years[0]}–${data.ndvi_years[1]}` : "nhiều năm";
     document.getElementById("ndviNote").textContent =
-        `Chỉ số NDVI từ vệ tinh MODIS MOD13Q1 (${p.lat}, ${p.lon}), chuỗi quan sát 2015–2025. Càng đậm là tán cây phủ càng dày.`;
+        `Chỉ số NDVI từ vệ tinh MODIS tại điểm (${p.lat}, ${p.lon}), trung bình ${yrs}. Ô càng đậm là càng nhiều cây xanh; ô nhạt là ruộng trống hoặc ngập nước.`;
 }
 
 function renderAssumptionsBox(data) {
     const items = (data.assumptions || []).map(a => `<li>${a}</li>`);
     if (data.salinity_months_source) items.push(`<li><strong>Nguồn tháng mặn:</strong> ${data.salinity_months_source}</li>`);
+    if (data.ndvi_years_source) items.push(`<li><strong>Năm dùng cho NDVI:</strong> ${data.ndvi_years_source}</li>`);
     if (data.display_rule) items.push(`<li><strong>Cách hiển thị lịch:</strong> ${data.display_rule}</li>`);
     document.getElementById("rotationAssumptionsBox").innerHTML =
         `<h3 class="card-heading" style="font-size:14.5px; margin-bottom:6px;">Giả định mô hình thủy văn & ranh giới dữ liệu</h3><ul class="muted" style="margin:0; padding-left:18px; font-size:13px; line-height:1.5;">${items.join("")}</ul>`;
@@ -678,23 +659,19 @@ async function evaluateCrops() {
 // ==========================================================================
 // HỎI ĐÁP AGRO-AI COPILOT (DETERMINISTIC ADVOCACY)
 // ==========================================================================
-async function sendQuestion(question) {
-    if (!question) return;
+function resetReport() {
+    document.getElementById("chatOutput").textContent = "Bấm nút để tạo báo cáo.";
+}
+
+async function loadReport() {
     const outputEl = document.getElementById("chatOutput");
-    outputEl.innerHTML = "<em>Trợ lý AI đang đối chiếu dữ liệu vệ tinh NASA và tính toán...</em>";
+    outputEl.innerHTML = "<em>Đang tính...</em>";
     try {
-        const res = await fetch("/api/advise", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ region: currentRegion, question })
-        });
-        if (!res.ok) {
-            outputEl.innerHTML = `<span style="color:var(--bad);">Không thể lấy câu trả lời (Mã lỗi HTTP ${res.status}).</span>`;
-            return;
-        }
+        const res = await fetch("/api/advise", { method: "POST", headers: { "Content-Type": "application/json" }, body: scenarioBody() });
+        if (!res.ok) { outputEl.innerHTML = `<span class="txt-bad">Không tạo được báo cáo (mã ${res.status}).</span>`; return; }
         outputEl.innerHTML = renderSimpleMarkdown((await res.json()).markdown);
     } catch (e) {
-        outputEl.innerHTML = `<span style="color:var(--bad);">Lỗi kết nối máy chủ: ${e.message}</span>`;
+        outputEl.innerHTML = `<span class="txt-bad">Không kết nối được máy chủ: ${e.message}</span>`;
     }
 }
 
