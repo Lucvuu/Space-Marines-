@@ -3,6 +3,8 @@
   "Ben_Tre_DBSCL": {
     "salinity_months": [2, 3, 4],
     "salinity_months_source": "Vĩnh Long (gồm Bến Tre cũ): 'Tập trung cảnh giác từ tháng 2/2027 - 4/2027' (Khuyến nông QG, sổ tay hạn mặn mùa khô 2026–2027, tr.50).",
+    "ndvi_years": [2022, 2024],
+    "ndvi_years_source": "Giai đoạn đã kiểm chứng lịch 2 vụ lúa: NDVI MODIS MOD13Q1 2022–2024 tại điểm 10.0992, 106.6040 và Báo Nông nghiệp Việt Nam 22/02/2024 ('chỉ làm 2 vụ lúa trong năm', 'không gieo sạ vụ thu đông 2023').",
     "assumptions": [
       "Ngày gieo là ngày đại diện (Hè Thu 25/5, Đông Xuân 1/11); thực tế dao động theo năm.",
       "Nước thêm cho lúa theo FAO Training Manual 3 (1986), mục 4.4: bão hòa đất 200 mm + lớp nước 100 mm + thấm 4 mm/ngày (mức đất sét nặng). Loại đất tại Ba Tri là giả định, chưa kiểm chứng. Phần nước này chiếm phần lớn nhu cầu nước của lúa.",

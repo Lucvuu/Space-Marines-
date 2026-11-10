@@ -911,6 +911,48 @@ class TestAeroAgriFix6(unittest.TestCase):
                     lower_bound = max(ph["etc_mm"] + ph["assumed_extra_mm"] - ph["peff_mm"], 0.0) - 0.2
                     self.assertGreaterEqual(ph["deficit_mm"], lower_bound)
 
+    def test_fix7_1_ndvi_monthly_year_filter(self):
+        """Fix 7: _ndvi_monthly lọc đúng năm và trả used_years."""
+        import pandas as pd
+        from core.rotation import _ndvi_monthly
+        df = pd.DataFrame({
+            "date": pd.to_datetime(["2015-10-01", "2023-10-01", "2023-03-01"]),
+            "ndvi": [0.9, 0.4, 0.3],
+        })
+        m, yrs = _ndvi_monthly(df, [2022, 2024])
+        self.assertAlmostEqual(m[9], 0.4, places=3)
+        self.assertAlmostEqual(m[2], 0.3, places=3)
+        self.assertIsNone(m[0])
+        self.assertEqual(yrs, [2023, 2023])
+        m_all, yrs_all = _ndvi_monthly(df, None)
+        self.assertAlmostEqual(m_all[9], 0.65, places=3)
+        self.assertEqual(yrs_all, [2015, 2023])
+
+    def test_fix7_2_water_months(self):
+        """Fix 7: D0 chỉ tính nước tháng 1–4; S0 tính đủ các tháng có lúa."""
+        from core.rotation import evaluate_rotations
+        dl = evaluate_rotations("Dak_Lak_Tay_Nguyen", 0.0, 0.0)
+        bt = evaluate_rotations("Ben_Tre_DBSCL", 0.0, 0.0)
+        if not dl.get("available") or not bt.get("available"):
+            self.skipTest("Thiếu dữ liệu POWER")
+        d0 = next(s for s in dl["strategies"] if s["id"] == "D0")
+        self.assertEqual(d0["water_months"], [1, 2, 3, 4])
+        self.assertFalse(d0["water_full_year"])
+        s0 = next(s for s in bt["strategies"] if s["id"] == "S0")
+        self.assertEqual(s0["water_months"], [1, 6, 7, 8, 11, 12])
+        self.assertTrue(s0["water_full_year"])
+
+    def test_fix7_3_ben_tre_ndvi_years(self):
+        """Fix 7: Bến Tre dùng NDVI 2022–2024 theo config; Đắk Lắk dùng mọi năm."""
+        from core.rotation import evaluate_rotations
+        bt = evaluate_rotations("Ben_Tre_DBSCL", 0.0, 0.0)
+        dl = evaluate_rotations("Dak_Lak_Tay_Nguyen", 0.0, 0.0)
+        if not bt.get("available") or bt.get("ndvi_monthly") is None:
+            self.skipTest("Thiếu dữ liệu NDVI")
+        self.assertEqual(bt["ndvi_years"], [2022, 2024])
+        self.assertTrue(bt["ndvi_years_source"])
+        self.assertLess(dl["ndvi_years"][0], 2022)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

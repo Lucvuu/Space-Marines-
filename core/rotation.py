@@ -20,11 +20,14 @@ from core.water_balance import (
 )
 
 
-def _count_phase_days_per_month(phase, reg_info, crops_cfg):
+MIN_PHASE_DAYS_FOR_DISPLAY = 15
+
+
+def _count_phase_days_per_month(phase, reg_info, crops_cfg, ignore_perennial=False):
     """
     Tính số ngày thuộc pha trong từng tháng (1..12) trên năm tham chiếu 2025 (có vắt năm).
-    - Cây lâu năm (perennial=true): cả 12 tháng đều có cây (>= 28 ngày/tháng).
-    - Cây hằng năm: tính từ start_date (2025 + start) kéo dài season_days ngày.
+    - Cây lâu năm (perennial=true): cả 12 tháng đều có cây (>= 28 ngày/tháng) trừ khi ignore_perennial=True.
+    - Cây hằng năm hoặc ignore_perennial=True: tính từ start_date kéo dài season_days ngày.
     - Pha không có crop (ví dụ tôm sú): tính từ start đến end trong config.
     """
     counts = {m: 0 for m in range(1, 13)}
@@ -34,7 +37,7 @@ def _count_phase_days_per_month(phase, reg_info, crops_cfg):
         if crop_id not in crops_cfg:
             return counts
         c_info = crops_cfg[crop_id]
-        if c_info.get("perennial", False):
+        if not ignore_perennial and c_info.get("perennial", False):
             for m in range(1, 13):
                 counts[m] = 30
             return counts
@@ -63,6 +66,30 @@ def _count_phase_days_per_month(phase, reg_info, crops_cfg):
     return counts
 
 
+def _ndvi_monthly(ndvi_df, years=None):
+    """
+    Tính trung bình NDVI 12 tháng, tùy chọn lọc theo khoảng năm [y0, y1].
+    Trả về (monthly, used_years).
+    """
+    if ndvi_df is None or len(ndvi_df) == 0 or "ndvi" not in ndvi_df.columns:
+        return None, None
+    ndvi_work = ndvi_df.copy()
+    if not pd.api.types.is_datetime64_any_dtype(ndvi_work["date"]):
+        ndvi_work["date"] = pd.to_datetime(ndvi_work["date"])
+    if years is not None and len(years) == 2:
+        y0, y1 = years
+        ndvi_work = ndvi_work[(ndvi_work["date"].dt.year >= y0) & (ndvi_work["date"].dt.year <= y1)]
+    if len(ndvi_work) == 0:
+        return [None] * 12, None
+    used_years = [int(ndvi_work["date"].dt.year.min()), int(ndvi_work["date"].dt.year.max())]
+    m_grp = ndvi_work.groupby(ndvi_work["date"].dt.month)["ndvi"].mean().to_dict()
+    monthly = [
+        round(float(m_grp[m]), 3) if m in m_grp and pd.notna(m_grp[m]) else None
+        for m in range(1, 13)
+    ]
+    return monthly, used_years
+
+
 def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
     """
     Đánh giá các chiến lược luân canh cả năm cho vùng `region_id`.
@@ -88,16 +115,7 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
 
     # Tính trung bình NDVI theo 12 tháng (nếu có file NDVI)
     ndvi_df, ndvi_meta = load_csv("ndvi", region_id)
-    ndvi_monthly = None
-    if ndvi_df is not None and len(ndvi_df) > 0 and "ndvi" in ndvi_df.columns:
-        ndvi_work = ndvi_df.copy()
-        if not pd.api.types.is_datetime64_any_dtype(ndvi_work["date"]):
-            ndvi_work["date"] = pd.to_datetime(ndvi_work["date"])
-        m_grp = ndvi_work.groupby(ndvi_work["date"].dt.month)["ndvi"].mean().to_dict()
-        ndvi_monthly = [
-            round(float(m_grp[m]), 3) if m in m_grp and pd.notna(m_grp[m]) else None
-            for m in range(1, 13)
-        ]
+    ndvi_monthly, ndvi_years = _ndvi_monthly(ndvi_df, reg_rot.get("ndvi_years"))
 
     salinity_months = reg_rot.get("salinity_months", [])
     salinity_set = set(int(m) for m in salinity_months)
@@ -193,7 +211,7 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
             best_days = 0
             for ph_cfg, m_counts in phase_month_counts:
                 d_cnt = m_counts.get(m, 0)
-                if d_cnt >= 15 and d_cnt > best_days:
+                if d_cnt >= MIN_PHASE_DAYS_FOR_DISPLAY and d_cnt > best_days:
                     active_ph = ph_cfg
                     best_days = d_cnt
 
@@ -224,12 +242,35 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
                 "heat_ratio": month_heat_ratio
             })
 
+        # Đếm ngày cho các pha có mô hình với ignore_perennial=True để xác định water_months
+        water_month_days = {m: 0 for m in range(1, 13)}
+        modeled_labels = set()
+        for p in phases_out:
+            if p["modeled"]:
+                modeled_labels.add(p["label"])
+
+        for ph in strat.get("phases", []):
+            if ph.get("crop") is not None and ph.get("modeled", True):
+                w_counts = _count_phase_days_per_month(ph, reg_info, crops_cfg, ignore_perennial=True)
+                for m in range(1, 13):
+                    water_month_days[m] += w_counts.get(m, 0)
+
+        water_months = [m for m in range(1, 13) if water_month_days[m] >= MIN_PHASE_DAYS_FOR_DISPLAY]
+
+        calendar_modeled_months = [
+            c["month"] for c in calendar_12m
+            if not c["bare"] and c.get("phase_label") in modeled_labels
+        ]
+        water_full_year = (set(water_months) == set(calendar_modeled_months))
+
         strategies_out.append({
             "id": strat.get("id"),
             "is_existing": bool(strat.get("is_existing", False)),
             "name_vi": strat.get("name_vi", ""),
             "phases": phases_out,
             "annual_deficit_mm": annual_deficit_mm,
+            "water_months": water_months,
+            "water_full_year": water_full_year,
             "partial": partial,
             "bare_months": bare_months,
             "calendar": calendar_12m,
@@ -254,5 +295,7 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
         "salinity_months_source": reg_rot.get("salinity_months_source", ""),
         "assumptions": reg_rot.get("assumptions", []),
         "ndvi_monthly": ndvi_monthly,
+        "ndvi_years": ndvi_years,
+        "ndvi_years_source": reg_rot.get("ndvi_years_source"),
         "strategies": strategies_out
     }
