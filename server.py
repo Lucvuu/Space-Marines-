@@ -116,6 +116,13 @@ class AeroAgriAPIHandler(SimpleHTTPRequestHandler):
                     "ETo_mm": "sum"
                 }).reset_index()
 
+                monthly["m"] = monthly["year_month"].str[5:7].astype(int)
+                clim = monthly.groupby("m")[["PRECTOTCORR", "ETo_mm"]].mean()
+                climatology = [
+                    {"month": int(m), "rain_mm": round(float(r["PRECTOTCORR"]), 1), "eto_mm": round(float(r["ETo_mm"]), 1)}
+                    for m, r in clim.iterrows()
+                ]
+
                 records = []
                 for _, row in monthly.iterrows():
                     ym = row["year_month"]
@@ -133,6 +140,7 @@ class AeroAgriAPIHandler(SimpleHTTPRequestHandler):
                     "region": reg_id,
                     "months_count": len(records),
                     "monthly_series": records,
+                    "climatology": climatology,
                     "ndvi_point": reg_info.get("ndvi_point"),
                     "is_synthetic": power_meta.get("is_synthetic", False)
                 })

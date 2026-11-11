@@ -1046,7 +1046,32 @@ class TestAeroAgriFix6(unittest.TestCase):
         for st in dl["strategies"]:
             self.assertEqual(st["annual_deficit_low_mm"], st["annual_deficit_mm"])
 
-
+    def test_fix10_1_climatology_12_thang(self):
+        """Fix 10: /api/climate trả mưa và ETo trung bình 12 tháng."""
+        import threading
+        import urllib.request
+        from http.server import HTTPServer
+        from server import AeroAgriAPIHandler
+        from core.loaders import load_csv
+        df, _ = load_csv("power", "Ben_Tre_DBSCL")
+        if df is None:
+            self.skipTest("Thiếu dữ liệu POWER")
+        httpd = HTTPServer(("127.0.0.1", 0), AeroAgriAPIHandler)
+        port = httpd.server_address[1]
+        threading.Thread(target=httpd.serve_forever, daemon=True).start()
+        try:
+            url = f"http://127.0.0.1:{port}/api/climate?region=Ben_Tre_DBSCL"
+            with urllib.request.urlopen(url, timeout=10) as resp:
+                body = json.loads(resp.read().decode("utf-8"))
+        finally:
+            httpd.shutdown()
+            httpd.server_close()
+        clim = body["climatology"]
+        self.assertEqual([c["month"] for c in clim], list(range(1, 13)))
+        self.assertTrue(all(c["rain_mm"] >= 0 and c["eto_mm"] > 0 for c in clim))
+        dry = sum(c["rain_mm"] for c in clim if c["month"] in (1, 2, 3))
+        wet = sum(c["rain_mm"] for c in clim if c["month"] in (8, 9, 10))
+        self.assertLess(dry, wet)
 
 
 if __name__ == "__main__":
