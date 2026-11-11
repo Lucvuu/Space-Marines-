@@ -906,3 +906,67 @@ C:\Users\LucVuu\AppData\Local\Programs\Python\Python313\Lib\site-packages\anyio\
  web/app.js                              |  9 +++--
  10 files changed, 194 insertions(+), 67 deletions(-)
 ```
+
+---
+
+## 17. Fix 10 (So sánh nhanh bằng thanh nước, biểu đồ khí hậu 12 tháng, màu thảm cỏ cà phê, tối ưu di động)
+
+### 17.1. Commit Hash của từng bước
+
+| Bước | Commit Hash | Commit Message | Nội dung chính |
+|---|---|---|---|
+| **Bước 1** | `fa77fc4` | `climate api: 12-month climatology` | `/api/climate` trong `server.py` tính và trả thêm trường `climatology` gồm 12 tháng trung bình (mưa và ETo); thêm test `test_fix10_1_climatology_12_thang` trong `tests/test_core.py`. |
+| **Bước 2–5** | `af2886b` | `web: quick comparison bars, 12-month climate chart, cover-crop colour, mobile layout` | `web/index.html` bổ sung thẻ `#compareBars` và cập nhật tiêu đề biểu đồ; `web/app.js` bổ sung hàm `renderCompareBars`, `monthSpans`, cập nhật `cleanName`, hero risk badge, ẩn chữ ô cây 1 tháng trên lịch, vẽ biểu đồ 12 tháng trung bình; `web/style.css` thêm styles thanh so sánh và responsive cho màn hình <=640px; chụp 3 ảnh màn hình giao diện. |
+| **Kết thúc** | *(commit hiện tại)* | `fix10 report` | Cập nhật báo cáo Fix 10 vào `MORNING_REPORT.md`. |
+
+---
+
+### 17.2. Output Pytest
+
+```text
+...................................................                      [100%]
+============================== warnings summary ===============================
+C:\Users\LucVuu\AppData\Local\Programs\Python\Python313\Lib\site-packages\anyio\pytest_plugin.py:14
+  C:\Users\LucVuu\AppData\Local\Programs\Python\Python313\Lib\site-packages\anyio\pytest_plugin.py:14: PytestRemovedIn10Warning: _pytest.python.CallSpec2 has been renamed to CallSpec.
+  The CallSpec2 alias will be removed in pytest 10.
+  Update imports to use CallSpec instead.
+  See https://docs.pytest.org/en/stable/deprecations.html#callspec2-renamed
+    from _pytest.python import CallSpec2
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+51 passed, 1 warning in 13.20s
+```
+
+---
+
+### 17.3. Đường dẫn 3 ảnh chụp màn hình & Đối chiếu kiểm tra Bước 5.5
+
+- `docs/screens/fix10_bentre.png`:
+  * Khối so sánh nằm trên 4 thẻ, có 4 dòng; mỗi thanh có phần đậm (thấm 2 mm/d) và phần nhạt (thấm 4 mm/d); có dòng chú giải dưới cùng: **ĐẠT**.
+- `docs/screens/fix10_daklak.png`:
+  * Khối so sánh có 2 dòng, không có dòng chú giải (vì không có khoảng thấm cà phê); tên viết hoa chữ đầu ("Cà phê vối đất trần"); thanh lịch "Cà phê + thảm cỏ" màu xanh lá, chữ trắng đọc rõ ràng: **ĐẠT**.
+  * Biểu đồ khí hậu có trục T1–T12; hàng NDVI ô T1 không phải "–" (Bến Tre là 0,83; Đắk Lắk là 0,76): **ĐẠT**.
+- `docs/screens/fix10_mobile.png`:
+  * Không có chữ hay thanh nào bị cắt ở mép phải khung 375 px; 2 nút vùng nằm chung 1 hàng dưới logo; "Như hiện nay" nằm trên 1 dòng; hàng NDVI chia 2 hàng, mỗi hàng 6 ô: **ĐẠT**.
+
+---
+
+### 17.4. Số dòng của `web/style.css`
+
+- Số dòng hiện tại: **221 dòng** (tuân thủ giới hạn dưới 500 dòng).
+
+---
+
+### 17.5. Output `git diff --stat` của các commit Fix 10 (`e0aed45..HEAD`)
+
+```text
+ docs/screens/fix10_bentre.png | Bin 0 -> 290734 bytes
+ docs/screens/fix10_daklak.png | Bin 0 -> 168628 bytes
+ docs/screens/fix10_mobile.png | Bin 0 -> 203185 bytes
+ server.py                     |   8 +++
+ tests/test_core.py            |  27 +++++++-
+ web/app.js                    | 142 ++++++++++++++++++------------------------
+ web/index.html                |   3 +-
+ web/style.css                 |  43 +++++++++++++
+ 8 files changed, 141 insertions(+), 82 deletions(-)
+```
