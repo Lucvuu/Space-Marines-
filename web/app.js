@@ -6,6 +6,8 @@ let currentRegion = "Ben_Tre_DBSCL";
 let latestRegionStatus = {};
 let simDebounceTimer = null;
 let baselineDeficits = {}; // Lưu trữ deficit cơ sở (0°C, 0%) để tính delta
+let selectedStrategy = null;
+let selectedStrategyName = "";
 
 // Thông tin vùng trọng điểm và tọa độ điểm ảnh vệ tinh MODIS NDVI
 const REGIONS_DATA = {
@@ -96,6 +98,8 @@ function initControls() {
     document.querySelectorAll(".region-tab").forEach(btn => {
         btn.addEventListener("click", () => {
             currentRegion = btn.dataset.region;
+            selectedStrategy = null;
+            selectedStrategyName = "";
             document.querySelectorAll(".region-tab").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
             baselineDeficits = {};
             loadRegionData();
@@ -137,7 +141,19 @@ function initControls() {
     });
 
     // Báo cáo tư vấn
-    document.getElementById("btnReport").addEventListener("click", loadReport);
+    document.getElementById("btnReport").addEventListener("click", () => {
+        selectedStrategy = null;
+        selectedStrategyName = "";
+        loadReport();
+    });
+    document.getElementById("rotationCardsGrid").addEventListener("click", e => {
+        const b = e.target.closest(".card-report-btn");
+        if (!b) return;
+        selectedStrategy = b.dataset.strategy;
+        selectedStrategyName = b.dataset.name;
+        document.getElementById("reportSection").scrollIntoView({ behavior: "smooth" });
+        loadReport();
+    });
 }
 
 function updateSliderLabels() {
@@ -147,6 +163,7 @@ function updateSliderLabels() {
         t === 0 ? "Như hiện nay" : (t > 0 ? `+${fmt(t, 1)} °C` : `${fmt(t, 1)} °C`);
     document.getElementById("valRain").textContent =
         r === 0 ? "Như hiện nay" : (r > 0 ? `+${r}%` : `${r}%`);
+    updateReportContext();
 }
 
 function syncPresetChipState() {
@@ -346,6 +363,32 @@ function renderCompareBars(strategies) {
     el.innerHTML = rows + legend;
 }
 
+function heroInsight(strategies) {
+    const base = strategies.find(s => s.is_existing);
+    if (!base || !isNum(base.annual_deficit_mm)) return "";
+    const t = parseFloat(document.getElementById("sliderTemp").value);
+    const r = parseInt(document.getElementById("sliderRain").value, 10);
+    const parts = [];
+    const b0 = baselineDeficits[base.id];
+    if ((t !== 0 || r !== 0) && isNum(b0)) {
+        const d = Math.round((base.annual_deficit_mm - b0) * 10);
+        const w = `${t > 0 ? "+" : ""}${fmt(t, 1)} °C, mưa ${r > 0 ? "+" : ""}${r}%`;
+        parts.push(d >= 0
+            ? `Với thời tiết ${w}, cách làm hiện tại cần thêm <b>${fmt(d)} m³/ha</b> nước ngọt so với khí hậu 2015–2025.`
+            : `Với thời tiết ${w}, cách làm hiện tại cần ít hơn <b>${fmt(-d)} m³/ha</b> nước ngọt so với khí hậu 2015–2025.`);
+    }
+    const alts = strategies.filter(s => !s.is_existing && !s.partial && isNum(s.annual_deficit_mm))
+        .sort((a, b) => a.annual_deficit_mm - b.annual_deficit_mm);
+    const best = alts[0];
+    if (best && best.annual_deficit_mm < base.annual_deficit_mm) {
+        const saved = Math.round((base.annual_deficit_mm - best.annual_deficit_mm) * 10);
+        parts.push(`Phương án ít nước ngọt nhất theo mô hình: <b>${cleanName(best.name_vi)}</b>, ít hơn hiện tại <b>${fmt(saved)} m³/ha</b>. Mô hình chưa tính chi phí, công lao động và đầu ra.`);
+    } else if (alts.length) {
+        parts.push("Theo mô hình, không phương án nào dùng ít nước ngọt hơn cách làm hiện tại. Xem từng thẻ để so các lợi ích khác, như che phủ đất.");
+    }
+    return parts.length ? `<p class="hero-insight">${parts.join(" ")}</p>` : "";
+}
+
 function renderHero(data, strategies) {
     const base = strategies.find(s => s.is_existing);
     const titleEl = document.getElementById("heroTitle");
@@ -379,7 +422,7 @@ function renderHero(data, strategies) {
                 <div class="hero-risk ${sal.length ? "sal" : "dry"}">${riskSeasonTxt}</div>
                 <div class="hero-stat-lbl">Cửa sổ thời tiết rủi ro cao</div>
             </div>
-        </div>`;
+        </div>` + heroInsight(strategies);
 }
 
 // Gantt Timeline 12 Tháng
@@ -536,6 +579,7 @@ function renderStrategyCards(data, strategies) {
                         ${st.partial ? `<div style="margin-top:6px; color:#0369a1;">* Chưa tính giai đoạn nuôi tôm trong tổng nước ngọt.</div>` : ""}
                     </div>
                 </details>
+                <button type="button" class="card-report-btn" data-strategy="${st.id}" data-name="${cleanName(st.name_vi)}">Xem báo cáo cho phương án này →</button>
             </div>
         </article>`;
     }).join("");
@@ -638,11 +682,25 @@ function resetReport() {
     document.getElementById("chatOutput").textContent = "Bấm nút để tạo báo cáo.";
 }
 
+function updateReportContext() {
+    const el = document.getElementById("reportContext");
+    if (!el) return;
+    const t = parseFloat(document.getElementById("sliderTemp").value);
+    const r = parseInt(document.getElementById("sliderRain").value, 10);
+    const w = (t === 0 && r === 0) ? "như trung bình 2015–2025" : `${t > 0 ? "+" : ""}${fmt(t, 1)} °C, mưa ${r > 0 ? "+" : ""}${r}%`;
+    el.textContent = `Đang xem: ${REGIONS_DATA[currentRegion].name} · Thời tiết: ${w}${selectedStrategyName ? ` · Phương án: ${selectedStrategyName}` : ""}`;
+}
+
 async function loadReport() {
+    updateReportContext();
     const outputEl = document.getElementById("chatOutput");
     outputEl.innerHTML = "<em>Đang tính...</em>";
     try {
-        const res = await fetch("/api/advise", { method: "POST", headers: { "Content-Type": "application/json" }, body: scenarioBody() });
+        const res = await fetch("/api/advise", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...JSON.parse(scenarioBody()), strategy_id: selectedStrategy })
+        });
         if (!res.ok) { outputEl.innerHTML = `<span class="txt-bad">Không tạo được báo cáo (mã ${res.status}).</span>`; return; }
         outputEl.innerHTML = renderSimpleMarkdown((await res.json()).markdown);
     } catch (e) {

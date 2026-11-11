@@ -1073,6 +1073,39 @@ class TestAeroAgriFix6(unittest.TestCase):
         wet = sum(c["rain_mm"] for c in clim if c["month"] in (8, 9, 10))
         self.assertLess(dry, wet)
 
+    def test_fix11_1_bao_cao_theo_phuong_an_dang_xem(self):
+        """Fix 11: strategy_id đưa phương án đó lên đầu mục 3, kèm rủi ro."""
+        from core.scoring import evaluate_crop_suitability
+        from core.rotation import evaluate_rotations
+        from core.advisor import build_advice
+        ev = evaluate_crop_suitability("Ben_Tre_DBSCL", 0.0, 0.0)
+        rot = evaluate_rotations("Ben_Tre_DBSCL", 0.0, 0.0)
+        if not ev.get("available") or not rot.get("available"):
+            self.skipTest("Thiếu dữ liệu POWER")
+        s = {x["id"]: x for x in rot["strategies"]}
+        md = build_advice("Ben_Tre_DBSCL", ev, rotations=rot, strategy_id="S3")["markdown"]
+        self.assertIn("Phương án đang xem: **" + s["S3"]["name_vi"] + "**", md)
+        self.assertIn("Ngô rất nhạy mặn", md)
+        sec3 = md.split("3. Việc nên làm trước vụ tới", 1)[1]
+        self.assertLess(sec3.index("- **" + s["S3"]["name_vi"]), sec3.index("- **" + s["S2"]["name_vi"]))
+        md0 = build_advice("Ben_Tre_DBSCL", ev, rotations=rot)["markdown"]
+        self.assertNotIn("Phương án đang xem", md0)
+        for bad in ("mất trắng", "mất mùa", "năng suất"):
+            self.assertNotIn(bad, md.lower())
+
+    def test_fix11_2_trang_co_4_buoc(self):
+        """Fix 11: trang có 4 bước, 4 nút dẫn đường, đúng 1 thẻ h1, không còn tên kịch bản không nguồn."""
+        with open(os.path.join(AERO_ROOT, "web", "index.html"), encoding="utf-8") as fh:
+            html = fh.read()
+        for i in range(1, 5):
+            self.assertIn(f"Bước {i}", html)
+        for anchor in ('href="#step1"', 'href="#rotationsSection"', 'href="#reportSection"', 'href="#techSection"'):
+            self.assertIn(anchor, html)
+        self.assertIn('id="reportSection"', html)
+        self.assertEqual(html.count("<h1"), 1)
+        for bad in ("El Niño", "Cực đoan", "AI Copilot", "Trợ lý AI"):
+            self.assertNotIn(bad, html)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

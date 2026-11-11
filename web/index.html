@@ -26,7 +26,7 @@
             </nav>
 
             <div class="header-actions">
-                <a href="#chatOutput" class="top-ask-btn">
+                <a href="#reportSection" class="top-ask-btn">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                     Báo cáo tư vấn
                 </a>
@@ -35,8 +35,25 @@
     </header>
 
     <main class="container">
+        <section class="howto" aria-label="Cách dùng trang này">
+            <h1 class="howto-hook">Chọn cách luân canh ít tốn nước ngọt hơn cho ruộng lúa Bến Tre và vườn cà phê Đắk Lắk</h1>
+            <p class="howto-sub">Mỗi phương án được so theo lượng nước ngọt phải tưới, số tháng đất trống và mùa mặn. Số liệu tính từ NASA POWER, MODIS (2015–2025) và các tài liệu khoa học Việt Nam đã kiểm chứng.</p>
+            <ol class="howto-steps">
+                <li><a href="#step1"><b>1</b>Vùng và thời tiết</a></li>
+                <li><a href="#rotationsSection"><b>2</b>So sánh phương án</a></li>
+                <li><a href="#reportSection"><b>3</b>Xem báo cáo</a></li>
+                <li><a href="#techSection"><b>4</b>Kiểm tra dữ liệu</a></li>
+            </ol>
+        </section>
+
         <!-- Banner cảnh báo nếu dùng dữ liệu giả lập -->
         <div id="dataBadgeArea"></div>
+
+        <div class="step-head" id="step1">
+            <span class="step-num">Bước 1</span>
+            <h2 class="section-title">Hiện trạng và thử thời tiết</h2>
+        </div>
+        <p class="step-hint">Chọn vùng ở thanh trên cùng. Kéo thanh trượt hoặc bấm "Khô nóng" để xem lượng nước của từng phương án đổi ra sao.</p>
 
         <!-- 2. BENTO INTRO: TỔNG QUAN HIỆN TRẠNG & THANH ĐIỀU KHIỂN KHÍ HẬU GỌN -->
         <section class="intro-grid">
@@ -44,7 +61,7 @@
             <div class="card hero" id="heroCard">
                 <div>
                     <span class="hero-kicker" id="heroPlace">Đang tải vị trí...</span>
-                    <h1 class="hero-title" id="heroTitle">Đang nạp dữ liệu vùng...</h1>
+                    <h2 class="hero-title" id="heroTitle">Đang nạp dữ liệu vùng...</h2>
                 </div>
                 <div id="heroBody"></div>
             </div>
@@ -52,11 +69,11 @@
             <!-- Thanh Mô Phỏng Kịch Bản Khí Hậu Gọn (Compact Simulator) -->
             <div class="card scenario">
                 <div class="scenario-header">
-                    <h2 class="card-heading" style="font-size: 15px;">Thử nghiệm thời tiết</h2>
+                    <h2 class="card-heading" style="font-size: 15px;">Thử thời tiết khô nóng hơn</h2>
                     <div class="preset-chips">
                         <button type="button" class="preset-chip active" data-temp="0" data-rain="0">Hiện nay</button>
-                        <button type="button" class="preset-chip" data-temp="1.5" data-rain="-20">El Niño</button>
-                        <button type="button" class="preset-chip" data-temp="2.5" data-rain="-35">Cực đoan</button>
+                        <button type="button" class="preset-chip" data-temp="1.5" data-rain="-20" title="Nhiệt độ +1,5 °C, mưa −20%. Kịch bản giả định, không phải dự báo.">Khô nóng</button>
+                        <button type="button" class="preset-chip" data-temp="2.5" data-rain="-35" title="Nhiệt độ +2,5 °C, mưa −35%. Kịch bản giả định, không phải dự báo.">Rất khô nóng</button>
                     </div>
                 </div>
 
@@ -73,7 +90,7 @@
                 </div>
 
                 <div class="scenario-footer">
-                    <span class="muted" style="font-size: 11.5px;">Số liệu các phương án tự động tính lại tức thì</span>
+                    <span class="muted" style="font-size: 11.5px;">Kịch bản giả định, không phải dự báo</span>
                     <button type="button" id="btnReset" class="btn-reset">Đặt lại đo đạc gốc</button>
                 </div>
             </div>
@@ -82,10 +99,11 @@
         <!-- 3. LƯỚI SO SÁNH PHƯƠNG ÁN LUÂN CANH CĂN HÀNG NGANG -->
         <section id="rotationsSection">
             <div class="section-header-compact">
-                <h2 class="section-title">So sánh các phương án luân canh cả năm</h2>
+                <div><span class="step-num">Bước 2</span><h2 class="section-title">So sánh các phương án luân canh cả năm</h2></div>
                 <div class="legend-compact" id="rotationLegend"></div>
             </div>
 
+            <p class="step-hint">Dòng đầu là cách đang làm. Thanh màu xanh dương càng ngắn là càng ít nước ngọt phải tưới. Trên lịch 12 tháng, tháng gạch đỏ là tháng nước mặn, chấm cam là có ngày nóng vượt ngưỡng của cây.</p>
             <div id="rotationsContent">
                 <div class="card compare" id="compareBars" aria-label="So sánh nhanh lượng nước ngọt"></div>
                 <div id="rotationCardsGrid" class="strategy-grid-horizontal"></div>
@@ -95,14 +113,16 @@
             </div>
         </section>
 
-        <!-- 3. Báo cáo tư vấn -->
-        <section>
-            <div class="section-header-compact">
-                <h2 class="section-title">Báo cáo tư vấn</h2>
-                <p class="muted">Báo cáo được ghép từ chính các số liệu trên trang, theo vùng và kịch bản thời tiết đang chọn. Không dùng AI tạo chữ.</p>
+        <!-- 3. Báo cáo cho phương án -->
+        <section id="reportSection">
+            <div class="step-head">
+                <span class="step-num">Bước 3</span>
+                <h2 class="section-title">Báo cáo cho phương án</h2>
             </div>
+            <p class="step-hint">Bấm "Xem báo cáo cho phương án này" trên một thẻ ở Bước 2, hoặc bấm nút dưới đây để xem cả vùng. Báo cáo được ghép từ chính số liệu trên trang, theo kịch bản thời tiết đang chọn. Không dùng AI tạo chữ.</p>
             <div class="card">
-                <button type="button" id="btnReport" class="btn-primary">Tạo báo cáo cho vùng này</button>
+                <p class="report-context" id="reportContext"></p>
+                <button type="button" id="btnReport" class="btn-primary">Tạo báo cáo cho cả vùng</button>
                 <div class="chat-output" id="chatOutput" role="status" aria-live="polite">Bấm nút để tạo báo cáo.</div>
             </div>
         </section>
@@ -110,7 +130,7 @@
         <!-- 5. SỐ LIỆU CHI TIẾT & BẢO ĐẢM KHOA HỌC NASA -->
         <section class="tech-section" id="techSection">
             <div class="section-header-compact">
-                <h2 class="section-title" style="font-size: 17px;">Dữ liệu và cách tính</h2>
+                <div><span class="step-num">Bước 4</span><h2 class="section-title">Dữ liệu và cách tính</h2></div>
                 <div class="status-bar-clean" id="statusBar">
                     <span class="chip chip-missing" id="chip-power">NASA POWER: kiểm tra...</span>
                     <span class="chip chip-missing" id="chip-ndvi">MODIS NDVI: kiểm tra...</span>
@@ -118,6 +138,7 @@
                     <span class="chip chip-missing" id="chip-sal">Độ mặn: kiểm tra...</span>
                 </div>
             </div>
+            <p class="step-hint">Đối chiếu mưa và bốc hơi (NASA POWER 2015–2025) với độ xanh từ vệ tinh (MODIS NDVI) theo 12 tháng, cùng bảng nhu cầu nước từng cây và các giả định của mô hình. Phần này dành cho kỹ sư và giám khảo.</p>
 
             <!-- Biểu đồ NASA POWER và Dải MODIS NDVI thẳng hàng 12 tháng -->
             <div class="tech-grid-clean">

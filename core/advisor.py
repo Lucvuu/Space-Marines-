@@ -22,7 +22,7 @@ def _vn_int(v):
     return f"{v:,.0f}".replace(",", ".")
 
 
-def _rotation_actions(rotations):
+def _rotation_actions(rotations, strategy_id=None):
     """Mục 3 của báo cáo: liệt kê từng phương án thay thế, chỉ dùng số liệu và câu chữ có sẵn trong rotations."""
     if not rotations or not rotations.get("available"):
         return "- Chưa có dữ liệu phương án luân canh cho vùng này."
@@ -30,6 +30,16 @@ def _rotation_actions(rotations):
     base = next((s for s in strategies if s.get("is_existing")), None)
     base_def = base.get("annual_deficit_mm") if base else None
     lines = []
+    picked = next((s for s in strategies if s.get("id") == strategy_id), None) if strategy_id else None
+    if picked is not None:
+        lines.append(f"Phương án đang xem: **{picked.get('name_vi', picked.get('id'))}**.")
+        if picked.get("is_existing"):
+            lines.append("Đây là cách đang làm. Các phương án thay thế:")
+        else:
+            risks = "; ".join(picked.get("risks", []))
+            if risks:
+                lines.append(f"Rủi ro cần cân nhắc: {risks}")
+            strategies = [picked] + [s for s in strategies if s is not picked]
     sal = rotations.get("salinity_months") or []
     if sal:
         lines.append(f"Mùa mặn theo văn bản: tháng {', '.join(str(m) for m in sal)}.")
@@ -58,7 +68,7 @@ def _rotation_actions(rotations):
     return "\n".join(lines)
 
 
-def build_advice(region_id, eval_results, question="", rotations=None):
+def build_advice(region_id, eval_results, question="", rotations=None, strategy_id=None):
     """
     Sinh khuyến nghị markdown 3 phần hoàn toàn từ số liệu trong eval_results và rotations.
     """
@@ -110,7 +120,7 @@ DỮ LIỆU JSON ĐÁNH GIÁ:
     table_md = "\n".join(rows_md)
 
     # Phần 3: Việc nên làm trước vụ tới
-    actions_md = _rotation_actions(rotations)
+    actions_md = _rotation_actions(rotations, strategy_id)
 
     # Ghi chú nguồn dữ liệu
     src_lines = []
