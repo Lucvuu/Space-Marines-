@@ -5,21 +5,21 @@
         "score": 35.8,
         "risk_level": "SEVERE",
         "r": 0.398,
-        "deficit_mm": 892.1,
+        "deficit_mm": 892.3,
         "water_vs_baseline_pct": 0.0
       },
       "soybean": {
         "score": 76.3,
         "risk_level": "SEVERE",
         "r": 0.362,
-        "deficit_mm": 191.0,
+        "deficit_mm": 191.1,
         "water_vs_baseline_pct": 78.6
       },
       "maize": {
         "score": 70.7,
         "risk_level": "CRITICAL",
         "r": 0.527,
-        "deficit_mm": 201.8,
+        "deficit_mm": 201.9,
         "water_vs_baseline_pct": 77.4
       },
       "rice_shrimp": {
@@ -35,21 +35,21 @@
         "score": 29.1,
         "risk_level": "SEVERE",
         "r": 0.449,
-        "deficit_mm": 1034.3,
+        "deficit_mm": 1034.5,
         "water_vs_baseline_pct": 0.0
       },
       "soybean": {
         "score": 70.0,
         "risk_level": "SEVERE",
         "r": 0.43,
-        "deficit_mm": 216.7,
+        "deficit_mm": 216.8,
         "water_vs_baseline_pct": 79.0
       },
       "maize": {
         "score": 64.6,
         "risk_level": "CRITICAL",
         "r": 0.527,
-        "deficit_mm": 226.2,
+        "deficit_mm": 226.3,
         "water_vs_baseline_pct": 78.1
       },
       "rice_shrimp": {
@@ -67,14 +67,14 @@
         "score": 13.7,
         "risk_level": "INSUFFICIENT_DATA",
         "r": null,
-        "deficit_mm": 723.5,
+        "deficit_mm": 723.3,
         "water_vs_baseline_pct": 0.0
       },
       "coffee_cover_crop": {
         "score": 0.0,
         "risk_level": "INSUFFICIENT_DATA",
         "r": null,
-        "deficit_mm": 838.7,
+        "deficit_mm": 838.5,
         "water_vs_baseline_pct": -15.9
       }
     },
@@ -83,14 +83,14 @@
         "score": 13.7,
         "risk_level": "INSUFFICIENT_DATA",
         "r": null,
-        "deficit_mm": 767.7,
+        "deficit_mm": 767.6,
         "water_vs_baseline_pct": 0.0
       },
       "coffee_cover_crop": {
         "score": 0.0,
         "risk_level": "INSUFFICIENT_DATA",
         "r": null,
-        "deficit_mm": 889.6,
+        "deficit_mm": 889.4,
         "water_vs_baseline_pct": -15.9
       }
     }

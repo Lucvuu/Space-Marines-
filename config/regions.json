@@ -2,8 +2,8 @@
   "Ben_Tre_DBSCL": {
     "id": "Ben_Tre_DBSCL",
     "name": "Bến Tre (Đồng bằng Sông Cửu Long)",
-    "lat": 10.2433,
-    "lon": 106.3758,
+    "lat": 10.0992,
+    "lon": 106.6040,
     "elevation_m": 2.0,
     "ndvi_point": {
       "lat": 10.0992,
@@ -21,8 +21,8 @@
   "Dak_Lak_Tay_Nguyen": {
     "id": "Dak_Lak_Tay_Nguyen",
     "name": "Đắk Lắk (Tây Nguyên)",
-    "lat": 12.6667,
-    "lon": 108.05,
+    "lat": 12.8314,
+    "lon": 108.1282,
     "elevation_m": 530.0,
     "ndvi_point": {
       "lat": 12.8314,

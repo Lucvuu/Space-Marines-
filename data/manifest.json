@@ -2,13 +2,25 @@
   "power/Ben_Tre_DBSCL.csv": {
     "source": "NASA POWER daily API, community=AG",
     "url": "https://power.larc.nasa.gov",
-    "retrieved_at": "2026-11-07",
-    "is_synthetic": false
+    "retrieved_at": "2026-11-11",
+    "is_synthetic": false,
+    "point": [
+      10.0992,
+      106.604
+    ]
   },
   "power/Dak_Lak_Tay_Nguyen.csv": {
     "source": "NASA POWER daily API, community=AG",
     "url": "https://power.larc.nasa.gov",
-    "retrieved_at": "2026-11-07",
+    "retrieved_at": "2026-11-11",
+    "is_synthetic": false,
+    "point": [
+      12.8314,
+      108.1282
+    ]
+  },
+  "power/_cu_toa_do_vung": {
+    "source": "Bản sao lưu tọa độ vùng cũ",
     "is_synthetic": false
   },
   "ndvi/Ben_Tre_DBSCL.csv": {

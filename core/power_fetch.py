@@ -16,17 +16,15 @@ from datetime import datetime
 AERO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, AERO_ROOT)
 from core.loaders import get_data_dir, update_manifest_entry
+from core.water_balance import load_config
 
-PILOT_COORDINATES = {
-    "Ben_Tre_DBSCL": {"lat": 10.2433, "lon": 106.3758, "name": "Bến Tre"},
-    "Dak_Lak_Tay_Nguyen": {"lat": 12.6667, "lon": 108.0500, "name": "Đắk Lắk"}
-}
 
 def fetch_power_for_region(region_id, start="20150101", end="20251231"):
-    if region_id not in PILOT_COORDINATES:
+    regions_cfg = load_config("regions")
+    if region_id not in regions_cfg:
         raise ValueError(f"Vùng không xác định: {region_id}")
 
-    coords = PILOT_COORDINATES[region_id]
+    coords = regions_cfg[region_id]
     url = "https://power.larc.nasa.gov/api/temporal/daily/point"
     params = {
         "parameters": "T2M_MAX,T2M_MIN,RH2M,WS2M,ALLSKY_SFC_SW_DWN,PRECTOTCORR",
@@ -38,11 +36,12 @@ def fetch_power_for_region(region_id, start="20150101", end="20251231"):
         "format": "JSON"
     }
 
-    print(f"[NASA POWER] Đang tải dữ liệu cho {coords['name']} ({start} - {end})...")
+    print(f"[NASA POWER] Đang tải dữ liệu cho {coords.get('name', region_id)} ({coords['lat']}, {coords['lon']}) ({start} - {end})...")
     try:
         resp = requests.get(url, params=params, timeout=60)
         resp.raise_for_status()
         data = resp.json()
+        print(f"[NASA POWER] Geometry coordinates: {data.get('geometry', {}).get('coordinates')}")
         parameters = data["properties"]["parameter"]
     except Exception as e:
         print(f"[ERROR] Lỗi khi kết nối hoặc tải NASA POWER API: {e}", file=sys.stderr)
@@ -71,7 +70,8 @@ def fetch_power_for_region(region_id, start="20150101", end="20251231"):
         "source": "NASA POWER daily API, community=AG",
         "url": "https://power.larc.nasa.gov",
         "retrieved_at": datetime.now().strftime("%Y-%m-%d"),
-        "is_synthetic": False
+        "is_synthetic": False,
+        "point": [coords["lat"], coords["lon"]]
     })
     print(f"[SUCCESS] Đã lưu {len(df)} dòng dữ liệu vào {out_path}")
     return True
@@ -80,8 +80,9 @@ def main():
     if "--help" in sys.argv or "-h" in sys.argv:
         print("Sử dụng: python core/power_fetch.py — Tải dữ liệu NASA POWER hàng ngày cho Bến Tre và Đắk Lắk.")
         sys.exit(0)
+    regions_cfg = load_config("regions")
     success = True
-    for region_id in PILOT_COORDINATES:
+    for region_id in regions_cfg:
         ok = fetch_power_for_region(region_id)
         if not ok:
             success = False
@@ -89,4 +90,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

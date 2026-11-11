@@ -10,7 +10,7 @@
       "Nước thêm cho lúa theo FAO Training Manual 3 (1986), mục 4.4: bão hòa đất 200 mm + lớp nước 100 mm + thấm 4 mm/ngày (mức đất sét nặng). Loại đất tại Ba Tri là giả định, chưa kiểm chứng. Phần nước này chiếm phần lớn nhu cầu nước của lúa.",
       "Một nghiên cứu cân bằng nước ở Bến Tre dùng mức thấm 2 mm/ngày, dẫn theo TCVN 9168:2012 (chưa đọc được bản gốc). Nếu dùng 2 mm/ngày, nước thêm cho mỗi vụ lúa 105 ngày là 510 mm thay vì 720 mm.",
       "App chưa có dữ liệu độ mặn theo trạm; tháng mặn lấy từ văn bản, không phải đo đạc.",
-      "Khí tượng lấy từ NASA POWER theo ô lưới khoảng 0,5° × 0,625° (cỡ 50 km), truy vấn tại tọa độ vùng trong regions.json, cách điểm ruộng Ba Tri khoảng 30 km. Đây không phải số đo tại ruộng.",
+      "Khí tượng lấy từ NASA POWER tại đúng tọa độ điểm ruộng (10.0992, 106.6040), nhưng mỗi giá trị là trung bình của ô lưới khoảng 0,5° × 0,625° (cỡ 50 km), không phải số đo tại ruộng.",
       "Thiếu hụt nước được cộng theo từng tháng: tháng mưa dư không bù cho tháng thiếu, vì mô hình chưa tính nước trữ trong đất. Lúa dùng mưa hiệu quả theo FAO TM3 (Pe = 0,8P − 25 khi P > 75 mm/tháng; Pe = 0,6P − 10 khi P < 75 mm/tháng); cây cạn dùng USDA-SCS."
     ],
     "strategies": [
@@ -95,7 +95,7 @@
       "Cà phê đánh giá trong tháng 1–4 (mùa khô) với Kc giữa vụ cố định.",
       "Không có ngưỡng nhiệt theo ngày có nguồn cho cà phê vối, nên không tính rủi ro nhiệt.",
       "Nhu cầu nước theo FAO-56 là nhu cầu đầy đủ của cây. Quy trình tưới trong nước: 350–420 lít/gốc/lần, chu kỳ 30–35 ngày (Khuyến nông QG 2026); 500–520 lít/gốc/lần, chu kỳ 30–40 ngày trên đất bazan (WASI, QĐ 26/QĐ-VNLT-KHKH 2013). Ở 1.111 cây/ha, mức này tương đương khoảng 130–230 mm/mùa, thấp hơn mô hình vì tưới thiếu có chủ đích và đất bazan trữ nước từ mùa mưa (mô hình chưa tính).",
-      "Khí tượng lấy từ NASA POWER theo ô lưới khoảng 0,5° × 0,625° (cỡ 50 km), truy vấn tại tọa độ vùng trong regions.json, cách điểm vườn Cư M'gar khoảng 20 km. Đây không phải số đo tại vườn.",
+      "Khí tượng lấy từ NASA POWER tại đúng tọa độ điểm vườn (12.8314, 108.1282), nhưng mỗi giá trị là trung bình của ô lưới khoảng 0,5° × 0,625° (cỡ 50 km), không phải số đo tại vườn.",
       "Thiếu hụt nước được cộng theo từng tháng: tháng mưa dư không bù cho tháng thiếu, vì mô hình chưa tính nước trữ trong đất."
     ],
     "strategies": [
