@@ -215,7 +215,8 @@ class AeroAgriAPIHandler(SimpleHTTPRequestHandler):
 
                 question = body.get("question", "")
                 eval_res = evaluate_crop_suitability(reg_id, delta_temp_c=d_temp, delta_rain_pct=d_rain)
-                advice = build_advice(reg_id, eval_res, question=question)
+                rot_res = evaluate_rotations(reg_id, delta_temp_c=d_temp, delta_rain_pct=d_rain)
+                advice = build_advice(reg_id, eval_res, question=question, rotations=rot_res)
                 self.send_json(200, advice)
                 return
 

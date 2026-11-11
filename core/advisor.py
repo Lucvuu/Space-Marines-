@@ -18,9 +18,49 @@ def call_llm(prompt):
     """
     return None
 
-def build_advice(region_id, eval_results, question=""):
+def _vn_int(v):
+    return f"{v:,.0f}".replace(",", ".")
+
+
+def _rotation_actions(rotations):
+    """Mục 3 của báo cáo: liệt kê từng phương án thay thế, chỉ dùng số liệu và câu chữ có sẵn trong rotations."""
+    if not rotations or not rotations.get("available"):
+        return "- Chưa có dữ liệu phương án luân canh cho vùng này."
+    strategies = rotations.get("strategies", [])
+    base = next((s for s in strategies if s.get("is_existing")), None)
+    base_def = base.get("annual_deficit_mm") if base else None
+    lines = []
+    sal = rotations.get("salinity_months") or []
+    if sal:
+        lines.append(f"Mùa mặn theo văn bản: tháng {', '.join(str(m) for m in sal)}.")
+    for s in strategies:
+        if s.get("is_existing"):
+            continue
+        d = s.get("annual_deficit_mm")
+        if d is None:
+            water = "chưa tính được nước"
+        elif base_def is None:
+            water = f"nước ngọt phải tưới thêm {_vn_int(d * 10)} m³/ha"
+        else:
+            diff = (d - base_def) * 10
+            sign = "+" if diff >= 0 else "−"
+            water = f"nước ngọt phải tưới thêm {_vn_int(d * 10)} m³/ha ({sign}{_vn_int(abs(diff))} m³/ha so với hiện trạng)"
+        windows = "; ".join(
+            f"{p['label']} {p['window']['start']} đến {p['window']['end']}"
+            for p in s.get("phases", [])
+            if p.get("window") and p["window"].get("start")
+        )
+        partial = " Chưa tính giai đoạn nuôi tôm." if s.get("partial") else ""
+        gaps = "; ".join(s.get("info_gaps", []))
+        lines.append(f"- **{s.get('name_vi', s.get('id'))}**: {water}. Lịch: {windows}.{partial} Cần kiểm chứng trước khi làm: {gaps}")
+    if sal:
+        lines.append("- Đo độ mặn nước kênh bằng bút đo cầm tay trước mỗi lần lấy nước tưới.")
+    return "\n".join(lines)
+
+
+def build_advice(region_id, eval_results, question="", rotations=None):
     """
-    Sinh khuyến nghị markdown 3 phần hoàn toàn từ số liệu trong eval_results.
+    Sinh khuyến nghị markdown 3 phần hoàn toàn từ số liệu trong eval_results và rotations.
     """
     if not eval_results or not eval_results.get("available"):
         err_msg = eval_results.get("error", "chưa có đủ dữ liệu để đánh giá")
@@ -55,72 +95,27 @@ DỮ LIỆU JSON ĐÁNH GIÁ:
     if d_temp != 0.0 or d_rain != 0.0:
         sim_note = f"\n*Kịch bản mô phỏng:* Nhiệt độ thay đổi `{d_temp:+.1f} °C`, lượng mưa thay đổi `{d_rain:+.0f}%`.\n"
 
-    # Tìm cây có điểm cao nhất
-    valid_crops = [c for c in crops if c.get("score") is not None]
-    valid_crops.sort(key=lambda x: x["score"], reverse=True)
-    best_crop = valid_crops[0] if valid_crops else None
-
     # Lập bảng so sánh cây trồng
     rows_md = []
     for c in crops:
         c_name = c["crop_name"]
-        sc = f"{c['score']}/100" if c['score'] is not None else "Chưa đủ dữ liệu để chấm"
-        rk = c["risk_level"]
         comp = c["components"]
         w_val = comp.get("irrigation_share", comp.get("water_stress"))
         w_stress = f"{w_val:.2f}" if w_val is not None else "N/A"
         def_mm = f"{c['deficit_mm']} mm" if c['deficit_mm'] is not None else "N/A"
         vs_val = c.get("water_vs_baseline_pct")
         vs_base = "N/A" if vs_val is None else (f"{vs_val:+.1f}%" if vs_val != 0.0 else "Baseline")
-        rows_md.append(f"| **{c_name}** | {sc} | `{rk}` | {def_mm} | {w_stress} | {vs_base} |")
+        rows_md.append(f"| **{c_name}** | {def_mm} | {w_stress} | {vs_base} |")
 
     table_md = "\n".join(rows_md)
 
-    # Phần 3: Việc nên làm 7 ngày tới
-    baseline_name = crops[0]["crop_name"] if crops else "cây hiện trạng"
-    actions = []
-    if best_crop and best_crop["score"] is not None:
-        vs_pct = best_crop.get("water_vs_baseline_pct")
-        if vs_pct is not None and vs_pct > 0:
-            actions.append(
-                f"Cân nhắc chuẩn bị đất và giống cho **{best_crop['crop_name']}** "
-                f"(nhu cầu tưới {best_crop['deficit_mm']} mm, ít hơn {baseline_name} {abs(vs_pct):.1f}%)."
-            )
-        elif vs_pct is not None and vs_pct < 0:
-            actions.append(
-                f"Theo dõi sát nguồn nước nếu chọn **{best_crop['crop_name']}** "
-                f"(nhu cầu tưới {best_crop['deficit_mm']} mm, nhiều hơn {baseline_name} {abs(vs_pct):.1f}%)."
-            )
-        else:
-            actions.append(
-                f"Theo dõi sát nguồn nước nếu tiếp tục duy trì **{best_crop['crop_name']}** "
-                f"(nhu cầu tưới {best_crop['deficit_mm']} mm)."
-            )
-
-    # Kiểm tra rủi ro nhiệt
-    high_heat_crops = [c for c in crops if c["components"]["heat_ratio"] and c["components"]["heat_ratio"] > 0.15]
-    if high_heat_crops:
-        heat_details = ", ".join(
-            f"{c['crop_name']} ({round(c['components']['heat_ratio'] * 100, 1)}% số ngày vượt ngưỡng nhiệt)"
-            for c in high_heat_crops
-        )
-        actions.append(f"Lên phương án tưới dặm buổi sáng cho: {heat_details}.")
-
-    # Kiểm tra mặn
-    high_sal_crops = [c for c in crops if c["components"]["salinity_exceed"] and c["components"]["salinity_exceed"] > 0.20]
-    if high_sal_crops:
-        names = ", ".join(c["crop_name"] for c in high_sal_crops)
-        actions.append(f"Đo độ mặn nguồn nước kênh mương bằng bút đo cầm tay trước khi lấy nước tưới cho ({names}).")
-
-    if not actions:
-        actions.append("Kiểm tra hệ thống tưới tiêu và kết nối hợp tác xã để cập nhật diễn biến nguồn nước.")
-
-    actions_md = "\n".join(f"{i+1}. {act}" for i, act in enumerate(actions))
+    # Phần 3: Việc nên làm trước vụ tới
+    actions_md = _rotation_actions(rotations)
 
     # Ghi chú nguồn dữ liệu
     src_lines = []
     for d in eval_results.get("data_used", []):
-        src_lines.append(f"- File `{d.get('file', 'N/A')}`: {d.get('source', 'nguồn chưa khai báo')} (Mẫu: {d.get('is_synthetic', False)})")
+        src_lines.append(f"- File `{d.get('file', 'N/A')}`: {d.get('source', 'nguồn chưa khai báo')} ({'dữ liệu mẫu' if d.get('is_synthetic') else 'dữ liệu đo thật'})")
     sources_block = "\n".join(src_lines)
 
     markdown = f"""### Báo cáo tư vấn chuyển đổi mùa vụ AERO-AGRI
@@ -131,7 +126,6 @@ DỮ LIỆU JSON ĐÁNH GIÁ:
 
 #### 1. Hiện trạng số liệu mùa khô
 - Số cây trồng đánh giá: **{len(crops)} cây**.
-- Cây trồng có chỉ số thích nghi cao nhất: **{best_crop['crop_name'] if best_crop else 'Chưa có'}** (Điểm: `{best_crop['score'] if best_crop else 'N/A'}`).
 - Nguồn dữ liệu đã nạp:
 {sources_block}
 
@@ -139,17 +133,17 @@ DỮ LIỆU JSON ĐÁNH GIÁ:
 
 #### 2. Bảng so sánh rủi ro & hiệu quả sử dụng nước
 
-| Cây trồng | Điểm so sánh với hiện trạng | Cấp rủi ro | Thiếu hụt nước (ETc - Peff) | Tỷ lệ tưới (0–1) | So với Baseline |
-| :--- | :---: | :---: | :---: | :---: | :---: |
+| Cây trồng | Thiếu hụt nước (mm) | Tỷ lệ phải tưới (0–1) | So với cây đầu |
+| :--- | :---: | :---: | :---: |
 {table_md}
 
 ---
 
-#### 3. Việc nên làm trong 7 ngày tới
+#### 3. Việc nên làm trước vụ tới
 {actions_md}
 
 ---
-*Ghi chú minh bạch: Khuyến nghị được tính toán tự động từ mô hình Penman-Monteith và dữ liệu khí tượng bề mặt, không thay thế kinh nghiệm thực địa của bà con.*
+*Ghi chú: Báo cáo được ghép tự động từ mô hình FAO-56 Penman-Monteith và dữ liệu NASA POWER theo ô lưới cỡ 50 km. Không thay thế kinh nghiệm thực địa và hướng dẫn của khuyến nông địa phương.*
 """
 
     return {

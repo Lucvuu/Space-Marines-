@@ -953,6 +953,50 @@ class TestAeroAgriFix6(unittest.TestCase):
         self.assertTrue(bt["ndvi_years_source"])
         self.assertLess(dl["ndvi_years"][0], 2022)
 
+    def test_fix8_1_web_khong_con_chu_chua_kiem_chung(self):
+        """Fix 8: web và advisor không còn số WASI chưa kiểm chứng và chữ quảng cáo."""
+        txt = ""
+        for rel in ("web/app.js", "web/index.html", "core/advisor.py"):
+            with open(os.path.join(AERO_ROOT, rel), encoding="utf-8") as fh:
+                txt += fh.read()
+        for bad in ("2,5%", "4,2%", "65%", "20%–25%", "Thuận thiên", "Zero Black-Box", "AI Copilot", "7 ngày", "isRecommended"):
+            self.assertNotIn(bad, txt)
+
+    def test_fix8_2_ghi_chu_phuong_an_tu_config(self):
+        """Fix 8: note của S1, D1 nằm trong config và đi qua evaluate_rotations."""
+        from core.rotation import evaluate_rotations
+        bt = evaluate_rotations("Ben_Tre_DBSCL", 0.0, 0.0)
+        dl = evaluate_rotations("Dak_Lak_Tay_Nguyen", 0.0, 0.0)
+        if not bt.get("available") or not dl.get("available"):
+            self.skipTest("Thiếu dữ liệu POWER")
+        s1 = next(s for s in bt["strategies"] if s["id"] == "S1")
+        d1 = next(s for s in dl["strategies"] if s["id"] == "D1")
+        self.assertIn("chưa tính giai đoạn nuôi tôm", s1["note"])
+        self.assertIn("QĐ 26", d1["note"])
+        self.assertIn("Chưa tìm thấy số đo", d1["note"])
+
+    def test_fix8_3_bao_cao_theo_phuong_an(self):
+        """Fix 8: báo cáo liệt kê phương án luân canh, không chọn cây theo điểm."""
+        from core.scoring import evaluate_crop_suitability
+        from core.rotation import evaluate_rotations
+        from core.advisor import build_advice
+        ev = evaluate_crop_suitability("Ben_Tre_DBSCL", 2.0, -20.0)
+        rot = evaluate_rotations("Ben_Tre_DBSCL", 2.0, -20.0)
+        if not ev.get("available") or not rot.get("available"):
+            self.skipTest("Thiếu dữ liệu POWER")
+        md = build_advice("Ben_Tre_DBSCL", ev, question="", rotations=rot)["markdown"]
+        self.assertIn("3. Việc nên làm trước vụ tới", md)
+        self.assertIn("Kịch bản mô phỏng", md)
+        for s in rot["strategies"]:
+            if not s["is_existing"]:
+                self.assertIn(s["name_vi"], md)
+        self.assertIn("Chưa tính giai đoạn nuôi tôm", md)
+        self.assertNotIn("Cân nhắc chuẩn bị đất và giống", md)
+        self.assertNotIn("Mẫu: False", md)
+        for bad in ("mất trắng", "mất mùa", "năng suất"):
+            self.assertNotIn(bad, md.lower())
+
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
