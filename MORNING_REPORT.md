@@ -970,3 +970,91 @@ C:\Users\LucVuu\AppData\Local\Programs\Python\Python313\Lib\site-packages\anyio\
  web/style.css                 |  43 +++++++++++++
  8 files changed, 141 insertions(+), 82 deletions(-)
 ```
+
+---
+
+## 18. Fix 11 (Dẫn đường 4 bước cho người mở trang lần đầu, hero insight, báo cáo theo từng phương án)
+
+### Bảng tóm tắt toàn bộ ca làm việc (Fix 8, Fix 9, Fix 10, Fix 11)
+
+| Fix | Commit cuối | Pytest | Các điểm phải dừng hoặc lệch (nếu có) |
+|---|---|---|---|
+| **Fix 8** | `fc97ef5` | 46 passed | Không có |
+| **Fix 9** | `e0aed45` | 50 passed | Cập nhật fixture `regression_baseline.json` theo đúng bước 5b do đổi mô hình tính nước theo tháng và mưa hiệu quả FAO TM3; tải dữ liệu NASA POWER thật theo tọa độ điểm ruộng Ba Tri và Cư M'gar ở bước 7 |
+| **Fix 10** | `d46ad8f` | 51 passed | Không có |
+| **Fix 11** | *(commit hiện tại)* | 53 passed | Không có |
+
+---
+
+### 18.1. Commit Hash của từng bước
+
+| Bước | Commit Hash | Commit Message | Nội dung chính |
+|---|---|---|---|
+| **Bước 1–4** | `40d7667` | `web: 4-step guide, hero insight, per-strategy report` | `core/advisor.py` và `server.py` hỗ trợ `strategy_id` đưa phương án đang xem lên đầu kèm rủi ro; thêm test `test_fix11_1_bao_cao_theo_phuong_an_dang_xem` và `test_fix11_2_trang_co_4_buoc`; `web/index.html` thêm header 4 bước, nhãn bước 1–4, đổi tên kịch bản "Khô nóng" / "Rất khô nóng"; `web/app.js` thêm `heroInsight`, nút xem báo cáo trên thẻ, cập nhật context báo cáo; `web/style.css` thêm styles cho khối hướng dẫn và các bước; chụp 3 ảnh màn hình giao diện. |
+| **Kết thúc** | *(commit hiện tại)* | `fix11 report` | Cập nhật báo cáo Fix 11 và bảng tổng kết 4 fix vào `MORNING_REPORT.md`. |
+
+---
+
+### 18.2. Output Pytest
+
+```text
+.....................................................                    [100%]
+============================== warnings summary ===============================
+C:\Users\LucVuu\AppData\Local\Programs\Python\Python313\Lib\site-packages\anyio\pytest_plugin.py:14
+  C:\Users\LucVuu\AppData\Local\Programs\Python\Python313\Lib\site-packages\anyio\pytest_plugin.py:14: PytestRemovedIn10Warning: _pytest.python.CallSpec2 has been renamed to CallSpec.
+  The CallSpec2 alias will be removed in pytest 10.
+  Update imports to use CallSpec instead.
+  See https://docs.pytest.org/en/stable/deprecations.html#callspec2-renamed
+    from _pytest.python import CallSpec2
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+53 passed, 1 warning in 14.24s
+```
+
+---
+
+### 18.3. Đường dẫn 3 ảnh màn hình & Đối chiếu kiểm tra Bước 5.4
+
+- `docs/screens/fix11_bentre.png`:
+  * Đầu trang có câu in đậm và 4 nút tròn đánh số 1–4: **ĐẠT**.
+  * Mỗi khu vực có nhãn xanh "BƯỚC 1", "BƯỚC 2", "BƯỚC 3", "BƯỚC 4": **ĐẠT**.
+  * Bến Tre: ô hiện trạng có dòng "Phương án ít nước ngọt nhất theo mô hình: Lúa Hè Thu + đậu tương thay vụ Đông Xuân, ít hơn hiện tại 6.351 m³/ha. Mô hình chưa tính chi phí, công lao động và đầu ra.": **ĐẠT**.
+  * Mỗi thẻ phương án có nút "Xem báo cáo cho phương án này →" ở chân thẻ: **ĐẠT**.
+- `docs/screens/fix11_daklak.png`:
+  * Đắk Lắk: ô hiện trạng ghi "Theo mô hình, không phương án nào dùng ít nước ngọt hơn cách làm hiện tại. Xem từng thẻ để so các lợi ích khác, như che phủ đất.": **ĐẠT**.
+  * Mỗi thẻ có nút "Xem báo cáo cho phương án này →" ở chân thẻ: **ĐẠT**.
+- `docs/screens/fix11_mobile.png`:
+  * Trên điện thoại (khung 375 px), 4 nút xếp 2 hàng, mỗi hàng 2 nút, chữ trong nút nằm trên 1 dòng: **ĐẠT**.
+  * Không có chữ hay thanh nào tràn hoặc bị cắt mép phải: **ĐẠT**.
+
+---
+
+### 18.4. Mục 3 của báo cáo ở Bước 5.5 (`strategy_id: "S1"`)
+
+```markdown
+#### 3. Việc nên làm trước vụ tới
+Phương án đang xem: **Lúa – tôm (lúa mùa mưa, tôm sú mùa khô)**.
+Rủi ro cần cân nhắc: Trong vụ tôm, ESP đất 20,7–25,4: 'đất có thể đạt đến ngưỡng sodic hóa' (Nguyễn Mỹ Hoa và cs., 2016).; 'Chỉ xuống giống lúa khi… độ mặn trong đất < 2‰' (Khuyến nông QG, tr.10): mưa đến muộn thì vụ lúa dễ hỏng.; 'Tạm dừng mở rộng diện tích tại các khu vực chưa hoàn thiện hạ tầng thủy lợi nội đồng' (Khuyến nông QG, tr.10).
+Mùa mặn theo văn bản: tháng 2, 3, 4.
+- **Lúa – tôm (lúa mùa mưa, tôm sú mùa khô)**: nước ngọt phải tưới thêm 6.613 m³/ha (−8.716 m³/ha so với hiện trạng). Lịch: Lúa mùa mưa 09-01 đến 12-14; Tôm sú (nước lợ) 03-01 đến 07-31. Chưa tính giai đoạn nuôi tôm. Cần kiểm chứng trước khi làm: Chưa có nguồn lịch lúa–tôm riêng cho Ba Tri; đang dùng lịch ở Bình Đại.; App chưa mô hình hóa nước và rủi ro của vụ tôm.; Chi phí đầu tư, dịch bệnh tôm, đầu ra: cần nông dân và cán bộ khuyến nông đánh giá.
+- **Lúa Hè Thu + đậu tương thay vụ Đông Xuân**: nước ngọt phải tưới thêm 8.978 m³/ha (−6.351 m³/ha so với hiện trạng). Lịch: Lúa Hè Thu 05-25 đến 09-06; Đậu tương 11-01 đến 02-08. Cần kiểm chứng trước khi làm: Lịch gieo đậu tương trên đất lúa ven biển Bến Tre: chưa tìm thấy nguồn; app giả định 1/11, 100 ngày.; Số đo cho đậu tương trên đất lúa nhiễm mặn ven biển: chưa có. Số đo đang dùng là của đậu xanh ở Tiền Giang (vùng ngọt).; Đầu ra và giá đậu tương tại địa phương.
+- **Lúa Hè Thu + ngô thay vụ Đông Xuân**: nước ngọt phải tưới thêm 9.025 m³/ha (−6.304 m³/ha so với hiện trạng). Lịch: Lúa Hè Thu 05-25 đến 09-06; Ngô 11-01 đến 02-08. Cần kiểm chứng trước khi làm: Lịch gieo ngô trên đất lúa ven biển Bến Tre: chưa tìm thấy nguồn; app giả định 1/11, 100 ngày.; Đầu ra và giá ngô tại địa phương.
+- Đo độ mặn nước kênh bằng bút đo cầm tay trước mỗi lần lấy nước tưới.
+```
+
+---
+
+### 18.5. Output `git diff --stat` của các commit Fix 11 (`d46ad8f..HEAD`)
+
+```text
+ core/advisor.py               |  16 +++++++++--
+ docs/screens/fix11_bentre.png | Bin 0 -> 299992 bytes
+ docs/screens/fix11_daklak.png | Bin 0 -> 166360 bytes
+ docs/screens/fix11_mobile.png | Bin 0 -> 216233 bytes
+ server.py                     |   3 +-
+ tests/test_core.py            |  33 ++++++++++++++++++++++
+ web/app.js                    |  64 ++++++++++++++++++++++++++++++++++++++++--
+ web/index.html                |  49 +++++++++++++++++++++++---------
+ web/style.css                 |  25 +++++++++++++++++
+ 9 files changed, 169 insertions(+), 21 deletions(-)
+```
