@@ -807,3 +807,102 @@ Mùa mặn theo văn bản: tháng 2, 3, 4.
  web/style.css         |  51 ++++++++++++------------
  10 files changed, 165 insertions(+), 129 deletions(-)
 ```
+
+
+---
+
+## 16. Fix 9 (Tính nước theo từng tháng, mưa hiệu quả FAO TM3 cho lúa, khoảng thấm 2–4 mm/ngày, lấy NASA POWER đúng điểm ruộng)
+
+### 16.1. Commit Hash của từng bước (Commit Bước 1–5, Commit Bước 7 & Báo cáo)
+
+| Bước | Commit Hash | Commit Message | Nội dung chính |
+|---|---|---|---|
+| **Bước 1–5** | `f6f2223` | `water balance: monthly deficit, FAO TM3 Pe for rice, presaturation, percolation range` | Cập nhật cấu hình: `rice` thêm `sat_mm: 200`, `peff_method: fao_tm3`, `percolation_mm_day_low: 2`, các cây cạn thêm `peff_method: usda_scs`; S0 Bến Tre vụ Đông Xuân thêm `presaturated: true`; bổ sung `calculate_monthly_peff_tm3` trong `core/water_balance.py`, tính thiếu hụt nước theo từng tháng không bù trừ tháng mưa dư, trừ `sat_mm` nếu `presaturated`; `core/rotation.py` tính thêm `deficit_low_mm` và `annual_deficit_low_mm`; `web/app.js` sửa lệch tháng NDVI và hiển thị khoảng độ nhạy thấm 2 mm/ngày; thêm 4 tests mới (`test_fix9_1` → `test_fix9_4`) và tái sinh `regression_baseline.json`. |
+| **Bước 7** | `bf1e23d` | `data: fetch NASA POWER at field points` | Cập nhật tọa độ vùng trong `config/regions.json` về đúng tọa độ điểm ruộng Ba Tri (10.0992, 106.6040) và điểm vườn Cư M'gar (12.8314, 108.1282); `core/power_fetch.py` đọc tọa độ động từ `regions.json` và cập nhật trường `point` trong manifest; tải dữ liệu NASA POWER thật tại 2 điểm ruộng mới; cập nhật câu giả định ô lưới 50 km tại đúng tọa độ điểm trong `config/rotations.json`. |
+| **Kết thúc** | *(commit hiện tại)* | `fix9 report` | Ghi báo cáo mục **16. Fix 9** vào `MORNING_REPORT.md`. |
+
+---
+
+### 16.2. Output Pytest ở Bước 5b (trước khi cập nhật fixture) và Output cuối cùng
+
+- **Ở Bước 5b (chỉ đúng 1 test fail do đổi công thức tính nước):**
+```text
+FAILED tests/test_core.py::TestAeroAgriStep7::test_prep6_regression_baseline
+1 failed, 49 passed, 1 warning in 15.12s
+```
+
+- **Output Pytest cuối cùng:**
+```text
+..................................................                       [100%]
+============================== warnings summary ===============================
+C:\Users\LucVuu\AppData\Local\Programs\Python\Python313\Lib\site-packages\anyio\pytest_plugin.py:14
+  C:\Users\LucVuu\AppData\Local\Programs\Python\Python313\Lib\site-packages\anyio\pytest_plugin.py:14: PytestRemovedIn10Warning: _pytest.python.CallSpec2 has been renamed to CallSpec.
+  The CallSpec2 alias will be removed in pytest 10.
+  Update imports to use CallSpec instead.
+  See https://docs.pytest.org/en/stable/deprecations.html#callspec2-renamed
+    from _pytest.python import CallSpec2
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+50 passed, 1 warning in 13.54s
+```
+
+---
+
+### 16.3. Bảng Trước / Sau của Fixture (`tests/fixtures/regression_baseline.json`) ở Kịch bản `0.0_0.0`
+
+| Vùng | Cây trồng | `deficit_mm` (Trước) | `deficit_mm` (Sau) | `score` (Trước → Sau) | `water_vs_baseline_pct` (Trước → Sau) |
+|---|---|---:|---:|---:|---:|
+| `Ben_Tre_DBSCL` | `rice` | 926.5 | 892.3 | 35.8 → 35.8 | 0.0% → 0.0% |
+| `Ben_Tre_DBSCL` | `soybean` | 67.3 | 191.0 | 83.3 → 76.3 | 92.7% → 78.6% |
+| `Ben_Tre_DBSCL` | `maize` | 63.6 | 201.8 | 78.6 → 70.7 | 93.1% → 77.4% |
+| `Ben_Tre_DBSCL` | `rice_shrimp` | null | null | null → null | null → null |
+| `Dak_Lak_Tay_Nguyen` | `coffee` | 723.5 | 723.5 | 13.7 → 13.7 | 0.0% → 0.0% |
+| `Dak_Lak_Tay_Nguyen` | `coffee_cover_crop` | 838.7 | 838.7 | 0.0 → 0.0 | -15.9% → -15.9% |
+
+---
+
+### 16.4. Output API ở Bước 6 và Bước 7
+
+- **Tọa độ và độ cao ô lưới mà NASA POWER API phản hồi tại điểm ruộng mới:**
+  * Bến Tre (Ba Tri): `geometry.coordinates = [106.604, 10.099, 0.28]` (kinh độ 106.604, vĩ độ 10.099, độ cao ô lưới 0.28 m).
+  * Đắk Lắk (Cư M'gar): `geometry.coordinates = [108.128, 12.831, 397.95]` (kinh độ 108.128, vĩ độ 12.831, độ cao ô lưới 397.95 m).
+
+- **Kiểm tra thứ hạng mưa Bến Tre trên dữ liệu POWER mới (2015–2025):**
+  * Tháng 10: `297.9 mm/tháng` (Rank 1 toàn năm).
+  * Tháng 9: `278.2 mm/tháng` (Rank 2 toàn năm).
+  * Khẳng định tháng 9 và 10 thuộc top mưa lớn nhất năm, tiền bão hòa đất (presaturated) của vụ Đông Xuân 1/11 hoàn toàn vững chắc.
+
+- **Bảng so sánh `/api/rotations` ở kịch bản `(0, 0)` giữa Bước 6 (tọa độ vùng cũ) và Bước 7 (tọa độ điểm ruộng mới):**
+
+| Vùng | Chiến lược | Tiêu chí | Bước 6 (tọa độ vùng cũ) | Bước 7 (tọa độ điểm ruộng mới) | Chênh lệch (mm) |
+|---|---|---|---:|---:|---:|
+| `Ben_Tre_DBSCL` | **S0** (Hiện trạng: 2 vụ lúa) | `annual_deficit_mm` (thấm 4 mm/d) | 1406.1 | 1532.9 | +126.8 |
+| `Ben_Tre_DBSCL` | **S0** (Hiện trạng: 2 vụ lúa) | `annual_deficit_low_mm` (thấm 2 mm/d) | 1044.5 | 1140.1 | +95.6 |
+| `Ben_Tre_DBSCL` | **S1** (Lúa - tôm) | `annual_deficit_mm` | 598.9 | 661.3 | +62.4 |
+| `Ben_Tre_DBSCL` | **S1** (Lúa - tôm) | `annual_deficit_low_mm` | 423.7 | 477.6 | +53.9 |
+| `Ben_Tre_DBSCL` | **S2** (Lúa HT + Đậu tương ĐX) | `annual_deficit_mm` | 776.6 | 897.8 | +121.2 |
+| `Ben_Tre_DBSCL` | **S2** (Lúa HT + Đậu tương ĐX) | `annual_deficit_low_mm` | 625.0 | 715.0 | +90.0 |
+| `Ben_Tre_DBSCL` | **S3** (Lúa HT + Ngô ĐX) | `annual_deficit_mm` | 781.6 | 902.5 | +120.9 |
+| `Ben_Tre_DBSCL` | **S3** (Lúa HT + Ngô ĐX) | `annual_deficit_low_mm` | 630.0 | 719.7 | +89.7 |
+| `Dak_Lak_Tay_Nguyen` | **D0** (Cà phê đất trần) | `annual_deficit_mm` | 351.3 | 360.2 | +8.9 |
+| `Dak_Lak_Tay_Nguyen` | **D0** (Cà phê đất trần) | `annual_deficit_low_mm` | 351.3 | 360.2 | +8.9 |
+| `Dak_Lak_Tay_Nguyen` | **D1** (Cà phê có cây phủ) | `annual_deficit_mm` | 418.5 | 430.2 | +11.7 |
+| `Dak_Lak_Tay_Nguyen` | **D1** (Cà phê có cây phủ) | `annual_deficit_low_mm` | 418.5 | 430.2 | +11.7 |
+
+---
+
+### 16.5. Output `git diff --stat` của các commit Fix 9 (`fc97ef5..HEAD`)
+
+```text
+ config/crops.json                       | 12 +++++-
+ config/regions.json                     |  8 ++--
+ config/rotations.json                   | 12 ++++--
+ core/power_fetch.py                     | 20 +++++-----
+ core/rotation.py                        | 28 +++++++++++++-
+ core/water_balance.py                   | 65 +++++++++++++++++++++------------
+ data/manifest.json                      | 18 +++++++--
+ tests/fixtures/regression_baseline.json | 36 +++++++++---------
+ tests/test_core.py                      | 53 ++++++++++++++++++++++++++-
+ web/app.js                              |  9 +++--
+ 10 files changed, 194 insertions(+), 67 deletions(-)
+```
