@@ -723,3 +723,87 @@ C:\Users\LucVuu\AppData\Local\Programs\Python\Python313\Lib\site-packages\anyio\
  web/index.html        | 48 ++++++++---------------------
  8 files changed, 154 insertions(+), 111 deletions(-)
 ```
+
+
+---
+
+## 15. Fix 8 (Gỡ số liệu chưa kiểm chứng trên web, báo cáo theo phương án luân canh, ghi rõ giới hạn dữ liệu)
+
+### 15.1. Commit Hash của từng bước (Commit 1, Commit 2, Commit Docs & Report)
+
+| Bước | Commit Hash | Commit Message | Nội dung chính |
+|---|---|---|---|
+| **Commit 1** | `bf0426d` | `config+web: strategy notes from config, drop unverified WASI figures` | Thêm trường `"note"` vào S1, D1 và ghi chú ô lưới POWER cỡ 50 km vào `assumptions` của 2 vùng trong `config/rotations.json`; truyền `note` qua `core/rotation.py`; hiển thị `st.note` trên web, đổi badge `Thuận thiên` thành `Chưa tính vụ tôm`, bỏ ngưỡng 45% `isRecommended`; đổi tiêu đề biểu đồ thành mưa tổng 24 tháng gần nhất, đổi tiêu đề NDVI MODIS trung vị ô 3×3 km; lọc bỏ cây không tính được nước và thêm trạng thái `Chưa tính mặn` trong bảng đánh giá cây; dọn dẹp các CSS class không còn dùng trong `web/style.css`. |
+| **Commit 2** | `1dbebd3` | `advise: list rotation strategies, drop score-based pick` | Endpoint `/api/advise` trong `server.py` gọi `evaluate_rotations` và truyền `rotations` vào `build_advice`; `core/advisor.py` bỏ chọn cây theo điểm, bảng cây bỏ 2 cột điểm và cấp rủi ro, mục 3 liệt kê phương án luân canh (`_rotation_actions`) kèm bù trừ nước so với hiện trạng, lịch và rủi ro/khoảng trống cần kiểm chứng; bổ sung 3 unit tests `test_fix8_1_web_khong_con_chu_chua_kiem_chung`, `test_fix8_2_ghi_chu_phuong_an_tu_config`, `test_fix8_3_bao_cao_theo_phuong_an`. |
+| **Bước 4** | `b513687` | `docs: agent rules match real tests` | Cập nhật `DESIGN.md` và `AGENTS.md`: làm rõ quy ước ID/chuỗi kiểm thử, cập nhật số bài test pass và quy định câu chữ khoa học đọc từ `config/*.json`. |
+| **Kết thúc** | *(commit hiện tại)* | `fix8 report` | Ghi báo cáo mục **15. Fix 8** vào `MORNING_REPORT.md`. |
+
+---
+
+### 15.2. Output `python -m pytest -q`
+
+```text
+..............................................                           [100%]
+============================== warnings summary ===============================
+C:\Users\LucVuu\AppData\Local\Programs\Python\Python313\Lib\site-packages\anyio\pytest_plugin.py:14
+  C:\Users\LucVuu\AppData\Local\Programs\Python\Python313\Lib\site-packages\anyio\pytest_plugin.py:14: PytestRemovedIn10Warning: _pytest.python.CallSpec2 has been renamed to CallSpec.
+  The CallSpec2 alias will be removed in pytest 10.
+  Update imports to use CallSpec instead.
+  See https://docs.pytest.org/en/stable/deprecations.html#callspec2-renamed
+    from _pytest.python import CallSpec2
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+46 passed, 1 warning in 32.02s
+```
+
+---
+
+### 15.3. Output 4 lệnh gọi API ở Bước 5 (kiểm tra trên dữ liệu thật)
+
+#### 1. `POST /api/rotations` (`{"region": "Ben_Tre_DBSCL", "delta_temp_c": 0, "delta_rain_pct": 0}`)
+- `annual_deficit_mm`:
+  * `S0`: `1636.2`
+  * `S1`: `680.5`
+  * `S2`: `791.7`
+  * `S3`: `786.6`
+- `note` của S1: `"Vụ tôm dùng nước lợ mùa khô nên không tính vào nước ngọt; con số trên thẻ chưa tính giai đoạn nuôi tôm. 'Chỉ xuống giống lúa khi… độ mặn trong đất < 2‰' (Khuyến nông QG, sổ tay hạn mặn mùa khô 2026–2027, tr.10)."`
+
+#### 2. `POST /api/rotations` (`{"region": "Dak_Lak_Tay_Nguyen", "delta_temp_c": 0, "delta_rain_pct": 0}`)
+- `annual_deficit_mm`:
+  * `D0`: `351.3`
+  * `D1`: `418.5`
+- `note` của D1: `"Theo FAO-56, cỏ phủ kín còn sống làm tăng nhu cầu nước, nên số liệu D1 là cận trên. Quy trình WASI (QĐ 26/QĐ-VNLT-KHKH, 2013): làm cỏ theo băng trên đất dốc, diệt cỏ quanh vườn đầu mùa khô để chống cháy, tủ gốc và ép xanh cuối mùa mưa. Chưa tìm thấy số đo tại Tây Nguyên cho thấy cây phủ làm giảm nước tưới."` (chứa `Chưa tìm thấy số đo`)
+
+#### 3. `POST /api/advise` (`{"region": "Ben_Tre_DBSCL", "delta_temp_c": 2, "delta_rain_pct": -20}`)
+- Chứa `Cân nhắc chuẩn bị đất và giống`: **Không (False)**
+- Chứa `Mẫu: False`: **Không (False)**
+- Mục 3 nguyên văn:
+```markdown
+#### 3. Việc nên làm trước vụ tới
+Mùa mặn theo văn bản: tháng 2, 3, 4.
+- **Lúa – tôm (lúa mùa mưa, tôm sú mùa khô)**: nước ngọt phải tưới thêm 7.468 m³/ha (−10.179 m³/ha so với hiện trạng). Lịch: Lúa mùa mưa 09-01 đến 12-14; Tôm sú (nước lợ) 03-01 đến 07-31. Chưa tính giai đoạn nuôi tôm. Cần kiểm chứng trước khi làm: Chưa có nguồn lịch lúa–tôm riêng cho Ba Tri; đang dùng lịch ở Bình Đại.; App chưa mô hình hóa nước và rủi ro của vụ tôm.; Chi phí đầu tư, dịch bệnh tôm, đầu ra: cần nông dân và cán bộ khuyến nông đánh giá.
+- **Lúa Hè Thu + đậu tương thay vụ Đông Xuân**: nước ngọt phải tưới thêm 9.119 m³/ha (−8.528 m³/ha so với hiện trạng). Lịch: Lúa Hè Thu 05-25 đến 09-06; Đậu tương 11-01 đến 02-08. Cần kiểm chứng trước khi làm: Lịch gieo đậu tương trên đất lúa ven biển Bến Tre: chưa tìm thấy nguồn; app giả định 1/11, 100 ngày.; Số đo cho đậu tương trên đất lúa nhiễm mặn ven biển: chưa có. Số đo đang dùng là của đậu xanh ở Tiền Giang (vùng ngọt).; Đầu ra và giá đậu tương tại địa phương.
+- **Lúa Hè Thu + ngô thay vụ Đông Xuân**: nước ngọt phải tưới thêm 9.058 m³/ha (−8.589 m³/ha so với hiện trạng). Lịch: Lúa Hè Thu 05-25 đến 09-06; Ngô 11-01 đến 02-08. Cần kiểm chứng trước khi làm: Lịch gieo ngô trên đất lúa ven biển Bến Tre: chưa tìm thấy nguồn; app giả định 1/11, 100 ngày.; Đầu ra và giá ngô tại địa phương.
+- Đo độ mặn nước kênh bằng bút đo cầm tay trước mỗi lần lấy nước tưới.
+```
+
+#### 4. `POST /api/evaluate` cho Bến Tre (`Ben_Tre_DBSCL`)
+- Các cây có `deficit_mm != None` (web sẽ hiển thị): `['rice', 'soybean', 'maize']` (chính xác).
+
+---
+
+### 15.4. Output `git diff --stat` của các commit Fix 8 (`bb93d9f..HEAD`)
+
+```text
+ AGENTS.md             |   4 +-
+ DESIGN.md             |   2 +-
+ config/rotations.json |   8 +++-
+ core/advisor.py       | 106 ++++++++++++++++++++++++--------------------------
+ core/rotation.py      |   1 +
+ server.py             |   3 +-
+ tests/test_core.py    |  44 +++++++++++++++++++++
+ web/app.js            |  58 ++++++++++++---------------
+ web/index.html        |  17 ++++----
+ web/style.css         |  51 ++++++++++++------------
+ 10 files changed, 165 insertions(+), 129 deletions(-)
+```
