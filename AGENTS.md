@@ -12,8 +12,10 @@ If you are an AI assistant, coding agent, or developer asked to modify, redesign
    - NO pulsing animations (`@keyframes pulse`) or decorative emojis.
    - NO nested box-in-box cards. Use subtle dividing hairlines.
    - Keep `web/style.css` **under 500 lines**.
-4. **INVARIANT TESTS CHECKLIST (40/40 pytest MUST pass)**:
+4. **INVARIANT TESTS CHECKLIST (toàn bộ pytest phải pass)**:
    - Preserve all **28 DOM IDs** listed in `DESIGN.md` section 6 in `web/index.html`.
    - Preserve all required text strings in `web/app.js`: `"11-01"`, `"04-30"`, `"chưa tính giai đoạn nuôi tôm"`, `"loại đất giả định"`, `"chưa kiểm chứng"`.
    - 100% Offline-First: Never inject external CDNs.
+
+Không đưa lên web con số hay trích dẫn nào không có trong config/*.json. Câu chữ khoa học trên thẻ phương án đọc từ trường "note" trong config/rotations.json.
 

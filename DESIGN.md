@@ -206,7 +206,7 @@ typography:
 
 ## 6. Danh Mục 28 DOM IDs & Chuỗi Bất Biến (Test Invariants)
 
-Bất kỳ AI Agent nào can thiệp vào `web/index.html` và `web/app.js` **TUYỆT ĐỐI KHÔNG ĐƯỢC XÓA HOẶC THAY ĐỔI** danh sách sau để đảm bảo toàn bộ 40 bài kiểm thử `pytest` luôn PASS 100%:
+Các ID và chuỗi dưới đây là quy ước giao diện. Pytest không đọc index.html; chỉ test_fix8_1 grep các chuỗi bị cấm trong web/app.js, web/index.html và core/advisor.py. Đừng giữ một câu chữ chỉ vì tưởng có test khoá nó.
 
 ### 28 DOM IDs Bắt Buộc trong `web/index.html`:
 ```text
