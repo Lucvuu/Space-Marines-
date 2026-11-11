@@ -11,12 +11,12 @@ let baselineDeficits = {}; // Lưu trữ deficit cơ sở (0°C, 0%) để tính
 const REGIONS_DATA = {
     "Ben_Tre_DBSCL": {
         name: "Bến Tre",
-        place: "Ba Tri (Đồng bằng sông Cửu Long) · Trọng điểm hạn mặn vụ khô 11-01",
+        place: "Ba Tri, ĐBSCL · Đông Xuân gieo 11-01, mặn tháng 2–4",
         ndvi_point: { lat: 10.0992, lon: 106.6040 }
     },
     "Dak_Lak_Tay_Nguyen": {
         name: "Đắk Lắk",
-        place: "Cư M'gar (Tây Nguyên) · Trọng điểm hạn hán mùa khô 04-30",
+        place: "Cư M'gar, Tây Nguyên · Mùa khô 01-01 đến 04-30",
         ndvi_point: { lat: 12.8314, lon: 108.1282 }
     }
 };
@@ -136,14 +136,6 @@ function updateSliderLabels() {
         t === 0 ? "Như hiện nay" : (t > 0 ? `+${fmt(t, 1)} °C` : `${fmt(t, 1)} °C`);
     document.getElementById("valRain").textContent =
         r === 0 ? "Như hiện nay" : (r > 0 ? `+${r}%` : `${r}%`);
-
-    // Cập nhật trạng thái ngữ cảnh trên khung AI
-    const contextEl = document.getElementById("aiContextBadge");
-    if (contextEl) {
-        const regName = REGIONS_DATA[currentRegion].name;
-        const weatherTxt = (t === 0 && r === 0) ? "Đo đạc 10 năm" : `Kịch bản: ΔT=${t > 0 ? "+" : ""}${fmt(t,1)}°C, ΔMưa=${r > 0 ? "+" : ""}${r}%`;
-        contextEl.textContent = `${regName} • ${weatherTxt}`;
-    }
 }
 
 function syncPresetChipState() {
@@ -185,8 +177,8 @@ async function updateStatusBar() {
 
         updateChip("chip-power", "NASA POWER", latestRegionStatus.power, "ngày");
         updateChip("chip-ndvi", "MODIS NDVI", latestRegionStatus.ndvi, "ảnh");
-        updateChip("chip-sm", "SMAP", latestRegionStatus.soil_moisture, "dòng");
-        updateChip("chip-sal", "Độ mặn", latestRegionStatus.salinity, "dòng");
+        updateChip("chip-sm", "SMAP (chưa dùng)", latestRegionStatus.soil_moisture, "dòng");
+        updateChip("chip-sal", "Độ mặn (trạm mặt đất)", latestRegionStatus.salinity, "dòng");
 
         const isSynth = Object.values(latestRegionStatus).some(s => s && s.is_synthetic);
         document.getElementById("dataBadgeArea").innerHTML = isSynth
@@ -253,7 +245,7 @@ async function loadClimateChart() {
         const datasets = [
             {
                 type: "bar",
-                label: "Mưa hữu hiệu (mm)",
+                label: "Mưa tổng (mm)",
                 data: series.map(s => s.rain_sum_mm),
                 backgroundColor: "rgba(2, 132, 199, 0.7)",
                 borderRadius: 2,
@@ -399,7 +391,7 @@ function renderHero(data, strategies) {
             </div>
             <div>
                 <div class="hero-stat-num">${bareN} <small>tháng</small></div>
-                <div class="hero-stat-lbl">Ruộng để đất trống ${bareN ? `(${monthList(base.bare_months)})` : ""}</div>
+                <div class="hero-stat-lbl">Tháng đất trống ${bareN ? `(${monthList(base.bare_months)})` : ""}</div>
             </div>
             <div>
                 <div class="hero-stat-num" style="font-size: 17px; font-weight: 700; color: #b45309;">${riskSeasonTxt}</div>
@@ -467,16 +459,14 @@ function renderStrategyCards(data, strategies) {
 
         // Tính badge trạng thái duy nhất
         let badgeHtml = "";
-        let isRecommended = false;
         if (isBase) {
             badgeHtml = `<span class="badge-status current">Hiện tại</span>`;
         } else if (st.partial) {
-            badgeHtml = `<span class="badge-status neutral">Thuận thiên</span>`;
+            badgeHtml = `<span class="badge-status neutral">Chưa tính vụ tôm</span>`;
         } else if (isNum(def) && isNum(base.annual_deficit_mm) && base.annual_deficit_mm > 0) {
             const pct = Math.round((base.annual_deficit_mm - def) / base.annual_deficit_mm * 100);
             if (pct > 0) {
                 badgeHtml = `<span class="badge-status saved">Tiết kiệm ${pct}% nước</span>`;
-                if (pct >= 45) isRecommended = true;
             } else if (pct < 0) {
                 badgeHtml = `<span class="badge-status neutral">Tăng ${-pct}% nước</span>`;
             }
@@ -495,19 +485,16 @@ function renderStrategyCards(data, strategies) {
         }
 
         // Ghi chú thực tế khoa học
-        let scienceNoteHtml = "";
-        if (st.id === "D1" || (currentRegion === "Dak_Lak_Tay_Nguyen" && !isBase)) {
-            scienceNoteHtml = `<div class="science-note"><strong>WASI Đắk Lắk:</strong> Mô hình FAO-56 tính lượng nước tăng (+67,2 mm). Thực nghiệm Viện WASI (QĐ 26/QĐ-VNLT-KHKH) chứng minh thảm cỏ che phủ giúp <strong>giữ ẩm đất tăng 2,5%–4,2%, giảm >65% xói mòn và tiết kiệm 20%–25% lượng nước tưới thực tế</strong>.</div>`;
-        } else if (st.partial || st.id === "S1") {
-            scienceNoteHtml = `<div class="science-note shrimp"><strong>Thuận thiên:</strong> Vụ tôm sú tận dụng nước lợ tự nhiên mùa khô, không dùng nước ngọt tưới cây. Chỉ số trên <strong>chưa tính giai đoạn nuôi tôm</strong>.</div>`;
-        }
+        const scienceNoteHtml = st.note
+            ? `<div class="science-note${st.partial ? " shrimp" : ""}">${st.note}</div>`
+            : "";
 
         // Gạch đầu dòng lợi ích & rủi ro tinh gọn
         const bullets = [];
         (st.benefits || []).slice(0, 2).forEach(b => {
             bullets.push(`<li class="good-item">${b}</li>`);
         });
-        (st.risks || []).slice(0, 1).forEach(r => {
+        (st.risks || []).slice(0, 2).forEach(r => {
             bullets.push(`<li class="risk-item">${r}</li>`);
         });
 
@@ -528,7 +515,7 @@ function renderStrategyCards(data, strategies) {
         const infoGaps = (st.info_gaps || []).map(g => `<li>${g}</li>`).join("");
 
         return `
-        <article class="rot-card ${isRecommended ? "recommended" : ""} ${isBase ? "is-baseline" : ""}" data-strategy-id="${st.id}">
+        <article class="rot-card ${isBase ? "is-baseline" : ""}" data-strategy-id="${st.id}">
             <div>
                 <div class="rot-card-top">
                     <h3 class="rot-card-title">${cleanName(st.name_vi)}</h3>
@@ -578,10 +565,10 @@ function renderStrategyCards(data, strategies) {
 
 function renderNdviStrip(data) {
     const el = document.getElementById("ndviStrip");
-    const ndvi = data.ndvi_monthly || {};
+    const ndvi = data.ndvi_monthly || [];
     let html = "";
     for (let m = 1; m <= 12; m++) {
-        const v = isNum(ndvi[String(m)]) ? Number(ndvi[String(m)]) : (isNum(ndvi[m]) ? Number(ndvi[m]) : null);
+        const v = isNum(ndvi[m - 1]) ? Number(ndvi[m - 1]) : null; // API trả list 12 phần tử, index 0 = tháng 1
         if (v === null) {
             html += `<div class="ndvi-cell na"><span>T${m}</span><b>–</b></div>`;
             continue;
@@ -596,7 +583,7 @@ function renderNdviStrip(data) {
     const p = REGIONS_DATA[currentRegion].ndvi_point;
     const yrs = data.ndvi_years ? `${data.ndvi_years[0]}–${data.ndvi_years[1]}` : "nhiều năm";
     document.getElementById("ndviNote").textContent =
-        `Chỉ số NDVI từ vệ tinh MODIS tại điểm (${p.lat}, ${p.lon}), trung bình ${yrs}. Ô càng đậm là càng nhiều cây xanh; ô nhạt là ruộng trống hoặc ngập nước.`;
+        `Chỉ số NDVI từ vệ tinh MODIS, trung vị ô 3×3 km quanh điểm (${p.lat}, ${p.lon}), trung bình ${yrs}. Ô càng đậm là càng nhiều cây xanh; ô nhạt là ruộng trống hoặc ngập nước.`;
 }
 
 function renderAssumptionsBox(data) {
@@ -626,10 +613,10 @@ async function evaluateCrops() {
         const crops = (await res.json()).crops || [];
         show("cropTableWrapper", true); show("evaluateEmpty", false);
 
-        show("waterOnlyScoreNote", crops.length > 0 && crops.every(c =>
-            c.components && c.components.heat_ratio === null && c.components.salinity_exceed === null));
+        const rows = crops.filter(c => isNum(c.deficit_mm));
+        show("waterOnlyScoreNote", rows.some(c => (c.missing_components || []).some(n => n.startsWith("chưa tính mặn"))));
 
-        tbody.innerHTML = crops.map((c, i) => {
+        tbody.innerHTML = rows.map((c, i) => {
             const note = c.missing_components && c.missing_components.length
                 ? `<div class="muted" style="font-size:11.5px;">(${c.missing_components.join("; ")})</div>` : "";
             const win = c.season_window && c.season_window.start ? `${c.season_window.start} → ${c.season_window.end}` : "–";
@@ -642,12 +629,15 @@ async function evaluateCrops() {
             if (c.score !== null && !isNum(c.exceed_ratio_r)) {
                 risk = `<span class="muted">Chưa có ngưỡng chuẩn</span>`;
             }
+            const salMissing = (c.missing_components || []).some(n => n.startsWith("chưa tính mặn"));
+            if (c.components && c.components.salinity_exceed === null && salMissing) {
+                risk = `<span class="muted">Chưa tính mặn</span>`;
+            }
             return `<tr>
                 <td><strong>${c.crop_name}</strong>${note}</td>
                 <td class="nowrap muted">${win}</td>
                 <td class="nowrap" style="text-align:right;">${isNum(c.deficit_mm) ? `<strong>${m3(c.deficit_mm)}</strong> <small class="muted">(${fmt(c.deficit_mm, 1)} mm)</small>` : "–"}</td>
                 <td style="text-align:right;">${saved}</td>
-                <td style="text-align:right;">${isNum(c.score) ? `<strong>${fmt(c.score, 1)}</strong>` : "–"}</td>
                 <td>${risk}</td>
             </tr>`;
         }).join("");
@@ -657,7 +647,7 @@ async function evaluateCrops() {
 }
 
 // ==========================================================================
-// HỎI ĐÁP AGRO-AI COPILOT (DETERMINISTIC ADVOCACY)
+// BÁO CÁO TƯ VẤN
 // ==========================================================================
 function resetReport() {
     document.getElementById("chatOutput").textContent = "Bấm nút để tạo báo cáo.";
@@ -701,6 +691,8 @@ function renderSimpleMarkdown(md) {
 
 function formatInline(text) {
     return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
         .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
         .replace(/\*(.*?)\*/g, "<em>$1</em>")
         .replace(/`(.*?)`/g, "<code>$1</code>");

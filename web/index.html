@@ -96,9 +96,9 @@
 
         <!-- 3. Báo cáo tư vấn -->
         <section>
-            <div class="section-head">
+            <div class="section-header-compact">
                 <h2 class="section-title">Báo cáo tư vấn</h2>
-                <p class="section-desc">Báo cáo được ghép từ chính các số liệu trên trang, theo vùng và kịch bản thời tiết đang chọn. Không dùng AI tạo chữ.</p>
+                <p class="muted">Báo cáo được ghép từ chính các số liệu trên trang, theo vùng và kịch bản thời tiết đang chọn. Không dùng AI tạo chữ.</p>
             </div>
             <div class="card">
                 <button type="button" id="btnReport" class="btn-primary">Tạo báo cáo cho vùng này</button>
@@ -109,7 +109,7 @@
         <!-- 5. SỐ LIỆU CHI TIẾT & BẢO ĐẢM KHOA HỌC NASA -->
         <section class="tech-section" id="techSection">
             <div class="section-header-compact">
-                <h2 class="section-title" style="font-size: 17px;">Kiểm chứng dữ liệu & Cơ sở vật lý (Zero Black-Box)</h2>
+                <h2 class="section-title" style="font-size: 17px;">Dữ liệu và cách tính</h2>
                 <div class="status-bar-clean" id="statusBar">
                     <span class="chip chip-missing" id="chip-power">NASA POWER: kiểm tra...</span>
                     <span class="chip chip-missing" id="chip-ndvi">MODIS NDVI: kiểm tra...</span>
@@ -121,14 +121,14 @@
             <!-- Biểu đồ NASA POWER và Dải MODIS NDVI thẳng hàng 12 tháng -->
             <div class="tech-grid-clean">
                 <div class="card">
-                    <h3 class="card-heading" style="font-size: 14.5px;">Mưa hữu hiệu vs. Nước bốc hơi ETo (NASA POWER 10 năm)</h3>
-                    <p class="muted">Đường nâu (ETo) vượt cột xanh (Mưa USDA) báo hiệu các tháng thâm hụt nước ngọt nghiêm trọng.</p>
+                    <h3 class="card-heading" style="font-size: 14.5px;">Mưa tổng và nước bốc hơi ETo (NASA POWER, 24 tháng gần nhất)</h3>
+                    <p class="muted">Cột xanh là mưa tổng, chưa trừ phần chảy tràn. Tháng nào đường nâu cao hơn cột xanh là tháng thiếu nước.</p>
                     <div class="chart-container-clean" id="chartWrapper"><canvas id="climateChart"></canvas></div>
                     <div id="climateEmpty" class="empty-state" hidden>Chưa có dữ liệu khí tượng.</div>
                 </div>
 
                 <div class="card">
-                    <h3 class="card-heading" style="font-size: 14.5px;">Chu kỳ độ xanh tán cây từ vệ tinh (MODIS NDVI 250m)</h3>
+                    <h3 class="card-heading" style="font-size: 14.5px;">Độ xanh từ vệ tinh (MODIS NDVI, trung vị ô 3×3 km)</h3>
                     <p class="muted" id="ndviNote">Chỉ số NDVI trung bình 12 tháng. Giá trị cao phản ánh thảm phủ phát triển mạnh.</p>
                     <div id="ndviStrip" class="ndvi-strip-swiss"></div>
                 </div>
@@ -136,7 +136,7 @@
 
             <!-- Bảng Đánh Giá Từng Cây Trồng Vụ Khô -->
             <div class="card" style="margin-bottom: 16px;">
-                <h3 class="card-heading" style="font-size: 14.5px;">Chỉ số thích ứng đa tiêu chí từng cây trồng vụ khô</h3>
+                <h3 class="card-heading" style="font-size: 14.5px;">Nhu cầu nước từng cây trồng vụ khô</h3>
                 <div id="cropTableWrapper" style="overflow-x: auto; margin-top: 8px;">
                     <table class="table-clean">
                         <thead>
@@ -145,13 +145,12 @@
                                 <th>Cửa sổ mùa vụ</th>
                                 <th style="text-align: right;">Nước tưới cần</th>
                                 <th style="text-align: right;">So với cây đầu</th>
-                                <th style="text-align: right;">Điểm /100</th>
                                 <th>Rủi ro thời tiết</th>
                             </tr>
                         </thead>
                         <tbody id="cropTableBody"></tbody>
                     </table>
-                    <p id="waterOnlyScoreNote" class="muted" style="margin-top: 8px; font-size: 12px;" hidden>Điểm dựa trên lượng nước thiếu hụt tương đối giữa các cây.</p>
+                    <p id="waterOnlyScoreNote" class="muted" style="margin-top: 8px; font-size: 12px;" hidden>Bảng chỉ so nhu cầu nước. Rủi ro mặn chưa tính vì chưa có số đo độ mặn tại ruộng.</p>
                 </div>
                 <div id="evaluateEmpty" class="empty-state" hidden>Chưa có dữ liệu để đánh giá.</div>
             </div>

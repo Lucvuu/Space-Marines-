@@ -275,6 +275,7 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
             "bare_months": bare_months,
             "calendar": calendar_12m,
             "why": strat.get("why", ""),
+            "note": strat.get("note"),
             "evidence": strat.get("evidence", []),
             "benefits": strat.get("benefits", []),
             "info_gaps": strat.get("info_gaps", []),

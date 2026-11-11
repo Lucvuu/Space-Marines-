@@ -9,7 +9,8 @@
       "Ngày gieo là ngày đại diện (Hè Thu 25/5, Đông Xuân 1/11); thực tế dao động theo năm.",
       "Nước thêm cho lúa theo FAO Training Manual 3 (1986), mục 4.4: bão hòa đất 200 mm + lớp nước 100 mm + thấm 4 mm/ngày (mức đất sét nặng). Loại đất tại Ba Tri là giả định, chưa kiểm chứng. Phần nước này chiếm phần lớn nhu cầu nước của lúa.",
       "Một nghiên cứu cân bằng nước ở Bến Tre dùng mức thấm 2 mm/ngày, dẫn theo TCVN 9168:2012 (chưa đọc được bản gốc). Nếu dùng 2 mm/ngày, nước thêm cho mỗi vụ lúa 105 ngày là 510 mm thay vì 720 mm.",
-      "App chưa có dữ liệu độ mặn theo trạm; tháng mặn lấy từ văn bản, không phải đo đạc."
+      "App chưa có dữ liệu độ mặn theo trạm; tháng mặn lấy từ văn bản, không phải đo đạc.",
+      "Khí tượng lấy từ NASA POWER theo ô lưới khoảng 0,5° × 0,625° (cỡ 50 km), truy vấn tại tọa độ vùng trong regions.json, cách điểm ruộng Ba Tri khoảng 30 km. Đây không phải số đo tại ruộng."
     ],
     "strategies": [
       {
@@ -37,6 +38,7 @@
           {"crop": null, "label": "Tôm sú (nước lợ)", "start": "03-01", "end": "07-31", "modeled": false}
         ],
         "why": "Thay vì chống mặn, dùng nước lợ mùa khô để nuôi tôm; trồng lúa khi mưa đã rửa mặn.",
+        "note": "Vụ tôm dùng nước lợ mùa khô nên không tính vào nước ngọt; con số trên thẻ chưa tính giai đoạn nuôi tôm. 'Chỉ xuống giống lúa khi… độ mặn trong đất < 2‰' (Khuyến nông QG, sổ tay hạn mặn mùa khô 2026–2027, tr.10).",
         "evidence": [
           {"text": "Bình Đại (huyện ven biển giáp Ba Tri): 'Vụ lúa từ tháng 9/2012 đến tháng 12/2012… Vụ tôm sú từ tháng 3/2013 đến tháng 7/2013.'", "source": "Nguyễn Mỹ Hoa, Trần Sơn Tùng, Nguyễn Hồng Giang, Võ Thị Gương (2016). Tạp chí KH ĐH Cần Thơ, Phần A, 42: 40–49", "verified": true},
           {"text": "Vùng ven biển Vĩnh Long: 'phân vùng mặn-lợ, không ngọt hóa cứng nhắc; bố trí sinh kế phù hợp nguồn nước.'", "source": "Khuyến nông QG, sổ tay hạn mặn mùa khô 2026–2027, tr.50", "verified": true}
@@ -87,7 +89,8 @@
     "assumptions": [
       "Cà phê đánh giá trong tháng 1–4 (mùa khô) với Kc giữa vụ cố định.",
       "Không có ngưỡng nhiệt theo ngày có nguồn cho cà phê vối, nên không tính rủi ro nhiệt.",
-      "Nhu cầu nước theo FAO-56 là nhu cầu đầy đủ của cây. Quy trình tưới trong nước: 350–420 lít/gốc/lần, chu kỳ 30–35 ngày (Khuyến nông QG 2026); 500–520 lít/gốc/lần, chu kỳ 30–40 ngày trên đất bazan (WASI, QĐ 26/QĐ-VNLT-KHKH 2013). Ở 1.111 cây/ha, mức này tương đương khoảng 130–230 mm/mùa, thấp hơn mô hình vì tưới thiếu có chủ đích và đất bazan trữ nước từ mùa mưa (mô hình chưa tính)."
+      "Nhu cầu nước theo FAO-56 là nhu cầu đầy đủ của cây. Quy trình tưới trong nước: 350–420 lít/gốc/lần, chu kỳ 30–35 ngày (Khuyến nông QG 2026); 500–520 lít/gốc/lần, chu kỳ 30–40 ngày trên đất bazan (WASI, QĐ 26/QĐ-VNLT-KHKH 2013). Ở 1.111 cây/ha, mức này tương đương khoảng 130–230 mm/mùa, thấp hơn mô hình vì tưới thiếu có chủ đích và đất bazan trữ nước từ mùa mưa (mô hình chưa tính).",
+      "Khí tượng lấy từ NASA POWER theo ô lưới khoảng 0,5° × 0,625° (cỡ 50 km), truy vấn tại tọa độ vùng trong regions.json, cách điểm vườn Cư M'gar khoảng 20 km. Đây không phải số đo tại vườn."
     ],
     "strategies": [
       {
@@ -108,6 +111,7 @@
         "name_vi": "Cà phê vối có cây che phủ đất / thảm cỏ",
         "phases": [{"crop": "coffee_cover_crop", "label": "Cà phê + cây phủ"}],
         "why": "Khuyến nông khuyến cáo 'trồng cây che phủ đất' và chống xói mòn trên đất dốc.",
+        "note": "Theo FAO-56, cỏ phủ kín còn sống làm tăng nhu cầu nước, nên số liệu D1 là cận trên. Quy trình WASI (QĐ 26/QĐ-VNLT-KHKH, 2013): làm cỏ theo băng trên đất dốc, diệt cỏ quanh vườn đầu mùa khô để chống cháy, tủ gốc và ép xanh cuối mùa mưa. Chưa tìm thấy số đo tại Tây Nguyên cho thấy cây phủ làm giảm nước tưới.",
         "evidence": [
           {"text": "'Tăng cường hệ thống cây che bóng, cây chắn gió, trồng cây che phủ đất…'; 'Ở đất dốc, bố trí rãnh, băng hoặc hố thu nước theo đường đồng mức để tăng khả năng giữ nước, hạn chế dòng chảy mặt và xói mòn.'", "source": "Trung tâm Khuyến nông QG, tờ gấp hạn mặn cà phê – hồ tiêu (2026)", "verified": true},
           {"text": "Kc cà phê có cỏ 1,05 / 1,10 / 1,10.", "source": "FAO-56, Bảng 12, tr.112", "verified": true},
