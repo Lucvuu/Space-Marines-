@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 AERO-AGRI Water Balance Engine
-Tính toán nhu cầu nước cây trồng (ETc = Kc * ETo + land_prep + percolation) và lượng mưa hiệu quả USDA-SCS.
+Tính toán nhu cầu nước cây trồng và lượng mưa hiệu quả (USDA-SCS hoặc FAO TM3).
 Tuân thủ:
-- Nước lúa: cộng land_prep_mm và percolation_mm_day vào nhu cầu nước (null thì coi là 0).
-- USDA-SCS theo tháng: P <= 250 -> Peff = P*(125 - 0.2P)/125; P > 250 -> Peff = 125 + 0.1P
+- Thiếu hụt nước cộng theo từng tháng: tháng mưa dư không bù cho tháng thiếu
+- Lúa dùng mưa hiệu quả theo FAO TM3 (Pe = 0,8P - 25 hoặc 0,6P - 10), cây khác dùng USDA-SCS
+- Nước lúa: cộng land_prep_mm và percolation_mm_day vào nhu cầu nước (presaturated bỏ sat_mm; percolation_mm_day ghi đè mức thấm)
 - Nội suy Kc tuyến tính theo từng giai đoạn sinh trưởng (ini/dev/mid/late)
 - Cây lâu năm (perennial=true): đánh giá trên các tháng mùa khô với Kc cố định = kc_mid
 - rice_shrimp (Kc=null): trả về None kèm status_note, không đoán mò Kc
@@ -130,6 +131,18 @@ def calculate_monthly_peff(p_mm):
         return 125.0 + 0.1 * p_mm
 
 
+def calculate_monthly_peff_tm3(p_mm):
+    """
+    Mưa hiệu quả theo FAO Training Manual 3 (Brouwer & Heibloem 1986), Part II §4.2 và §4.4:
+    P > 75 mm/tháng: Pe = 0.8P - 25; P <= 75 mm/tháng: Pe = 0.6P - 10; không âm.
+    """
+    if p_mm <= 0.0:
+        return 0.0
+    if p_mm > 75.0:
+        return max(0.8 * p_mm - 25.0, 0.0)
+    return max(0.6 * p_mm - 10.0, 0.0)
+
+
 def calculate_season_peff(df_all, df_season, rain_col="Rain_sim_mm"):
     """
     Tính tổng mưa hiệu quả USDA-SCS cho một mùa vụ (df_season), phân bổ theo tỷ lệ ngày
@@ -180,7 +193,7 @@ def build_daily_kc(stages, kc_ini, kc_mid, kc_end, season_days):
             kc_array[day_idx] = kc_mid + fraction * (kc_end - kc_mid)
     return kc_array
 
-def calculate_water_balance(power_df, region_id, crop_id, delta_temp_c=0.0, delta_rain_pct=0.0, season_start=None):
+def calculate_water_balance(power_df, region_id, crop_id, delta_temp_c=0.0, delta_rain_pct=0.0, season_start=None, presaturated=False, percolation_mm_day=None):
     """
     Tính toán cân bằng nước cho 1 vùng và 1 loại cây trồng qua các năm.
     Trả về:
@@ -238,39 +251,45 @@ def calculate_water_balance(power_df, region_id, crop_id, delta_temp_c=0.0, delt
     is_perennial = crop_info.get("perennial", False)
     yearly_results = []
 
-    # Khoản nước phụ trợ: làm đất (land_prep_mm) và thấm lọc (percolation_mm_day)
+    # Khoản nước phụ trợ cho lúa (FAO TM3 §4.4): land_prep_mm = SAT + WL, tính vào tháng đầu vụ
     land_prep = float(crop_info.get("land_prep_mm") or 0.0)
-    perc_day = float(crop_info.get("percolation_mm_day") or 0.0)
+    if presaturated:
+        land_prep = max(land_prep - float(crop_info.get("sat_mm") or 0.0), 0.0)
+    if percolation_mm_day is None:
+        perc_day = float(crop_info.get("percolation_mm_day") or 0.0)
+    else:
+        perc_day = float(percolation_mm_day)
+    peff_fn = calculate_monthly_peff_tm3 if crop_info.get("peff_method") == "fao_tm3" else calculate_monthly_peff
+    month_rain = df.groupby(df["date"].dt.strftime("%Y-%m"))["Rain_sim_mm"].sum()
 
     for y, df_season in iter_crop_season_slices(df, reg_info, crop_id, crop_info):
         if is_perennial:
-            kc_mid = crop_info["kc_mid"]
-            df_season["ETc_mm"] = df_season["ETo_mm"] * kc_mid
-            total_etc = df_season["ETc_mm"].sum()
-            total_peff = calculate_season_peff(df, df_season, rain_col="Rain_sim_mm")
-
+            df_season["ETc_mm"] = df_season["ETo_mm"] * crop_info["kc_mid"]
         else:
-            stages = crop_info.get("stages", {})
-            kc_array = build_daily_kc(
-                stages,
+            df_season["Kc"] = build_daily_kc(
+                crop_info.get("stages", {}),
                 crop_info["kc_ini"],
                 crop_info["kc_mid"],
                 crop_info["kc_end"],
                 len(df_season)
             )
-            df_season["Kc"] = kc_array
             df_season["ETc_mm"] = df_season["ETo_mm"] * df_season["Kc"]
-            total_etc = df_season["ETc_mm"].sum()
-            total_peff = calculate_season_peff(df, df_season, rain_col="Rain_sim_mm")
 
-        # Nhu cầu nước tổng thể = ETc + làm đất + thấm lọc
-        total_prep = land_prep
-        total_perc = perc_day * len(df_season)
-        total_req = total_etc + total_prep + total_perc
+        # Cộng thiếu hụt theo từng tháng: tháng mưa dư không bù cho tháng thiếu
+        ym = df_season["date"].dt.strftime("%Y-%m")
+        total_etc = total_req = total_peff = deficit = 0.0
+        for i, m in enumerate(ym.unique()):
+            days = df_season[ym == m]
+            frac = len(days) / float(days["date"].dt.days_in_month.iloc[0])
+            etc_m = float(days["ETc_mm"].sum())
+            req_m = etc_m + perc_day * len(days) + (land_prep if i == 0 else 0.0)
+            pe_m = peff_fn(float(month_rain[m])) * frac
+            total_etc += etc_m
+            total_req += req_m
+            total_peff += pe_m
+            deficit += max(req_m - pe_m, 0.0)
 
-        deficit = max(total_req - total_peff, 0.0)
         water_stress = np.clip(deficit / max(total_req, 1.0), 0.0, 1.0)
-
         yearly_results.append({
             "year": y,
             "etc_mm": total_etc,

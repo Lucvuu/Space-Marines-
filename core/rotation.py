@@ -145,8 +145,24 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
                     crop_id,
                     delta_temp_c=delta_temp_c,
                     delta_rain_pct=delta_rain_pct,
-                    season_start=p_start
+                    season_start=p_start,
+                    presaturated=bool(ph.get("presaturated", False))
                 )
+                if c_info.get("percolation_mm_day_low") is not None:
+                    wb_low = calculate_water_balance(
+                        power_df,
+                        region_id,
+                        crop_id,
+                        delta_temp_c=delta_temp_c,
+                        delta_rain_pct=delta_rain_pct,
+                        season_start=p_start,
+                        presaturated=bool(ph.get("presaturated", False)),
+                        percolation_mm_day=c_info["percolation_mm_day_low"]
+                    )
+                    deficit_low_mm = wb_low.get("mean_deficit_mm")
+                else:
+                    deficit_low_mm = wb.get("mean_deficit_mm")
+
                 window = get_crop_season_window_info(reg_override, crop_id, c_info)
 
                 heat_thresh = c_info.get("heat_threshold_c")
@@ -171,8 +187,10 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
                     "crop_name": c_info.get("name_vi", crop_id),
                     "label": label,
                     "modeled": True,
+                    "presaturated": bool(ph.get("presaturated", False)),
                     "window": window,
                     "deficit_mm": wb.get("mean_deficit_mm"),
+                    "deficit_low_mm": deficit_low_mm,
                     "etc_mm": mean_etc,
                     "assumed_extra_mm": assumed_extra_mm,
                     "peff_mm": wb.get("mean_peff_mm"),
@@ -184,11 +202,13 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
                     "crop_name": label,
                     "label": label,
                     "modeled": False,
+                    "presaturated": False,
                     "window": {
                         "start": ph.get("start"),
                         "end": ph.get("end")
                     },
                     "deficit_mm": None,
+                    "deficit_low_mm": None,
                     "etc_mm": None,
                     "assumed_extra_mm": None,
                     "peff_mm": None,
@@ -201,6 +221,11 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
             if p["modeled"] and p["deficit_mm"] is not None
         ]
         annual_deficit_mm = round(float(sum(modeled_defs)), 1) if modeled_defs else None
+        modeled_defs_low = [
+            p["deficit_low_mm"] for p in phases_out
+            if p["modeled"] and p["deficit_low_mm"] is not None
+        ]
+        annual_deficit_low_mm = round(float(sum(modeled_defs_low)), 1) if modeled_defs_low else None
         partial = any(not p["modeled"] for p in phases_out)
 
         # Lịch 12 tháng theo _display_rule (>= 15 ngày thuộc pha)
@@ -269,6 +294,7 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
             "name_vi": strat.get("name_vi", ""),
             "phases": phases_out,
             "annual_deficit_mm": annual_deficit_mm,
+            "annual_deficit_low_mm": annual_deficit_low_mm,
             "water_months": water_months,
             "water_full_year": water_full_year,
             "partial": partial,

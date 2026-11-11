@@ -509,7 +509,10 @@ function renderStrategyCards(data, strategies) {
             }
             const extra = isNum(ph.assumed_extra_mm) && ph.assumed_extra_mm > 0
                 ? ` + nước làm đất, thấm ${fmt(ph.assumed_extra_mm)} mm [loại đất giả định]` : "";
-            return `<li><strong>${ph.label}</strong>${win}: ETc ${fmt(ph.etc_mm)} mm${extra} − Peff ${fmt(ph.peff_mm)} mm = <strong>tưới ${fmt(ph.deficit_mm)} mm</strong></li>`;
+            const presat = ph.presaturated ? " (không tính lại 200 mm bão hòa đất vì ruộng đã ngấm nước từ tháng trước)" : "";
+            const low = isNum(ph.deficit_low_mm) && isNum(ph.deficit_mm) && ph.deficit_mm - ph.deficit_low_mm >= 1
+                ? `; nếu đất thấm 2 mm/ngày: ${fmt(ph.deficit_low_mm)} mm` : "";
+            return `<li><strong>${ph.label}</strong>${win}: ETc ${fmt(ph.etc_mm)} mm${extra}${presat}; mưa hiệu quả ${fmt(ph.peff_mm)} mm. Cộng phần thiếu của từng tháng: <strong>tưới ${fmt(ph.deficit_mm)} mm</strong>${low}.</li>`;
         }).join("");
 
         const infoGaps = (st.info_gaps || []).map(g => `<li>${g}</li>`).join("");
@@ -565,10 +568,10 @@ function renderStrategyCards(data, strategies) {
 
 function renderNdviStrip(data) {
     const el = document.getElementById("ndviStrip");
-    const ndvi = data.ndvi_monthly || [];
+    const ndvi = Array.isArray(data.ndvi_monthly) ? data.ndvi_monthly : [];
     let html = "";
     for (let m = 1; m <= 12; m++) {
-        const v = isNum(ndvi[m - 1]) ? Number(ndvi[m - 1]) : null; // API trả list 12 phần tử, index 0 = tháng 1
+        const v = isNum(ndvi[m - 1]) ? Number(ndvi[m - 1]) : null;
         if (v === null) {
             html += `<div class="ndvi-cell na"><span>T${m}</span><b>–</b></div>`;
             continue;

@@ -786,7 +786,7 @@ class TestAeroAgriFix6(unittest.TestCase):
         if df_power is None:
             self.skipTest("Thiếu file CSV dữ liệu POWER cho Ben_Tre_DBSCL")
         wb_ht = calculate_water_balance(df_power, "Ben_Tre_DBSCL", "rice", 0.0, 0.0, season_start="05-25")
-        wb_dx = calculate_water_balance(df_power, "Ben_Tre_DBSCL", "rice", 0.0, 0.0, season_start="11-01")
+        wb_dx = calculate_water_balance(df_power, "Ben_Tre_DBSCL", "rice", 0.0, 0.0, season_start="11-01", presaturated=True)
         expected_sum = wb_ht["mean_deficit_mm"] + wb_dx["mean_deficit_mm"]
 
         self.assertAlmostEqual(s0["annual_deficit_mm"], expected_sum, delta=0.1)
@@ -995,6 +995,57 @@ class TestAeroAgriFix6(unittest.TestCase):
         self.assertNotIn("Mẫu: False", md)
         for bad in ("mất trắng", "mất mùa", "năng suất"):
             self.assertNotIn(bad, md.lower())
+
+    def _fix9_power_df(self):
+        import pandas as pd
+        dates = pd.date_range("2023-11-01", "2024-02-29", freq="D")
+        return pd.DataFrame({
+            "date": dates,
+            "T2M_MAX": 32.0, "T2M_MIN": 24.0, "RH2M": 75.0, "WS2M": 2.0, "ALLSKY_SFC_SW_DWN": 18.0,
+            "PRECTOTCORR": [10.0 if d.month == 11 else 0.0 for d in dates],
+        })
+
+    def test_fix9_1_tm3_peff(self):
+        """Fix 9: mưa hiệu quả FAO TM3."""
+        from core.water_balance import calculate_monthly_peff_tm3
+        self.assertAlmostEqual(calculate_monthly_peff_tm3(100.0), 55.0, places=6)
+        self.assertAlmostEqual(calculate_monthly_peff_tm3(75.0), 35.0, places=6)
+        self.assertAlmostEqual(calculate_monthly_peff_tm3(50.0), 20.0, places=6)
+        self.assertEqual(calculate_monthly_peff_tm3(10.0), 0.0)
+        self.assertEqual(calculate_monthly_peff_tm3(0.0), 0.0)
+
+    def test_fix9_2_thang_mua_du_khong_bu_thang_thieu(self):
+        """Fix 9: thiếu hụt cộng theo từng tháng; mưa dư tháng 11 không bù cho tháng 1–2."""
+        from core.water_balance import calculate_water_balance
+        wb = calculate_water_balance(self._fix9_power_df(), "Ben_Tre_DBSCL", "soybean", 0.0, 0.0, season_start="11-01")
+        self.assertTrue(wb["available"])
+        self.assertGreater(wb["mean_deficit_mm"], max(wb["mean_water_req_mm"] - wb["mean_peff_mm"], 0.0) + 1.0)
+
+    def test_fix9_3_presaturated_bo_200mm(self):
+        """Fix 9: presaturated=True bỏ đúng sat_mm khỏi nhu cầu nước lúa."""
+        from core.water_balance import calculate_water_balance
+        df = self._fix9_power_df()
+        a = calculate_water_balance(df, "Ben_Tre_DBSCL", "rice", 0.0, 0.0, season_start="11-01")
+        b = calculate_water_balance(df, "Ben_Tre_DBSCL", "rice", 0.0, 0.0, season_start="11-01", presaturated=True)
+        self.assertAlmostEqual(a["mean_water_req_mm"] - b["mean_water_req_mm"], 200.0, delta=0.2)
+        self.assertLess(b["mean_deficit_mm"], a["mean_deficit_mm"])
+
+    def test_fix9_4_khoang_tham_dat(self):
+        """Fix 9: lúa có khoảng thấm 2–4 mm/ngày; cây cạn và cà phê không có."""
+        from core.rotation import evaluate_rotations
+        bt = evaluate_rotations("Ben_Tre_DBSCL", 0.0, 0.0)
+        dl = evaluate_rotations("Dak_Lak_Tay_Nguyen", 0.0, 0.0)
+        if not bt.get("available") or not dl.get("available"):
+            self.skipTest("Thiếu dữ liệu POWER")
+        s = {x["id"]: x for x in bt["strategies"]}
+        self.assertLess(s["S0"]["annual_deficit_low_mm"], s["S0"]["annual_deficit_mm"])
+        self.assertFalse(s["S0"]["phases"][0]["presaturated"])
+        self.assertTrue(s["S0"]["phases"][1]["presaturated"])
+        soy = next(p for p in s["S2"]["phases"] if p["crop"] == "soybean")
+        self.assertEqual(soy["deficit_low_mm"], soy["deficit_mm"])
+        for st in dl["strategies"]:
+            self.assertEqual(st["annual_deficit_low_mm"], st["annual_deficit_mm"])
+
 
 
 
