@@ -64,7 +64,18 @@ function cropKey(crop) {
     return KNOWN_CROPS.includes(crop) ? crop : "other";
 }
 function show(id, on) { const el = document.getElementById(id); if (el) el.hidden = !on; }
-function cleanName(name) { return String(name || "").replace(/^Hiện trạng:\s*/, ""); }
+function cleanName(name) {
+    const s = String(name || "").replace(/^Hiện trạng:\s*/, "");
+    return s.charAt(0).toUpperCase() + s.slice(1);
+}
+function monthSpans(ms) {
+    const out = [];
+    ms.forEach(m => {
+        const last = out[out.length - 1];
+        if (last && m === last[1] + 1) last[1] = m; else out.push([m, m]);
+    });
+    return "tháng " + out.map(([a, b]) => (a === b ? `${a}` : `${a}–${b}`)).join(", ");
+}
 function monthList(ms) { return ms.map(m => `tháng ${m}`).join(", "); }
 
 function monthRange(ms) {
@@ -232,92 +243,30 @@ async function loadClimateChart() {
     try {
         const res = await fetch(`/api/climate?region=${encodeURIComponent(currentRegion)}`);
         const data = res.ok ? await res.json() : {};
-        const series = (data.monthly_series || []).slice(-24);
-        if (series.length === 0) {
+        const clim = data.climatology || [];
+        if (clim.length !== 12) {
             show("chartWrapper", false); show("climateEmpty", true);
             return;
         }
         show("chartWrapper", true); show("climateEmpty", false);
-
-        const ndvi = series.map(s => s.ndvi_mean);
-        const hasNdvi = ndvi.some(isNum);
-
-        const datasets = [
-            {
-                type: "bar",
-                label: "Mưa tổng (mm)",
-                data: series.map(s => s.rain_sum_mm),
-                backgroundColor: "rgba(2, 132, 199, 0.7)",
-                borderRadius: 2,
-                yAxisID: "y",
-                order: 2
-            },
-            {
-                type: "line",
-                label: "Bốc thoát hơi ETo (mm)",
-                data: series.map(s => s.eto_sum_mm),
-                borderColor: "#b45309",
-                backgroundColor: "#b45309",
-                borderWidth: 2,
-                pointRadius: 0,
-                tension: 0.25,
-                yAxisID: "y",
-                order: 1
-            }
-        ];
-
-        if (hasNdvi) {
-            datasets.push({
-                type: "line",
-                label: "NDVI (0–1)",
-                data: ndvi,
-                borderColor: "#15803d",
-                backgroundColor: "#15803d",
-                borderWidth: 1.5,
-                borderDash: [4, 4],
-                pointRadius: 0,
-                tension: 0.25,
-                yAxisID: "y1",
-                order: 0
-            });
-        }
-
-        const scales = {
-            x: {
-                ticks: { color: "#64748b", font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 12 },
-                grid: { display: false }
-            },
-            y: {
-                ticks: { color: "#64748b", font: { size: 11 } },
-                grid: { color: "#f1f5f9" }
-            }
-        };
-
-        if (hasNdvi) {
-            scales.y1 = {
-                position: "right",
-                min: 0,
-                max: 1,
-                ticks: { color: "#15803d", font: { size: 10 } },
-                grid: { drawOnChartArea: false }
-            };
-        }
-
         if (climateChart) climateChart.destroy();
         climateChart = new Chart(document.getElementById("climateChart").getContext("2d"), {
-            data: { labels: series.map(s => s.month), datasets },
+            data: {
+                labels: clim.map(c => `T${c.month}`),
+                datasets: [
+                    { type: "bar", label: "Mưa trung bình (mm/tháng)", data: clim.map(c => c.rain_mm), backgroundColor: "rgba(3, 105, 161, 0.75)", borderRadius: 2, order: 2 },
+                    { type: "line", label: "Bốc thoát hơi ETo (mm/tháng)", data: clim.map(c => c.eto_mm), borderColor: "#b45309", backgroundColor: "#b45309", borderWidth: 2, pointRadius: 2.5, tension: 0.3, order: 1 }
+                ]
+            },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 interaction: { mode: "index", intersect: false },
-                plugins: {
-                    legend: {
-                        position: "top",
-                        align: "end",
-                        labels: { color: "#334155", usePointStyle: true, boxWidth: 6, font: { size: 11, weight: "bold" } }
-                    }
-                },
-                scales
+                plugins: { legend: { position: "top", align: "end", labels: { color: "#334155", usePointStyle: true, boxWidth: 6, font: { size: 11 } } } },
+                scales: {
+                    x: { ticks: { color: "#64748b", font: { size: 11 } }, grid: { display: false } },
+                    y: { ticks: { color: "#64748b", font: { size: 11 } }, grid: { color: "#f1f5f9" }, title: { display: true, text: "mm/tháng", color: "#64748b", font: { size: 11 } } }
+                }
             }
         });
     } catch (e) {
@@ -356,12 +305,45 @@ async function loadRotations() {
         }
 
         renderHero(data, strategies);
+        renderCompareBars(strategies);
         renderStrategyCards(data, strategies);
         renderNdviStrip(data);
         renderAssumptionsBox(data);
     } catch (e) {
         show("rotationsContent", false); show("rotationsEmpty", true);
     }
+}
+
+function renderCompareBars(strategies) {
+    const el = document.getElementById("compareBars");
+    const vals = strategies.map(s => s.annual_deficit_mm).filter(isNum);
+    if (!vals.length) { el.innerHTML = ""; return; }
+    const max = Math.max(...vals);
+    const pct = v => (isNum(v) && max > 0 ? (v / max * 100).toFixed(1) : "0");
+    let hasRange = false;
+    const rows = strategies.map(st => {
+        const hi = st.annual_deficit_mm;
+        const lo = isNum(st.annual_deficit_low_mm) ? st.annual_deficit_low_mm : hi;
+        const ranged = isNum(lo) && isNum(hi) && hi - lo >= 1;
+        if (ranged) hasRange = true;
+        const notes = [];
+        if (st.is_existing) notes.push("Hiện tại");
+        if (st.partial) notes.push("chưa tính vụ tôm");
+        if (st.water_full_year === false && st.water_months && st.water_months.length) notes.push(`chỉ tính ${monthRange(st.water_months)}`);
+        const name = cleanName(st.name_vi);
+        return `<div class="cmp-row">
+            <div class="cmp-name">${name}${notes.length ? `<span class="cmp-note">${notes.join(" · ")}</span>` : ""}</div>
+            <div class="cmp-bar" role="img" aria-label="${name}: ${m3(hi)} m³/ha">
+                <span class="cmp-hi" style="width:${pct(hi)}%"></span><span class="cmp-lo" style="width:${pct(lo)}%"></span>
+            </div>
+            <div class="cmp-val"><b>${m3(hi)}</b> m³/ha${ranged ? `<small>${m3(lo)} nếu đất thấm ít</small>` : ""}</div>
+            <div class="cmp-bare">${(st.bare_months || []).length} tháng đất trống</div>
+        </div>`;
+    }).join("");
+    const legend = hasRange
+        ? `<div class="cmp-legend"><span><i style="background:var(--water)"></i>Nước ngọt phải tưới thêm nếu đất thấm 2 mm/ngày</span><span><i style="background:var(--water-light)"></i>Phần thêm nếu đất thấm 4 mm/ngày (mức đang dùng)</span><span>Loại đất tại ruộng chưa kiểm chứng.</span></div>`
+        : "";
+    el.innerHTML = rows + legend;
 }
 
 function renderHero(data, strategies) {
@@ -391,10 +373,10 @@ function renderHero(data, strategies) {
             </div>
             <div>
                 <div class="hero-stat-num">${bareN} <small>tháng</small></div>
-                <div class="hero-stat-lbl">Tháng đất trống ${bareN ? `(${monthList(base.bare_months)})` : ""}</div>
+                <div class="hero-stat-lbl">Tháng đất trống ${bareN ? `(${monthSpans(base.bare_months)})` : ""}</div>
             </div>
             <div>
-                <div class="hero-stat-num" style="font-size: 17px; font-weight: 700; color: #b45309;">${riskSeasonTxt}</div>
+                <div class="hero-risk ${sal.length ? "sal" : "dry"}">${riskSeasonTxt}</div>
                 <div class="hero-stat-lbl">Cửa sổ thời tiết rủi ro cao</div>
             </div>
         </div>`;
@@ -436,7 +418,7 @@ function renderGanttTimeline(st, salMonths, usedCrops) {
         const ck = cropByLabel[b.label] || "other";
         usedCrops.add(ck);
         const heatDot = hasHeat ? `<span class="gantt-heat-dot" title="Có ngày nóng vượt ngưỡng sinh lý"></span>` : "";
-        return `<div class="gantt-seg crop-${ck}" style="${style}" title="${b.label}">${heatDot}${CROP_NAMES[ck] || b.label}</div>`;
+        return `<div class="gantt-seg crop-${ck}" style="${style}" title="${b.label}">${heatDot}${span >= 2 ? (CROP_NAMES[ck] || b.label) : ""}</div>`;
     }).join("");
 
     return `
