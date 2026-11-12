@@ -1058,3 +1058,96 @@ Mùa mặn theo văn bản: tháng 2, 3, 4.
  web/style.css                 |  25 +++++++++++++++++
  9 files changed, 169 insertions(+), 21 deletions(-)
 ```
+
+---
+
+## 19. Fix 12 (Báo cáo dùng cùng số với thẻ phương án, sửa dấu câu, lịch 12 tháng không đè chữ, chân thẻ gọn)
+
+### 19.1. Hash của 2 commit ở Bước 2 và Bước 4
+
+| Bước | Commit Hash | Commit Message | Nội dung chính |
+|---|---|---|---|
+| **Bước 2** | `3065148` | `report: whole-year rotation table, sentence joins` | Bổ sung hàm `_sentences` và `_rotation_table` trong `core/advisor.py`; cập nhật mục 2 báo cáo đồng nhất số liệu cả năm với thẻ ở Bước 2, loại bỏ tỷ lệ stress và so sánh theo cây; sửa dấu câu nối rủi ro và khoảng trống thông tin; thêm test `test_fix12_1_bao_cao_cung_so_voi_the` trong `tests/test_core.py`. |
+| **Bước 4** | `dd4bd12` | `web: calendar labels fit, card footer stacked` | `web/app.js` chỉ in chữ cho ô lịch có độ rộng từ 3 tháng trở lên (`span >= 3`), ô 2 tháng giữ màu và tooltip `title`; `web/style.css` căn chỉnh grid 12 tháng không để chữ đẩy rộng cột (`minmax(0, 1fr)` và `min-width: 0`), xếp dọc nút xem báo cáo và `details` chân thẻ. |
+| **Kết thúc** | *(commit hiện tại)* | `fix12 report` | Ghi báo cáo Fix 12 vào `MORNING_REPORT.md` kèm 2 ảnh chụp giao diện. |
+
+---
+
+### 19.2. Output `python -m pytest -q` cuối cùng
+
+```text
+......................................................                   [100%]
+============================== warnings summary ===============================
+C:\Users\LucVuu\AppData\Local\Programs\Python\Python313\Lib\site-packages\anyio\pytest_plugin.py:14
+  C:\Users\LucVuu\AppData\Local\Programs\Python\Python313\Lib\site-packages\anyio\pytest_plugin.py:14: PytestRemovedIn10Warning: _pytest.python.CallSpec2 has been renamed to CallSpec.
+  The CallSpec2 alias will be removed in pytest 10.
+  Update imports to use CallSpec instead.
+  See https://docs.pytest.org/en/stable/deprecations.html#callspec2-renamed
+    from _pytest.python import CallSpec2
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+54 passed, 1 warning in 17.76s
+```
+
+---
+
+### 19.3. Nguyên văn Mục 2, Mục 3 ở Bước 5.1 và dòng D1 của Đắk Lắk
+
+#### Bến Tre (`Ben_Tre_DBSCL`, kịch bản `0.0 / 0.0`, `strategy_id: "S3"`):
+
+**Mục 2:**
+```markdown
+#### 2. Bảng so sánh lượng nước ngọt cả năm theo phương án
+
+| Phương án | Nước ngọt phải tưới (m³/ha/năm) | Nếu đất thấm ít (m³/ha/năm) | So với cách đang làm | Tháng đất trống |
+| :--- | ---: | ---: | :--- | ---: |
+| Hiện trạng: 2 vụ lúa (Hè Thu + Đông Xuân sớm) | 15.329 | 11.401 | Mốc so sánh | 6 |
+| Lúa – tôm (lúa mùa mưa, tôm sú mùa khô) | 6.613 | 4.776 | −8.716 m³/ha, chưa tính vụ tôm | 4 |
+| Lúa Hè Thu + đậu tương thay vụ Đông Xuân | 8.978 | 7.150 | −6.351 m³/ha (−41%) | 6 |
+| Lúa Hè Thu + ngô thay vụ Đông Xuân | 9.025 | 7.197 | −6.304 m³/ha (−41%) | 6 |
+
+Cột chính tính với nước thấm 4 mm/ngày, cột "Nếu đất thấm ít" tính với 2 mm/ngày; chỉ ruộng lúa có khác biệt. Số giống thẻ phương án ở Bước 2.
+```
+
+**Mục 3:**
+```markdown
+#### 3. Việc nên làm trước vụ tới
+Phương án đang xem: **Lúa Hè Thu + ngô thay vụ Đông Xuân**.
+Rủi ro cần cân nhắc: Ngô rất nhạy mặn: rủi ro cao nếu nước tưới nhiễm mặn cuối vụ. Không cố định đạm.
+Mùa mặn theo văn bản: tháng 2, 3, 4.
+- **Lúa Hè Thu + ngô thay vụ Đông Xuân**: nước ngọt phải tưới thêm 9.025 m³/ha (−6.304 m³/ha so với hiện trạng). Lịch: Lúa Hè Thu 05-25 đến 09-06; Ngô 11-01 đến 02-08. Cần kiểm chứng trước khi làm: Lịch gieo ngô trên đất lúa ven biển Bến Tre: chưa tìm thấy nguồn; app giả định 1/11, 100 ngày. Đầu ra và giá ngô tại địa phương.
+- **Lúa – tôm (lúa mùa mưa, tôm sú mùa khô)**: nước ngọt phải tưới thêm 6.613 m³/ha (−8.716 m³/ha so với hiện trạng). Lịch: Lúa mùa mưa 09-01 đến 12-14; Tôm sú (nước lợ) 03-01 đến 07-31. Chưa tính giai đoạn nuôi tôm. Cần kiểm chứng trước khi làm: Chưa có nguồn lịch lúa–tôm riêng cho Ba Tri; đang dùng lịch ở Bình Đại. App chưa mô hình hóa nước và rủi ro của vụ tôm. Chi phí đầu tư, dịch bệnh tôm, đầu ra: cần nông dân và cán bộ khuyến nông đánh giá.
+- **Lúa Hè Thu + đậu tương thay vụ Đông Xuân**: nước ngọt phải tưới thêm 8.978 m³/ha (−6.351 m³/ha so với hiện trạng). Lịch: Lúa Hè Thu 05-25 đến 09-06; Đậu tương 11-01 đến 02-08. Cần kiểm chứng trước khi làm: Lịch gieo đậu tương trên đất lúa ven biển Bến Tre: chưa tìm thấy nguồn; app giả định 1/11, 100 ngày. Số đo cho đậu tương trên đất lúa nhiễm mặn ven biển: chưa có. Số đo đang dùng là của đậu xanh ở Tiền Giang (vùng ngọt). Đầu ra và giá đậu tương tại địa phương.
+- Đo độ mặn nước kênh bằng bút đo cầm tay trước mỗi lần lấy nước tưới.
+```
+
+#### Đắk Lắk (`Dak_Lak_Tay_Nguyen`, kịch bản `delta_temp_c: 2`, `delta_rain_pct: -20`):
+
+**Dòng phương án D1 (cà phê có cây phủ):**
+```text
+| Cà phê vối có cây che phủ đất / thảm cỏ | 4.708 | 4.708 | +735 m³/ha (+18%) | 0 |
+```
+
+---
+
+### 19.4. Đường dẫn 2 ảnh và kết quả đối chiếu 3 ý ở Bước 5.2
+
+- `docs/screens/fix12_bentre.png` (khung 1280 px, Bến Tre)
+- `docs/screens/fix12_mobile.png` (khung 375 px, giao diện di động)
+
+**Đối chiếu 3 tiêu chí:**
+1. Trên lịch 12 tháng của cả 4 thẻ, không còn chữ đè nhau hay bị cắt kiểu "Đất trốngậu tươn". Ô 2 tháng để trống chữ: **ĐẠT**.
+2. Chân mỗi thẻ: dòng trên là "Xem báo cáo cho phương án này →" nằm trên 1 dòng (ở khung 1280 px), dòng dưới là "Nguồn & Tính toán": **ĐẠT**.
+3. Bấm mở "Nguồn & Tính toán" thì phần nội dung chiếm hết chiều ngang thẻ: **ĐẠT**.
+
+---
+
+### 19.5. Output `git diff --stat 4787d3e..HEAD`
+
+```text
+ core/advisor.py    | 72 ++++++++++++++++++++++++++++++++++++++++--------------
+ tests/test_core.py | 25 +++++++++++++++++++
+ web/app.js         |  4 +--
+ web/style.css      |  7 ++++++
+ 4 files changed, 87 insertions(+), 21 deletions(-)
+```
