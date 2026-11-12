@@ -22,6 +22,51 @@ def _vn_int(v):
     return f"{v:,.0f}".replace(",", ".")
 
 
+def _sentences(items):
+    """Nối các câu trong config: mỗi câu kết thúc bằng dấu chấm, cách nhau một dấu cách."""
+    out = []
+    for t in items or []:
+        t = t.strip()
+        if t:
+            out.append(t if t.endswith((".", "!", "?")) else t + ".")
+    return " ".join(out)
+
+
+def _rotation_table(rotations):
+    """Mục 2 của báo cáo: cùng số liệu cả năm với thẻ phương án ở Bước 2."""
+    if not rotations or not rotations.get("available"):
+        return "- Chưa có dữ liệu phương án luân canh cho vùng này."
+    strategies = rotations.get("strategies", [])
+    base = next((s for s in strategies if s.get("is_existing")), None)
+    b = base.get("annual_deficit_mm") if base else None
+    rows = [
+        "| Phương án | Nước ngọt phải tưới (m³/ha/năm) | Nếu đất thấm ít (m³/ha/năm) | So với cách đang làm | Tháng đất trống |",
+        "| :--- | ---: | ---: | :--- | ---: |",
+    ]
+    for s in strategies:
+        d = s.get("annual_deficit_mm")
+        lo = s.get("annual_deficit_low_mm")
+        name = s.get("name_vi", s.get("id"))
+        if s.get("is_existing"):
+            cmp = "Mốc so sánh"
+        elif d is None or b is None:
+            cmp = "Chưa so được"
+        else:
+            diff = (d - b) * 10
+            cmp = f"{'+' if diff >= 0 else '−'}{_vn_int(abs(diff))} m³/ha"
+            if s.get("partial"):
+                cmp += ", chưa tính vụ tôm"
+            elif b > 0:
+                pct = round((d - b) / b * 100)
+                cmp += f" ({'+' if pct >= 0 else '−'}{abs(pct)}%)"
+        water = "Chưa tính được" if d is None else _vn_int(d * 10)
+        low = "–" if lo is None else _vn_int(lo * 10)
+        rows.append(f"| {name} | {water} | {low} | {cmp} | {len(s.get('bare_months') or [])} |")
+    rows.append("")
+    rows.append("Cột chính tính với nước thấm 4 mm/ngày, cột \"Nếu đất thấm ít\" tính với 2 mm/ngày; chỉ ruộng lúa có khác biệt. Số giống thẻ phương án ở Bước 2.")
+    return "\n".join(rows)
+
+
 def _rotation_actions(rotations, strategy_id=None):
     """Mục 3 của báo cáo: liệt kê từng phương án thay thế, chỉ dùng số liệu và câu chữ có sẵn trong rotations."""
     if not rotations or not rotations.get("available"):
@@ -36,7 +81,7 @@ def _rotation_actions(rotations, strategy_id=None):
         if picked.get("is_existing"):
             lines.append("Đây là cách đang làm. Các phương án thay thế:")
         else:
-            risks = "; ".join(picked.get("risks", []))
+            risks = _sentences(picked.get("risks"))
             if risks:
                 lines.append(f"Rủi ro cần cân nhắc: {risks}")
             strategies = [picked] + [s for s in strategies if s is not picked]
@@ -61,7 +106,7 @@ def _rotation_actions(rotations, strategy_id=None):
             if p.get("window") and p["window"].get("start")
         )
         partial = " Chưa tính giai đoạn nuôi tôm." if s.get("partial") else ""
-        gaps = "; ".join(s.get("info_gaps", []))
+        gaps = _sentences(s.get("info_gaps"))
         lines.append(f"- **{s.get('name_vi', s.get('id'))}**: {water}. Lịch: {windows}.{partial} Cần kiểm chứng trước khi làm: {gaps}")
     if sal:
         lines.append("- Đo độ mặn nước kênh bằng bút đo cầm tay trước mỗi lần lấy nước tưới.")
@@ -105,19 +150,10 @@ DỮ LIỆU JSON ĐÁNH GIÁ:
     if d_temp != 0.0 or d_rain != 0.0:
         sim_note = f"\n*Kịch bản mô phỏng:* Nhiệt độ thay đổi `{d_temp:+.1f} °C`, lượng mưa thay đổi `{d_rain:+.0f}%`.\n"
 
-    # Lập bảng so sánh cây trồng
-    rows_md = []
-    for c in crops:
-        c_name = c["crop_name"]
-        comp = c["components"]
-        w_val = comp.get("irrigation_share", comp.get("water_stress"))
-        w_stress = f"{w_val:.2f}" if w_val is not None else "N/A"
-        def_mm = f"{c['deficit_mm']} mm" if c['deficit_mm'] is not None else "N/A"
-        vs_val = c.get("water_vs_baseline_pct")
-        vs_base = "N/A" if vs_val is None else (f"{vs_val:+.1f}%" if vs_val != 0.0 else "Baseline")
-        rows_md.append(f"| **{c_name}** | {def_mm} | {w_stress} | {vs_base} |")
-
-    table_md = "\n".join(rows_md)
+    # Phần 2: bảng so sánh theo phương án luân canh cả năm
+    table_md = _rotation_table(rotations)
+    n_strat = len(rotations.get("strategies", [])) if rotations and rotations.get("available") else 0
+    count_line = f"- Số phương án so sánh: **{n_strat}** (gồm cách đang làm)." if n_strat else f"- Số cây trồng đánh giá: **{len(crops)} cây**."
 
     # Phần 3: Việc nên làm trước vụ tới
     actions_md = _rotation_actions(rotations, strategy_id)
@@ -135,16 +171,14 @@ DỮ LIỆU JSON ĐÁNH GIÁ:
 ---
 
 #### 1. Hiện trạng số liệu mùa khô
-- Số cây trồng đánh giá: **{len(crops)} cây**.
+{count_line}
 - Nguồn dữ liệu đã nạp:
 {sources_block}
 
 ---
 
-#### 2. Bảng so sánh rủi ro & hiệu quả sử dụng nước
+#### 2. Bảng so sánh lượng nước ngọt cả năm theo phương án
 
-| Cây trồng | Thiếu hụt nước (mm) | Tỷ lệ phải tưới (0–1) | So với cây đầu |
-| :--- | :---: | :---: | :---: |
 {table_md}
 
 ---

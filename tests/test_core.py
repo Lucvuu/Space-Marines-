@@ -1106,6 +1106,31 @@ class TestAeroAgriFix6(unittest.TestCase):
         for bad in ("El Niño", "Cực đoan", "AI Copilot", "Trợ lý AI"):
             self.assertNotIn(bad, html)
 
+    def test_fix12_1_bao_cao_cung_so_voi_the(self):
+        """Fix 12: bảng mục 2 dùng số cả năm như thẻ phương án; không còn '.;'."""
+        from core.scoring import evaluate_crop_suitability
+        from core.rotation import evaluate_rotations
+        from core.advisor import build_advice, _vn_int
+        ev = evaluate_crop_suitability("Ben_Tre_DBSCL", 0.0, 0.0)
+        rot = evaluate_rotations("Ben_Tre_DBSCL", 0.0, 0.0)
+        if not ev.get("available") or not rot.get("available"):
+            self.skipTest("Thiếu dữ liệu POWER")
+        md = build_advice("Ben_Tre_DBSCL", ev, rotations=rot, strategy_id="S3")["markdown"]
+        sec2 = md.split("#### 2.")[1].split("#### 3.")[0]
+        s = {x["id"]: x for x in rot["strategies"]}
+        b = s["S0"]["annual_deficit_mm"]
+        self.assertIn("Mốc so sánh", sec2)
+        self.assertIn(_vn_int(b * 10), sec2)
+        for sid in ("S2", "S3"):
+            d = s[sid]["annual_deficit_mm"]
+            self.assertIn(_vn_int(d * 10), sec2)
+            self.assertIn(f"−{abs(round((d - b) / b * 100))}%", sec2)
+        self.assertIn("chưa tính vụ tôm", sec2)
+        self.assertNotIn("Tỷ lệ phải tưới", md)
+        self.assertNotIn("So với cây đầu", md)
+        self.assertNotIn("rủi ro &", md)
+        self.assertNotIn(".;", md)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
