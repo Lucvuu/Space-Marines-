@@ -270,3 +270,37 @@ footer { text-align: center; padding: 24px 0; color: var(--muted); font-size: 12
 .rot-card-footer { flex-direction: column; align-items: flex-start; gap: 6px; }
 .rot-card-footer .card-report-btn { order: -1; font-size: 12.5px; }
 .rot-card-footer details { width: 100%; }
+
+/* FIX 13: lối vào theo vai, dòng nói gọn cho nông dân, tải CSV, in báo cáo, khối cách tính */
+.howto-roles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+.howto-roles .role { display: block; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); text-decoration: none; font-size: 12.5px; line-height: 1.45; }
+.howto-roles .role:hover { border-color: var(--primary); }
+.howto-roles .role:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.howto-roles .role b { display: block; font-size: 13.5px; color: var(--primary); margin-bottom: 2px; }
+.howto-roles .role span { color: var(--muted); }
+.plain-box { background: #f6faf7; border: 1px solid #d8ebd9; border-radius: 6px; padding: 7px 9px; margin: 0 0 10px; font-size: 12.5px; line-height: 1.45; }
+.plain-head { font-weight: 700; font-size: 12px; margin-bottom: 2px; }
+.plain-box ul { margin: 0; padding-left: 16px; }
+.plain-box p { margin: 3px 0 0; }
+.plain-box b { font-variant-numeric: tabular-nums; }
+.section-tools { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.btn-ghost { border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 6px; padding: 7px 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+.btn-ghost:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.report-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.method-card { margin-bottom: 16px; scroll-margin-top: 72px; }
+.method-card ol { margin: 6px 0 0; padding-left: 20px; font-size: 13px; line-height: 1.55; }
+.method-card li { margin-bottom: 4px; }
+.method-card code { font-size: 12px; }
+.ndvi-row-lbl { font-size: 11.5px; font-weight: 600; color: var(--muted); margin: 10px 0 4px; }
+#btnCsv { scroll-margin-top: 90px; }
+@media (max-width: 640px) {
+  .howto-roles { grid-template-columns: 1fr; }
+  .section-tools { justify-content: flex-start; }
+}
+@media print {
+  .topbar, .howto, #dataBadgeArea, #step1, .step-hint, .intro-grid, #rotationsSection, #techSection, footer, .report-actions button { display: none !important; }
+  body { background: #fff; }
+  #reportSection .card { border: 0; box-shadow: none; padding: 0; }
+  .chat-output { border: 0; background: #fff; padding: 0; }
+}

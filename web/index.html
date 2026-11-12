@@ -44,6 +44,11 @@
                 <li><a href="#reportSection"><b>3</b>Xem báo cáo</a></li>
                 <li><a href="#techSection"><b>4</b>Kiểm tra dữ liệu</a></li>
             </ol>
+            <div class="howto-roles">
+                <a class="role" href="#rotationsSection"><b>Nông dân</b><span>Xem khung "Mỗi 1.000 m²" trên từng thẻ ở Bước 2: vụ nào phải tưới bao nhiêu nước ngọt. Bấm "In báo cáo" ở Bước 3 để mang đi hỏi cán bộ khuyến nông.</span></a>
+                <a class="role" href="#btnCsv"><b>Cán bộ khuyến nông, nhà nghiên cứu</b><span>So các phương án ở Bước 2, thử thời tiết khô nóng ở Bước 1, tải số liệu từng vụ (CSV) để tự tính tiếp.</span></a>
+                <a class="role" href="#methodCard"><b>Nhà khoa học</b><span>Bước 4 có công thức, nguồn của từng tham số, lịch mô hình đặt cạnh ảnh vệ tinh và những gì mô hình chưa tính.</span></a>
+            </div>
         </section>
 
         <!-- Banner cảnh báo nếu dùng dữ liệu giả lập -->
@@ -105,6 +110,7 @@
 
             <p class="step-hint">Dòng đầu là cách đang làm. Thanh màu xanh dương càng ngắn là càng ít nước ngọt phải tưới. Trên lịch 12 tháng, tháng gạch đỏ là tháng nước mặn, chấm cam là có ngày nóng vượt ngưỡng của cây.</p>
             <div id="rotationsContent">
+                <div class="section-tools"><button type="button" id="btnCsv" class="btn-ghost" title="Mỗi dòng là một vụ: ETc, mưa hiệu quả, nước thêm cho lúa, lượng phải tưới (mm). 1 mm = 10 m³/ha.">Tải số liệu từng vụ (CSV)</button></div>
                 <div class="card compare" id="compareBars" aria-label="So sánh nhanh lượng nước ngọt"></div>
                 <div id="rotationCardsGrid" class="strategy-grid-horizontal"></div>
             </div>
@@ -122,7 +128,10 @@
             <p class="step-hint">Bấm "Xem báo cáo cho phương án này" trên một thẻ ở Bước 2, hoặc bấm nút dưới đây để xem cả vùng. Báo cáo được ghép từ chính số liệu trên trang, theo kịch bản thời tiết đang chọn. Không dùng AI tạo chữ.</p>
             <div class="card">
                 <p class="report-context" id="reportContext"></p>
-                <button type="button" id="btnReport" class="btn-primary">Tạo báo cáo cho cả vùng</button>
+                <div class="report-actions">
+                    <button type="button" id="btnReport" class="btn-primary">Tạo báo cáo cho cả vùng</button>
+                    <button type="button" id="btnPrint" class="btn-ghost">In báo cáo</button>
+                </div>
                 <div class="chat-output" id="chatOutput" role="status" aria-live="polite">Bấm nút để tạo báo cáo.</div>
             </div>
         </section>
@@ -152,8 +161,24 @@
                 <div class="card">
                     <h3 class="card-heading" style="font-size: 14.5px;">Độ xanh từ vệ tinh (MODIS NDVI, trung vị ô 3×3 km)</h3>
                     <p class="muted" id="ndviNote">Chỉ số NDVI trung bình 12 tháng. Giá trị cao phản ánh thảm phủ phát triển mạnh.</p>
+                    <div id="ndviModelRow"></div>
                     <div id="ndviStrip" class="ndvi-strip-swiss"></div>
                 </div>
+            </div>
+
+            <!-- FIX 13: cách tính, để nhà khoa học kiểm tra lại -->
+            <div class="card method-card" id="methodCard">
+                <h3 class="card-heading" style="font-size: 14.5px;">Cách tính (để kiểm tra lại)</h3>
+                <p class="muted" style="font-size: 12.5px;">Mã nguồn ở <code>core/eto.py</code>, <code>core/water_balance.py</code>, <code>core/rotation.py</code>. Tham số và nguồn từng con số ở <code>config/crops.json</code> và <code>config/rotations.json</code>.</p>
+                <ol>
+                    <li><b>Bốc thoát hơi chuẩn ETo:</b> FAO-56 Penman-Monteith (Allen và cs., 1998), tính theo ngày từ NASA POWER (<code>T2M_MAX</code>, <code>T2M_MIN</code>, <code>RH2M</code>, <code>WS2M</code>, <code>ALLSKY_SFC_SW_DWN</code>), gió tối thiểu 0,5 m/s (FAO-56 tr.63). Kịch bản nóng hơn cộng ΔT vào cả nhiệt độ cao nhất và thấp nhất, giữ nguyên độ ẩm.</li>
+                    <li><b>Nhu cầu nước của cây:</b> ETc = Kc × ETo. Kc lấy từ FAO-56 Bảng 12 (tr.111–112), nội suy theo giai đoạn sinh trưởng. Cà phê dùng Kc giữa vụ cho cả mùa khô.</li>
+                    <li><b>Mưa hiệu quả Pe:</b> từ mưa tháng <code>PRECTOTCORR</code>; kịch bản mưa nhân với (1 + Δ%). Lúa theo FAO Training Manual 3 mục 4.2: Pe = 0,8P − 25 khi P &gt; 75 mm/tháng, Pe = 0,6P − 10 khi P ≤ 75. Cây cạn và cà phê theo USDA-SCS (dạng dùng trong CROPWAT của FAO): Pe = P(125 − 0,2P)/125 khi P ≤ 250 mm, Pe = 125 + 0,1P khi P &gt; 250.</li>
+                    <li><b>Nước thêm cho lúa</b> (FAO Training Manual 3 mục 4.4): làm đất 300 mm ở tháng đầu vụ (bão hòa đất 200 + lớp nước 100); vụ Đông Xuân gieo sau tháng 9–10 mưa nhiều thì bỏ phần bão hòa 200 mm; nước thấm 4 mm/ngày, cận dưới 2 mm/ngày.</li>
+                    <li><b>Lượng phải tưới:</b> mỗi tháng trong vụ, thiếu = max(0; ETc + thấm + làm đất − Pe). Cộng các tháng; tháng mưa dư không bù tháng thiếu vì mô hình chưa tính nước trữ trong đất. Lấy trung bình các năm 2015–2025. Đổi đơn vị: 1 mm = 10 m³/ha = 1 m³ trên 1.000 m².</li>
+                    <li><b>Độ xanh vệ tinh:</b> MODIS MOD13Q1 (250 m, 16 ngày) qua ORNL DAAC, trung vị ô 3×3 km quanh điểm ruộng, chỉ giữ điểm ảnh có độ tin cậy 0 hoặc 1. Chỉ dùng để đối chiếu lịch mùa vụ, không đưa vào công thức nước.</li>
+                    <li><b>Chưa tính:</b> nước trữ trong đất, diễn biến độ mặn theo ngày, nước và rủi ro của vụ tôm, năng suất, chi phí, giá bán.</li>
+                </ol>
             </div>
 
             <!-- Bảng Đánh Giá Từng Cây Trồng Vụ Khô -->

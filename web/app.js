@@ -8,6 +8,8 @@ let simDebounceTimer = null;
 let baselineDeficits = {}; // Lưu trữ deficit cơ sở (0°C, 0%) để tính delta
 let selectedStrategy = null;
 let selectedStrategyName = "";
+let lastRotations = null;
+let reportReady = false;
 
 // Thông tin vùng trọng điểm và tọa độ điểm ảnh vệ tinh MODIS NDVI
 const REGIONS_DATA = {
@@ -141,6 +143,11 @@ function initControls() {
     });
 
     // Báo cáo tư vấn
+    document.getElementById("btnCsv").addEventListener("click", downloadCsv);
+    document.getElementById("btnPrint").addEventListener("click", async () => {
+        if (!reportReady) await loadReport();
+        window.print();
+    });
     document.getElementById("btnReport").addEventListener("click", () => {
         selectedStrategy = null;
         selectedStrategyName = "";
@@ -321,10 +328,11 @@ async function loadRotations() {
             });
         }
 
+        lastRotations = strategies;
         renderHero(data, strategies);
         renderCompareBars(strategies);
         renderStrategyCards(data, strategies);
-        renderNdviStrip(data);
+        renderNdviStrip(data, strategies);
         renderAssumptionsBox(data);
     } catch (e) {
         show("rotationsContent", false); show("rotationsEmpty", true);
@@ -387,6 +395,61 @@ function heroInsight(strategies) {
         parts.push("Theo mô hình, không phương án nào dùng ít nước ngọt hơn cách làm hiện tại. Xem từng thẻ để so các lợi ích khác, như che phủ đất.");
     }
     return parts.length ? `<p class="hero-insight">${parts.join(" ")}</p>` : "";
+}
+
+function ddmm(s) {
+    const [m, d] = String(s).split("-");
+    return `${Number(d)}/${Number(m)}`;
+}
+
+function plainLine(st, base) {
+    const items = (st.phases || []).map(ph => {
+        const win = ph.window && ph.window.start ? `, ${ddmm(ph.window.start)}–${ddmm(ph.window.end)}` : "";
+        return ph.modeled && isNum(ph.deficit_mm)
+            ? `<li>${ph.label}${win}: tưới <b>${fmt(ph.deficit_mm)} m³</b></li>`
+            : `<li>${ph.label}${win}: chưa tính nước</li>`;
+    });
+    let total = "";
+    if (isNum(st.annual_deficit_mm)) {
+        total = `${st.water_full_year === false ? "Tổng các tháng trên" : "Cả năm"}: <b>${fmt(st.annual_deficit_mm)} m³</b>`;
+        if (!st.is_existing && base && isNum(base.annual_deficit_mm)) {
+            const d = Math.round(st.annual_deficit_mm - base.annual_deficit_mm);
+            total += d < 0 ? `, ít hơn cách đang làm ${fmt(-d)} m³` : (d > 0 ? `, nhiều hơn cách đang làm ${fmt(d)} m³` : ", bằng cách đang làm");
+            if (st.partial) total += " (chưa tính vụ tôm)";
+        }
+        total += ".";
+    }
+    return `<div class="plain-box" title="1 mm nước trên ruộng = 1 m³ trên 1.000 m²">
+        <div class="plain-head">Mỗi 1.000 m² cần tưới bao nhiêu nước ngọt</div>
+        <ul>${items.join("")}</ul>${total ? `<p>${total}</p>` : ""}
+    </div>`;
+}
+
+function csvCell(v) {
+    const s = v === null || v === undefined ? "" : String(v);
+    return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function downloadCsv() {
+    if (!lastRotations) return;
+    const t = parseFloat(document.getElementById("sliderTemp").value);
+    const r = parseInt(document.getElementById("sliderRain").value, 10);
+    const rows = [["region", "delta_temp_c", "delta_rain_pct", "strategy_id", "strategy_name", "phase", "start_mmdd", "end_mmdd", "modeled",
+        "etc_mm", "peff_mm", "rice_extra_mm", "deficit_mm", "deficit_low_perc_mm", "annual_deficit_mm", "annual_deficit_low_perc_mm", "bare_months", "partial"]];
+    lastRotations.forEach(st => (st.phases || []).forEach(ph => rows.push([
+        currentRegion, t, r, st.id, st.name_vi, ph.label,
+        ph.window ? ph.window.start : "", ph.window ? ph.window.end : "", ph.modeled,
+        ph.etc_mm, ph.peff_mm, ph.assumed_extra_mm, ph.deficit_mm, ph.deficit_low_mm,
+        st.annual_deficit_mm, st.annual_deficit_low_mm, (st.bare_months || []).join(" "), st.partial
+    ])));
+    const csv = String.fromCharCode(0xFEFF) + rows.map(row => row.map(csvCell).join(",")).join("\r\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    a.download = `aero-agri_${currentRegion}_T${t}_R${r}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
 function renderHero(data, strategies) {
@@ -550,6 +613,7 @@ function renderStrategyCards(data, strategies) {
                     ${badgeHtml}
                 </div>
                 <p class="rot-why">${st.why}</p>
+                ${plainLine(st, base)}
 
                 <div class="rot-metrics-row">
                     <div>
@@ -592,7 +656,7 @@ function renderStrategyCards(data, strategies) {
     document.getElementById("rotationLegend").innerHTML = items.join("");
 }
 
-function renderNdviStrip(data) {
+function renderNdviStrip(data, strategies) {
     const el = document.getElementById("ndviStrip");
     const ndvi = Array.isArray(data.ndvi_monthly) ? data.ndvi_monthly : [];
     let html = "";
@@ -612,7 +676,11 @@ function renderNdviStrip(data) {
     const p = REGIONS_DATA[currentRegion].ndvi_point;
     const yrs = data.ndvi_years ? `${data.ndvi_years[0]}–${data.ndvi_years[1]}` : "nhiều năm";
     document.getElementById("ndviNote").textContent =
-        `Chỉ số NDVI từ vệ tinh MODIS, trung vị ô 3×3 km quanh điểm (${p.lat}, ${p.lon}), trung bình ${yrs}. Ô càng đậm là càng nhiều cây xanh; ô nhạt là ruộng trống hoặc ngập nước.`;
+        `Chỉ số NDVI từ vệ tinh MODIS, trung vị ô 3×3 km quanh điểm (${p.lat}, ${p.lon}), trung bình ${yrs}. Ô càng đậm là càng nhiều cây xanh; ô nhạt là ruộng trống, mới gieo hoặc ngập nước. Dòng trên là lịch của cách đang làm trong mô hình, đặt ngay trên để tự đối chiếu.`;
+    const base = (strategies || []).find(s => s.is_existing);
+    document.getElementById("ndviModelRow").innerHTML = base
+        ? `<div class="ndvi-row-lbl">Lịch cách đang làm trong mô hình</div>${renderGanttTimeline(base, new Set((data.salinity_months || []).map(Number)), new Set())}<div class="ndvi-row-lbl">Độ xanh vệ tinh đo được (NDVI)</div>`
+        : "";
 }
 
 function renderAssumptionsBox(data) {
@@ -679,6 +747,7 @@ async function evaluateCrops() {
 // BÁO CÁO TƯ VẤN
 // ==========================================================================
 function resetReport() {
+    reportReady = false;
     document.getElementById("chatOutput").textContent = "Bấm nút để tạo báo cáo.";
 }
 
@@ -692,6 +761,7 @@ function updateReportContext() {
 }
 
 async function loadReport() {
+    reportReady = false;
     updateReportContext();
     const outputEl = document.getElementById("chatOutput");
     outputEl.innerHTML = "<em>Đang tính...</em>";
@@ -703,6 +773,7 @@ async function loadReport() {
         });
         if (!res.ok) { outputEl.innerHTML = `<span class="txt-bad">Không tạo được báo cáo (mã ${res.status}).</span>`; return; }
         outputEl.innerHTML = renderSimpleMarkdown((await res.json()).markdown);
+        reportReady = true;
     } catch (e) {
         outputEl.innerHTML = `<span class="txt-bad">Không kết nối được máy chủ: ${e.message}</span>`;
     }

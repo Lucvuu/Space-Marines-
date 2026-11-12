@@ -1131,6 +1131,21 @@ class TestAeroAgriFix6(unittest.TestCase):
         self.assertNotIn("rủi ro &", md)
         self.assertNotIn(".;", md)
 
+    def test_fix13_1_loi_vao_theo_vai(self):
+        """Fix 13: trang có lối vào cho nông dân, cán bộ/nhà nghiên cứu, nhà khoa học; có CSV, in, cách tính."""
+        def read(*p):
+            with open(os.path.join(AERO_ROOT, *p), encoding="utf-8") as fh:
+                return fh.read()
+        html, js, css = read("web", "index.html"), read("web", "app.js"), read("web", "style.css")
+        for s in ("howto-roles", "Nông dân", "Cán bộ khuyến nông", "Nhà khoa học",
+                  'href="#btnCsv"', 'href="#methodCard"', 'id="btnCsv"', 'id="btnPrint"',
+                  'id="methodCard"', 'id="ndviModelRow"', "FAO-56 Penman-Monteith", "0,8P − 25", "Chưa tính:"):
+            self.assertIn(s, html)
+        for s in ("function plainLine", "function downloadCsv", "Mỗi 1.000 m²", "fromCharCode(0xFEFF)"):
+            self.assertIn(s, js)
+        self.assertIn("@media print", css)
+        self.assertEqual(html.count("<h1"), 1)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
