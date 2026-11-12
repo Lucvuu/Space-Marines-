@@ -1151,3 +1151,95 @@ Mùa mặn theo văn bản: tháng 2, 3, 4.
  web/style.css      |  7 ++++++
  4 files changed, 87 insertions(+), 21 deletions(-)
 ```
+
+---
+
+## 20. Fix 13 (Lối vào theo vai, hộp nước mỗi 1.000 m², tải CSV, in báo cáo, khối cách tính)
+
+### 20.1. Commit Hash của Bước 4
+
+| Bước | Commit Hash | Commit Message | Nội dung chính |
+|---|---|---|---|
+| **Bước 4** | `77bea44` | `web: role entry points, per-1000 m2 water box, CSV export, print, method card` | Thêm 3 lối vào theo đối tượng (`.howto-roles`), khung nước ngọt mỗi 1.000 m² (`plainLine`), nút tải CSV (`downloadCsv` kèm UTF-8 BOM), nút in báo cáo (`btnPrint`), khối giải thích công thức & giả định (`#methodCard`), dải đối chiếu lịch mô hình trên NDVI (`#ndviModelRow`), CSS in ấn `@media print`; thêm test `test_fix13_1_loi_vao_theo_vai`. |
+| **Kết thúc** | *(commit hiện tại)* | `fix13 report` | Ghi báo cáo Fix 13 vào `MORNING_REPORT.md` kèm 3 ảnh chụp và file PDF. |
+
+---
+
+### 20.2. Output `python -m pytest -q` cuối cùng
+
+```text
+.......................................................                  [100%]
+============================== warnings summary ===============================
+C:\Users\LucVuu\AppData\Local\Programs\Python\Python313\Lib\site-packages\anyio\pytest_plugin.py:14
+  C:\Users\LucVuu\AppData\Local\Programs\Python\Python313\Lib\site-packages\anyio\pytest_plugin.py:14: PytestRemovedIn10Warning: _pytest.python.CallSpec2 has been renamed to CallSpec.
+  The CallSpec2 alias will be removed in pytest 10.
+  Update imports to use CallSpec instead.
+  See https://docs.pytest.org/en/stable/deprecations.html#callspec2-renamed
+    from _pytest.python import CallSpec2
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+55 passed, 1 warning in 18.39s
+```
+
+---
+
+### 20.3. Kết quả đối chiếu số ở Bước 5.1
+
+#### Bến Tre (`Ben_Tre_DBSCL`, kịch bản hiện nay: `0°C, 0%`):
+- **Thẻ hiện trạng (S0)**: "Lúa Hè Thu, 25/5–6/9: tưới **704 m³**", "Lúa Đông Xuân sớm, 1/11–13/2: tưới **829 m³**", "Cả năm: **1.533 m³**." → **ĐẠT**.
+- **Thẻ lúa – tôm (S1)**: "Lúa mùa mưa, 1/9–14/12: tưới **661 m³**", "Tôm sú (nước lợ), 1/3–31/7: chưa tính nước", "Cả năm: **661 m³**, ít hơn cách đang làm 872 m³ (chưa tính vụ tôm)." → **ĐẠT**.
+- **Thẻ đậu tương (S2)**: "Đậu tương, 1/11–8/2: tưới **194 m³**", "Cả năm: **898 m³**, ít hơn cách đang làm 635 m³." → **ĐẠT**.
+- **Thẻ ngô (S3)**: "Ngô, 1/11–8/2: tưới **199 m³**", "Cả năm: **903 m³**, ít hơn cách đang làm 630 m³." → **ĐẠT**.
+
+#### Đắk Lắk (`Dak_Lak_Tay_Nguyen`, kịch bản hiện nay: `0°C, 0%`):
+- **Thẻ đất trần (D0)**: "Cà phê (đất trần), 1/1–30/4: tưới **360 m³**", "Tổng các tháng trên: **360 m³**." → **ĐẠT**.
+- **Thẻ có cây phủ (D1)**: "Tổng các tháng trên: **430 m³**, nhiều hơn cách đang làm 70 m³." → **ĐẠT**.
+
+---
+
+### 20.4. Kiểm tra xuất CSV ở Bước 5.2
+
+- File tải về có đúng 9 dòng (1 dòng tiêu đề + 8 vụ). Mở bằng Excel hiển thị đúng dấu tiếng Việt nhờ tiền tố BOM `\uFEFF`.
+- Dòng "Lúa Đông Xuân sớm" có `rice_extra_mm` = 520 (làm đất 100 sau khi trừ bão hòa 200, cộng thấm 4 × 105 ngày).
+- Nguyên văn 3 dòng đầu của file CSV:
+```csv
+region,delta_temp_c,delta_rain_pct,strategy_id,strategy_name,phase,start_mmdd,end_mmdd,modeled,etc_mm,peff_mm,rice_extra_mm,deficit_mm,deficit_low_perc_mm,annual_deficit_mm,annual_deficit_low_perc_mm,bare_months,partial
+Ben_Tre_DBSCL,0,0,S0,Hiện trạng: 2 vụ lúa (Hè Thu + Đông Xuân sớm),Lúa Hè Thu,05-25,09-06,true,494,538.6,720,703.9,521.1,1532.9,1140.1,2 3 4 5 9 10,false
+Ben_Tre_DBSCL,0,0,S0,Hiện trạng: 2 vụ lúa (Hè Thu + Đông Xuân sớm),Lúa Đông Xuân sớm,11-01,02-13,true,457.7,148.7,520,829,619,1532.9,1140.1,2 3 4 5 9 10,false
+```
+
+---
+
+### 20.5. Kết quả in ấn & xuất PDF ở Bước 5.3
+
+- Bấm nút "In báo cáo" khi chưa tạo báo cáo: hệ thống tự động gọi `loadReport()` tạo báo cáo hoàn chỉnh trước khi mở hộp thoại in.
+- Trong bản in / xem trước: `@media print` ẩn sạch sẽ thanh trên cùng, hướng dẫn, thẻ phương án, thanh trượt thời tiết, biểu đồ và nút bấm; chỉ giữ lại khu vực Bước 3 (dòng "Đang xem: ..." và toàn văn báo cáo).
+- File PDF kết quả: `docs/screens/fix13_print.pdf` (123.562 bytes, 2 trang hoàn chỉnh) → **ĐẠT**.
+
+---
+
+### 20.6. Đường dẫn ảnh chụp, PDF & Kết quả đối chiếu Bước 5.4
+
+- `docs/screens/fix13_bentre.png` (khung 1280 px, Bến Tre)
+- `docs/screens/fix13_daklak.png` (khung 1280 px, Đắk Lắk)
+- `docs/screens/fix13_mobile.png` (khung 375 px, giao diện di động qua iframe)
+- `docs/screens/fix13_print.pdf` (bản in PDF báo cáo tư vấn)
+
+**Đối chiếu 4 tiêu chí:**
+1. Dưới 4 nút bước có 3 ô "Nông dân", "Cán bộ khuyến nông, nhà nghiên cứu", "Nhà khoa học". Trên điện thoại 3 ô xếp dọc: **ĐẠT**.
+2. Mỗi thẻ ở Bước 2 có khung xanh nhạt "Mỗi 1.000 m² cần tưới bao nhiêu nước ngọt" nằm ngay dưới câu giải thích: **ĐẠT**.
+3. Bấm ô "Nhà khoa học" thì trang cuộn tới khối "Cách tính (để kiểm tra lại)" (`#methodCard`): **ĐẠT**.
+4. Trong ô NDVI ở Bước 4, dòng "Lịch cách đang làm trong mô hình" nằm trên dải NDVI, 12 tháng thẳng cột với 12 ô NDVI (ở khung 1280 px): **ĐẠT**.
+
+---
+
+### 20.7. Output `git diff --stat e023eee..HEAD`
+
+```text
+ tests/test_core.py | 15 +++++++++++
+ web/app.js         | 77 +++++++++++++++++++++++++++++++++++++++++++++++++++---
+ web/index.html     | 27 ++++++++++++++++++-
+ web/style.css      | 34 ++++++++++++++++++++++++
+ 4 files changed, 149 insertions(+), 4 deletions(-)
+```
+
