@@ -263,3 +263,10 @@ footer { text-align: center; padding: 24px 0; color: var(--muted); font-size: 12
   .howto-steps li { flex: 1 1 calc(50% - 8px); }
   .howto-steps a { width: 100%; }
 }
+
+/* FIX 12: lịch 12 tháng không đẩy chữ tràn ô, chân thẻ xếp dọc */
+.gantt-months-head, .gantt-bar { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+.gantt-seg { min-width: 0; }
+.rot-card-footer { flex-direction: column; align-items: flex-start; gap: 6px; }
+.rot-card-footer .card-report-btn { order: -1; font-size: 12.5px; }
+.rot-card-footer details { width: 100%; }

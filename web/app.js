@@ -456,12 +456,12 @@ function renderGanttTimeline(st, salMonths, usedCrops) {
         const style = `grid-column: span ${span};`;
 
         if (b.bare) {
-            return `<div class="gantt-seg bare" style="${style}" title="Ruộng trống không có cây che phủ">${span >= 2 ? "Đất trống" : ""}</div>`;
+            return `<div class="gantt-seg bare" style="${style}" title="Ruộng trống không có cây che phủ">${span >= 3 ? "Đất trống" : ""}</div>`;
         }
         const ck = cropByLabel[b.label] || "other";
         usedCrops.add(ck);
         const heatDot = hasHeat ? `<span class="gantt-heat-dot" title="Có ngày nóng vượt ngưỡng sinh lý"></span>` : "";
-        return `<div class="gantt-seg crop-${ck}" style="${style}" title="${b.label}">${heatDot}${span >= 2 ? (CROP_NAMES[ck] || b.label) : ""}</div>`;
+        return `<div class="gantt-seg crop-${ck}" style="${style}" title="${b.label}">${heatDot}${span >= 3 ? (CROP_NAMES[ck] || b.label) : ""}</div>`;
     }).join("");
 
     return `
