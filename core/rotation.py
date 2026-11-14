@@ -102,6 +102,12 @@ def _phase_crosses_year(phase, reg_info, crops_cfg):
     return end_dt.year > start_dt.year
 
 
+def _phase_label_vi(strat, idx):
+    """Vietnamese label of phase `idx` (team's original text), or None."""
+    labels = (strat.get("vi") or {}).get("phase_labels") or []
+    return labels[idx] if idx < len(labels) else None
+
+
 def _summarize_crop_years(phase_yearly, crosses_year):
     """
     Combine per-phase yearly deficits into crop-year totals.
@@ -227,6 +233,7 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
                     "crop": crop_id,
                     "crop_name": c_info.get("name_vi", crop_id),
                     "label": label,
+                    "label_vi": _phase_label_vi(strat, len(phases_out)),
                     "modeled": True,
                     "presaturated": bool(ph.get("presaturated", False)),
                     "window": window,
@@ -242,6 +249,7 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
                     "crop": None,
                     "crop_name": label,
                     "label": label,
+                    "label_vi": _phase_label_vi(strat, len(phases_out)),
                     "modeled": False,
                     "presaturated": False,
                     "window": {
@@ -351,7 +359,8 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
             "evidence": strat.get("evidence", []),
             "benefits": strat.get("benefits", []),
             "info_gaps": strat.get("info_gaps", []),
-            "risks": strat.get("risks", [])
+            "risks": strat.get("risks", []),
+            "vi": strat.get("vi")
         })
 
     existing = next((s for s in reg_rot.get("strategies", []) if s.get("is_existing")), None)
@@ -369,6 +378,7 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
         "display_rule": display_rule,
         "salinity_months": salinity_months,
         "salinity_months_source": reg_rot.get("salinity_months_source", ""),
+        "vi": {**(reg_rot.get("vi") or {}), "region_name": (reg_info.get("vi") or {}).get("name")},
         "observed_sowing": observed_sowing_for_region(region_id, existing_phases),
         "stress_years": reg_rot.get("stress_years", []),
         "stress_years_source": reg_rot.get("stress_years_source"),

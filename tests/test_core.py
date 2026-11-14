@@ -1104,7 +1104,8 @@ class TestAeroAgriFix6(unittest.TestCase):
         for i in range(1, 5):
             self.assertIn(f"Step {i}", html)
             self.assertNotIn(f"Bước {i}", html)
-        for anchor in ('href="#step1"', 'href="#rotationsSection"', 'href="#reportSection"', 'href="#techSection"'):
+        for anchor in ('href="#step1"', 'href="#rotationsSection"', 'href="#evidenceSection"', 'href="#reportSection"',
+                       'href="#techSection"'):
             self.assertIn(anchor, html)
         self.assertIn('id="reportSection"', html)
         self.assertEqual(html.count("<h1"), 1)
@@ -1148,7 +1149,7 @@ class TestAeroAgriFix6(unittest.TestCase):
                   'id="methodCard"', 'id="ndviModelRow"', "FAO-56 Penman-Monteith", "0.8P − 25", "Not modeled yet:"):
             self.assertIn(s, html)
         for s in ("function plainLine", "function downloadCsv", "Per 1,000 m²", "fromCharCode(0xFEFF)",
-                  'toLocaleString("en-US"', "annual_deficit_by_year", "stress_years"):
+                  "toLocaleString(loc()", '"en-US"', '"vi-VN"', "annual_deficit_by_year", "stress_years"):
             self.assertIn(s, js)
         # app.js must not branch on (translatable) config wording
         self.assertNotIn("chưa tính mặn", js)
@@ -1172,6 +1173,25 @@ class TestAeroAgriFix6(unittest.TestCase):
             self.assertIn(s, js)
         self.assertLess(css.count("\n"), 500)
         self.assertNotIn("linear-gradient(var", css)
+
+    def test_fix15_1_web_chuyen_ngon_ngu_en_vi(self):
+        """Fix 15: EN|VI toggle (default EN) with an I18N dictionary for both languages and API `vi` fields."""
+        def read(*p):
+            with open(os.path.join(AERO_ROOT, *p), encoding="utf-8") as fh:
+                return fh.read()
+        html, js, css = read("web", "index.html"), read("web", "app.js"), read("web", "style.css")
+        self.assertIn('<html lang="en">', html)
+        self.assertIn('id="langToggle"', html)
+        for s in ('data-lang="en"', 'data-lang="vi"', "data-i18n=", 'id="stepNav"', 'id="evidenceSection"'):
+            self.assertIn(s, html)
+        for s in ("const I18N = {", "en: {", "vi: {", "function t(", "localStorage", "documentElement.lang",
+                  "label_vi", "event_vi", "evidence_text", "Báo cáo hiện có bằng tiếng Anh", "prefers-reduced-motion"):
+            self.assertIn(s, js)
+        self.assertIn("prefers-reduced-motion", css)
+        # every dynamic key used with t("...") exists in the English dictionary
+        en_block = js.split("const I18N = {", 1)[1].split("vi: {", 1)[0]
+        for key in set(re.findall(r'\bt\("([a-z0-9_]+)"\s*[,)]', js)):
+            self.assertIn(f"{key}:", en_block, key)
 
 
 class TestT2YearlyVariability(unittest.TestCase):
@@ -1254,6 +1274,44 @@ class TestT2YearlyVariability(unittest.TestCase):
             self.assertTrue(y.get("source"))
             self.assertIn("verified", y)
         self.assertEqual(self.dl["stress_years"], [])
+
+
+class TestVietnameseContent(unittest.TestCase):
+    """EN/VI toggle: the team's original Vietnamese text travels next to the English in the API."""
+
+    def test_vi_blocks_parallel_to_english(self):
+        from core.water_balance import load_config
+        rot = load_config("rotations")
+        for reg in ("Ben_Tre_DBSCL", "Dak_Lak_Tay_Nguyen"):
+            self.assertEqual(len(rot[reg]["vi"]["assumptions"]), len(rot[reg]["assumptions"]))
+            for s in rot[reg]["strategies"]:
+                vi = s["vi"]
+                self.assertTrue(vi["name"])
+                for k in ("benefits", "risks", "info_gaps", "evidence_text"):
+                    src = s["evidence"] if k == "evidence_text" else s[k]
+                    self.assertEqual(len(vi[k]), len(src), f"{reg}/{s['id']}/{k}")
+                self.assertEqual(len(vi["phase_labels"]), len(s["phases"]))
+                self.assertEqual(bool(vi.get("note")), bool(s.get("note")))
+
+    def test_vi_passes_through_rotations_api(self):
+        from scripts.make_demo_data import generate_demo_dataset
+        from core.rotation import evaluate_rotations
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            old = os.environ.get("AERO_DATA_DIR")
+            os.environ["AERO_DATA_DIR"] = tmp_dir
+            try:
+                generate_demo_dataset()
+                bt = evaluate_rotations("Ben_Tre_DBSCL")
+            finally:
+                if old:
+                    os.environ["AERO_DATA_DIR"] = old
+                else:
+                    os.environ.pop("AERO_DATA_DIR", None)
+        self.assertIn("Bến Tre", bt["vi"]["region_name"])
+        s0 = next(s for s in bt["strategies"] if s["id"] == "S0")
+        self.assertIn("lúa", s0["vi"]["name"].lower())
+        self.assertEqual([p["label_vi"] for p in s0["phases"]], s0["vi"]["phase_labels"])
+        self.assertTrue(all(y.get("event_vi") for y in bt["stress_years"]))
 
 
 class TestT3SowingDetection(unittest.TestCase):

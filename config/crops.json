@@ -10,7 +10,7 @@
       "late": 15
     },
     "kc_ini": 1.05,
-    "kc_mid": 1.20,
+    "kc_mid": 1.2,
     "kc_end": 0.75,
     "land_prep_mm": 300,
     "percolation_mm_day": 4,
@@ -30,7 +30,14 @@
       "perc_low": "2 mm/day: Nguyen Trung Nam, VGU/TU Darmstadt master thesis on Ben Tre, p.29, citing TCVN 9168:2012 (standard not read). Used only as a sensitivity bound."
     },
     "verified": false,
-    "verified_params": ["kc", "salinity", "heat"]
+    "verified_params": [
+      "kc",
+      "salinity",
+      "heat"
+    ],
+    "vi": {
+      "name": "Lúa thâm canh"
+    }
   },
   "soybean": {
     "name_vi": "Soybean",
@@ -42,9 +49,9 @@
       "mid": 35,
       "late": 20
     },
-    "kc_ini": 0.40,
+    "kc_ini": 0.4,
     "kc_mid": 1.15,
-    "kc_end": 0.50,
+    "kc_end": 0.5,
     "land_prep_mm": null,
     "percolation_mm_day": null,
     "peff_method": "usda_scs",
@@ -58,7 +65,13 @@
       "water_extra": "N/A (upland crop, null)"
     },
     "verified": false,
-    "verified_params": ["kc", "salinity"]
+    "verified_params": [
+      "kc",
+      "salinity"
+    ],
+    "vi": {
+      "name": "Đậu tương"
+    }
   },
   "maize": {
     "name_vi": "Maize (silage / grain)",
@@ -70,8 +83,8 @@
       "mid": 35,
       "late": 15
     },
-    "kc_ini": 0.30,
-    "kc_mid": 1.20,
+    "kc_ini": 0.3,
+    "kc_mid": 1.2,
     "kc_end": 0.35,
     "land_prep_mm": null,
     "percolation_mm_day": null,
@@ -86,7 +99,13 @@
       "water_extra": "N/A (upland crop, null)"
     },
     "verified": false,
-    "verified_params": ["kc", "salinity"]
+    "verified_params": [
+      "kc",
+      "salinity"
+    ],
+    "vi": {
+      "name": "Ngô sinh khối / ngô hạt"
+    }
   },
   "rice_shrimp": {
     "name_vi": "Rice–shrimp ecological system",
@@ -108,7 +127,10 @@
       "water_extra": "TODO: local experts needed"
     },
     "verified": false,
-    "verified_params": []
+    "verified_params": [],
+    "vi": {
+      "name": "Mô hình sinh thái Lúa - Tôm"
+    }
   },
   "coffee": {
     "name_vi": "Robusta coffee monoculture (bare soil)",
@@ -120,7 +142,7 @@
       "mid": 30,
       "late": 30
     },
-    "kc_ini": 0.90,
+    "kc_ini": 0.9,
     "kc_mid": 0.95,
     "kc_end": 0.95,
     "land_prep_mm": null,
@@ -136,7 +158,12 @@
       "water_extra": "N/A (upland crop, null)"
     },
     "verified": false,
-    "verified_params": ["kc"]
+    "verified_params": [
+      "kc"
+    ],
+    "vi": {
+      "name": "Cà phê Robusta độc canh (đất trần)"
+    }
   },
   "coffee_cover_crop": {
     "name_vi": "Robusta coffee with cover crop / grass",
@@ -149,8 +176,8 @@
       "late": 30
     },
     "kc_ini": 1.05,
-    "kc_mid": 1.10,
-    "kc_end": 1.10,
+    "kc_mid": 1.1,
+    "kc_end": 1.1,
     "land_prep_mm": null,
     "percolation_mm_day": null,
     "peff_method": "usda_scs",
@@ -164,6 +191,11 @@
       "water_extra": "N/A (upland crop, null)"
     },
     "verified": false,
-    "verified_params": ["kc"]
+    "verified_params": [
+      "kc"
+    ],
+    "vi": {
+      "name": "Cà phê có cây phủ đất / cỏ"
+    }
   }
 }
