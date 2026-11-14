@@ -1,0 +1,132 @@
+{
+  "_display_rule": "Một tháng được coi là 'có cây' nếu có ít nhất 15 ngày thuộc một pha (tính trên năm tham chiếu 2025, có vắt năm).",
+  "Ben_Tre_DBSCL": {
+    "salinity_months": [2, 3, 4],
+    "salinity_months_source": "Vĩnh Long (gồm Bến Tre cũ): 'Tập trung cảnh giác từ tháng 2/2027 - 4/2027' (Khuyến nông QG, sổ tay hạn mặn mùa khô 2026–2027, tr.50).",
+    "ndvi_years": [2022, 2024],
+    "ndvi_years_source": "Giai đoạn đã kiểm chứng lịch 2 vụ lúa: NDVI MODIS MOD13Q1 2022–2024 tại điểm 10.0992, 106.6040 và Báo Nông nghiệp Việt Nam 22/02/2024 ('chỉ làm 2 vụ lúa trong năm', 'không gieo sạ vụ thu đông 2023').",
+    "assumptions": [
+      "Ngày gieo là ngày đại diện (Hè Thu 25/5, Đông Xuân 1/11); thực tế dao động theo năm.",
+      "Nước thêm cho lúa theo FAO Training Manual 3 (1986), mục 4.4: bão hòa đất 200 mm + lớp nước 100 mm + thấm 4 mm/ngày (mức đất sét nặng). Loại đất tại Ba Tri là giả định, chưa kiểm chứng. Phần nước này chiếm phần lớn nhu cầu nước của lúa.",
+      "Một nghiên cứu cân bằng nước ở Bến Tre dùng mức thấm 2 mm/ngày, dẫn theo TCVN 9168:2012 (chưa đọc được bản gốc). Nếu dùng 2 mm/ngày, nước thêm cho mỗi vụ lúa 105 ngày là 510 mm thay vì 720 mm.",
+      "App chưa có dữ liệu độ mặn theo trạm; tháng mặn lấy từ văn bản, không phải đo đạc.",
+      "Khí tượng lấy từ NASA POWER tại đúng tọa độ điểm ruộng (10.0992, 106.6040), nhưng mỗi giá trị là trung bình của ô lưới khoảng 0,5° × 0,625° (cỡ 50 km), không phải số đo tại ruộng.",
+      "Thiếu hụt nước được cộng theo từng tháng: tháng mưa dư không bù cho tháng thiếu, vì mô hình chưa tính nước trữ trong đất. Lúa dùng mưa hiệu quả theo FAO TM3 (Pe = 0,8P − 25 khi P > 75 mm/tháng; Pe = 0,6P − 10 khi P < 75 mm/tháng); cây cạn dùng USDA-SCS."
+    ],
+    "strategies": [
+      {
+        "id": "S0", "is_existing": true,
+        "name_vi": "Hiện trạng: 2 vụ lúa (Hè Thu + Đông Xuân sớm)",
+        "phases": [
+          {"crop": "rice", "label": "Lúa Hè Thu", "start": "05-25"},
+          {
+            "crop": "rice", "label": "Lúa Đông Xuân sớm", "start": "11-01",
+            "presaturated": true,
+            "presaturated_source": "FAO TM3 mục 4.4: không tính lại nước bão hòa đất (SAT) khi tầng rễ đã bão hòa từ tháng trước. Ruộng vừa qua tháng 9–10, thuộc nhóm tháng mưa nhiều nhất năm theo NASA POWER, nên vụ Đông Xuân không cộng 200 mm bão hòa đất."
+          }
+        ],
+        "why": "Đây là cách ruộng đang được canh tác, dùng làm mốc so sánh.",
+        "evidence": [
+          {"text": "NDVI tại điểm 10.0992, 106.6040 (2022–2024): hai đỉnh mỗi năm (tháng 6–8 và tháng 12–1), thấp từ tháng 3 đến tháng 5.", "source": "NASA MODIS MOD13Q1 v061 qua ORNL DAAC", "verified": true},
+          {"text": "Xã Mỹ Chánh, Ba Tri: 'chỉ làm 2 vụ lúa trong năm'; vận động 'không gieo sạ vụ thu đông 2023'.", "source": "Báo Nông nghiệp Việt Nam, 22/02/2024", "verified": true},
+          {"text": "Vùng ven biển: 'kết thúc gieo sạ hoàn toàn trong tháng 10 đến tháng 11 dương lịch để thu hoạch trước thời điểm mặn xâm nhập đỉnh điểm'.", "source": "Khuyến nông QG, sổ tay hạn mặn mùa khô 2026–2027, tr.10", "verified": true}
+        ],
+        "benefits": ["Né đỉnh mặn tháng 2–4 theo khuyến cáo.", "Nông dân đã quen kỹ thuật và đầu ra."],
+        "info_gaps": ["Ngày gieo thực tế từng năm."],
+        "risks": ["Đất bỏ trống trong mùa khô, trùng mùa mặn: không có lớp phủ, không có thu nhập.", "Đông Xuân gieo muộn có nguy cơ gặp mặn cuối vụ."]
+      },
+      {
+        "id": "S1", "is_existing": false,
+        "name_vi": "Lúa – tôm (lúa mùa mưa, tôm sú mùa khô)",
+        "phases": [
+          {"crop": "rice", "label": "Lúa mùa mưa", "start": "09-01"},
+          {"crop": null, "label": "Tôm sú (nước lợ)", "start": "03-01", "end": "07-31", "modeled": false}
+        ],
+        "why": "Thay vì chống mặn, dùng nước lợ mùa khô để nuôi tôm; trồng lúa khi mưa đã rửa mặn.",
+        "note": "Vụ tôm dùng nước lợ mùa khô nên không tính vào nước ngọt; con số trên thẻ chưa tính giai đoạn nuôi tôm. 'Chỉ xuống giống lúa khi… độ mặn trong đất < 2‰' (Khuyến nông QG, sổ tay hạn mặn mùa khô 2026–2027, tr.10).",
+        "evidence": [
+          {"text": "Bình Đại (huyện ven biển giáp Ba Tri): 'Vụ lúa từ tháng 9/2012 đến tháng 12/2012… Vụ tôm sú từ tháng 3/2013 đến tháng 7/2013.'", "source": "Nguyễn Mỹ Hoa, Trần Sơn Tùng, Nguyễn Hồng Giang, Võ Thị Gương (2016). Tạp chí KH ĐH Cần Thơ, Phần A, 42: 40–49", "verified": true},
+          {"text": "Vùng ven biển Vĩnh Long: 'phân vùng mặn-lợ, không ngọt hóa cứng nhắc; bố trí sinh kế phù hợp nguồn nước.'", "source": "Khuyến nông QG, sổ tay hạn mặn mùa khô 2026–2027, tr.50", "verified": true}
+        ],
+        "benefits": ["Có thu nhập trong mùa khô thay vì để đất trống.", "Ít cần nước ngọt mùa khô.", "Vụ lúa giúp rửa mặn đất: 'việc canh tác lúa luân canh thay vì nuôi tôm sú thâm canh đã làm đất được rửa mặn' (Nguyễn Mỹ Hoa và cs., 2016)."],
+        "info_gaps": ["Chưa có nguồn lịch lúa–tôm riêng cho Ba Tri; đang dùng lịch ở Bình Đại.", "App chưa mô hình hóa nước và rủi ro của vụ tôm.", "Chi phí đầu tư, dịch bệnh tôm, đầu ra: cần nông dân và cán bộ khuyến nông đánh giá."],
+        "risks": ["Trong vụ tôm, ESP đất 20,7–25,4: 'đất có thể đạt đến ngưỡng sodic hóa' (Nguyễn Mỹ Hoa và cs., 2016).", "'Chỉ xuống giống lúa khi… độ mặn trong đất < 2‰' (Khuyến nông QG, tr.10): mưa đến muộn thì vụ lúa dễ hỏng.", "'Tạm dừng mở rộng diện tích tại các khu vực chưa hoàn thiện hạ tầng thủy lợi nội đồng' (Khuyến nông QG, tr.10)."]
+      },
+      {
+        "id": "S2", "is_existing": false,
+        "name_vi": "Lúa Hè Thu + đậu tương thay vụ Đông Xuân",
+        "phases": [
+          {"crop": "rice", "label": "Lúa Hè Thu", "start": "05-25"},
+          {"crop": "soybean", "label": "Đậu tương", "start": "11-01"}
+        ],
+        "why": "Đậu tương không cần nước làm đất và thấm như lúa ngập, chịu mặn tốt hơn ngô, và là cây họ đậu cố định đạm.",
+        "evidence": [
+          {"text": "Ngưỡng ECe: đậu tương 5,0 dS/m; ngô 1,7 dS/m.", "source": "FAO-56, Bảng 23, tr.178–179", "verified": true},
+          {"text": "Bến Tre có chính sách hỗ trợ chuyển đất lúa sang cây màu: QĐ 1353/QĐ-UBND ngày 11/07/2014.", "source": "caselaw.vn (chưa đọc toàn văn)", "verified": false},
+          {"text": "Xã Long Khánh, Cai Lậy, Tiền Giang (đất lúa 3 vụ trong đê bao, vùng ngọt): trồng đậu xanh vụ Hè Thu thì lúa vụ sau hấp thu 98 kg N/ha từ đất, so với 69 kg N/ha ở ruộng 3 vụ lúa liên tục; năng suất lúa vụ sau 4,6 tấn/ha, so với 3 tấn/ha. Cây thử là đậu xanh, không phải đậu tương.", "source": "Võ Thị Gương, Nguyễn Minh Đông, Châu Minh Khôi (2010). Tạp chí Khoa học ĐH Cần Thơ 16b: 147–154, tr.152", "verified": true}
+        ],
+        "benefits": ["Giảm nhu cầu nước ngọt so với lúa (xem số liệu mô hình).", "Cây họ đậu: luân canh với lúa làm tăng đạm đất cung cấp cho lúa vụ sau (số đo với đậu xanh ở vùng ngọt Tiền Giang)."],
+        "info_gaps": ["Lịch gieo đậu tương trên đất lúa ven biển Bến Tre: chưa tìm thấy nguồn; app giả định 1/11, 100 ngày.", "Số đo cho đậu tương trên đất lúa nhiễm mặn ven biển: chưa có. Số đo đang dùng là của đậu xanh ở Tiền Giang (vùng ngọt).", "Đầu ra và giá đậu tương tại địa phương."],
+        "risks": ["Đất lúa dễ úng: cần lên luống, thoát nước (cần khuyến nông địa phương hướng dẫn).", "Cuối vụ (tháng 1–2) mặn bắt đầu vào sông: nước tưới có thể nhiễm mặn.", "Nông dân chưa quen kỹ thuật."]
+      },
+      {
+        "id": "S3", "is_existing": false,
+        "name_vi": "Lúa Hè Thu + ngô thay vụ Đông Xuân",
+        "phases": [
+          {"crop": "rice", "label": "Lúa Hè Thu", "start": "05-25"},
+          {"crop": "maize", "label": "Ngô", "start": "11-01"}
+        ],
+        "why": "Ngô không cần nước làm đất và thấm như lúa ngập; có thể dùng làm thức ăn chăn nuôi.",
+        "evidence": [
+          {"text": "Ngưỡng ECe của ngô 1,7 dS/m, thấp nhất trong các cây được so sánh.", "source": "FAO-56, Bảng 23, tr.179", "verified": true},
+          {"text": "Ba Tri, tiểu vùng mặn thấp (4/2012–6/2013): đã thử nghiệm mô hình bắp–lúa–lúa, cùng với dưa hấu–lúa–lúa và đậu bắp–lúa–lúa, so với 3 vụ lúa. Mô hình đậu bắp–lúa–lúa cho hiệu quả kinh tế cao nhất.", "source": "Nguyễn Mỹ Hoa và cs. (2014). Tạp chí Khoa học ĐH Cần Thơ, số chuyên đề Nông nghiệp: 31–37 (tóm tắt)", "verified": true},
+          {"text": "Cùng thí nghiệm ở Cai Lậy, Tiền Giang (vùng ngọt): luân canh bắp rau thì lúa vụ sau hấp thu 105 kg N/ha, so với 69 kg N/ha ở ruộng 3 vụ lúa; năng suất 4,0 tấn/ha, so với 3 tấn/ha. Cây thử là bắp rau, không phải ngô hạt.", "source": "Võ Thị Gương, Nguyễn Minh Đông, Châu Minh Khôi (2010). Tạp chí Khoa học ĐH Cần Thơ 16b: 147–154, tr.152", "verified": true}
+        ],
+        "benefits": ["Giảm nhu cầu nước ngọt so với lúa (xem số liệu mô hình).", "Có giá trị làm thức ăn chăn nuôi.", "Luân canh cây cạn với lúa làm tăng năng suất lúa vụ sau (số đo với bắp rau ở vùng ngọt Tiền Giang)."],
+        "info_gaps": ["Lịch gieo ngô trên đất lúa ven biển Bến Tre: chưa tìm thấy nguồn; app giả định 1/11, 100 ngày.", "Đầu ra và giá ngô tại địa phương."],
+        "risks": ["Ngô rất nhạy mặn: rủi ro cao nếu nước tưới nhiễm mặn cuối vụ.", "Không cố định đạm."]
+      }
+    ]
+  },
+  "Dak_Lak_Tay_Nguyen": {
+    "salinity_months": [],
+    "salinity_months_source": "Vùng cao nguyên, không xét mặn.",
+    "assumptions": [
+      "Cà phê đánh giá trong tháng 1–4 (mùa khô) với Kc giữa vụ cố định.",
+      "Không có ngưỡng nhiệt theo ngày có nguồn cho cà phê vối, nên không tính rủi ro nhiệt.",
+      "Nhu cầu nước theo FAO-56 là nhu cầu đầy đủ của cây. Quy trình tưới trong nước: 350–420 lít/gốc/lần, chu kỳ 30–35 ngày (Khuyến nông QG 2026); 500–520 lít/gốc/lần, chu kỳ 30–40 ngày trên đất bazan (WASI, QĐ 26/QĐ-VNLT-KHKH 2013). Ở 1.111 cây/ha, mức này tương đương khoảng 130–230 mm/mùa, thấp hơn mô hình vì tưới thiếu có chủ đích và đất bazan trữ nước từ mùa mưa (mô hình chưa tính).",
+      "Khí tượng lấy từ NASA POWER tại đúng tọa độ điểm vườn (12.8314, 108.1282), nhưng mỗi giá trị là trung bình của ô lưới khoảng 0,5° × 0,625° (cỡ 50 km), không phải số đo tại vườn.",
+      "Thiếu hụt nước được cộng theo từng tháng: tháng mưa dư không bù cho tháng thiếu, vì mô hình chưa tính nước trữ trong đất."
+    ],
+    "strategies": [
+      {
+        "id": "D0", "is_existing": true,
+        "name_vi": "Hiện trạng: cà phê vối đất trần",
+        "phases": [{"crop": "coffee", "label": "Cà phê (đất trần)"}],
+        "why": "Đây là cách vườn đang được canh tác, dùng làm mốc so sánh.",
+        "evidence": [
+          {"text": "Kc cà phê đất trần 0,90 / 0,95 / 0,95.", "source": "FAO-56, Bảng 12, tr.112", "verified": true},
+          {"text": "NDVI tại điểm 12.8314, 108.1282 cao quanh năm (khoảng 0,66–0,80): cây lâu năm.", "source": "NASA MODIS MOD13Q1 v061 qua ORNL DAAC", "verified": true}
+        ],
+        "benefits": ["Theo FAO-56, nhu cầu nước mùa khô thấp hơn vườn có cỏ phủ."],
+        "info_gaps": ["Kc đo tại Tây Nguyên: chưa có nguồn."],
+        "risks": ["Đất trần dễ mất nước và xói mòn trên đất dốc.", "Cà phê vối nhạy nhiệt: mỗi 1 °C tăng của nhiệt độ trung bình mùa làm giảm khoảng 14% năng suất (Kath et al., 2020, Global Change Biology)."]
+      },
+      {
+        "id": "D1", "is_existing": false,
+        "name_vi": "Cà phê vối có cây che phủ đất / thảm cỏ",
+        "phases": [{"crop": "coffee_cover_crop", "label": "Cà phê + cây phủ"}],
+        "why": "Khuyến nông khuyến cáo 'trồng cây che phủ đất' và chống xói mòn trên đất dốc.",
+        "note": "Theo FAO-56, cỏ phủ kín còn sống làm tăng nhu cầu nước, nên số liệu D1 là cận trên. Quy trình WASI (QĐ 26/QĐ-VNLT-KHKH, 2013): làm cỏ theo băng trên đất dốc, diệt cỏ quanh vườn đầu mùa khô để chống cháy, tủ gốc và ép xanh cuối mùa mưa. Chưa tìm thấy số đo tại Tây Nguyên cho thấy cây phủ làm giảm nước tưới.",
+        "evidence": [
+          {"text": "'Tăng cường hệ thống cây che bóng, cây chắn gió, trồng cây che phủ đất…'; 'Ở đất dốc, bố trí rãnh, băng hoặc hố thu nước theo đường đồng mức để tăng khả năng giữ nước, hạn chế dòng chảy mặt và xói mòn.'", "source": "Trung tâm Khuyến nông QG, tờ gấp hạn mặn cà phê – hồ tiêu (2026)", "verified": true},
+          {"text": "Kc cà phê có cỏ 1,05 / 1,10 / 1,10.", "source": "FAO-56, Bảng 12, tr.112", "verified": true},
+          {"text": "Quy trình WASI: 'làm sạch cỏ từ 3 – 4 lần/năm'; 'Đối với đất dốc: làm cỏ theo băng, không làm cỏ trắng toàn bộ diện tích'; đầu mùa khô 'diệt cỏ dại xung quanh vườn cà phê để chống cháy'; cuối mùa mưa 'tủ gốc, ép xanh'.", "source": "WASI, Quy trình ICM cà phê vối giai đoạn kinh doanh, QĐ 26/QĐ-VNLT-KHKH ngày 04/3/2013", "verified": true}
+        ],
+        "benefits": ["Che phủ đất, hạn chế dòng chảy mặt và xói mòn.", "Có thể tăng chất hữu cơ cho đất (cần số đo đạc tại chỗ)."],
+        "info_gaps": ["Chưa có số đo tại Tây Nguyên về ảnh hưởng của cây phủ tới nhu cầu tưới; FAO-56 giả định cỏ làm tăng ETc.", "Loài cây phủ phù hợp và cách quản lý trong mùa khô."],
+        "risks": ["Cây phủ có thể tranh nước với cà phê trong mùa khô (xem số liệu mô hình).", "Cách quản lý cây phủ trong mùa khô (cắt, tủ gốc) cần chuyên gia địa phương hướng dẫn.", "Quy trình WASI không khuyến cáo giữ thảm cỏ phủ kín vườn trong mùa khô, mà làm cỏ theo băng. Kc 'có cỏ' của FAO-56 giả định cỏ phủ kín, nên số liệu D1 là cận trên của nhu cầu nước."]
+      }
+    ]
+  }
+}

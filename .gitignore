@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+screenshot*.png
+data/raw/**/*.csv
