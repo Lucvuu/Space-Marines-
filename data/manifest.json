@@ -2,7 +2,7 @@
   "power/Ben_Tre_DBSCL.csv": {
     "source": "NASA POWER daily API, community=AG",
     "url": "https://power.larc.nasa.gov",
-    "retrieved_at": "2026-11-11",
+    "retrieved_at": "2026-11-14",
     "is_synthetic": false,
     "point": [
       10.0992,
@@ -12,27 +12,81 @@
   "power/Dak_Lak_Tay_Nguyen.csv": {
     "source": "NASA POWER daily API, community=AG",
     "url": "https://power.larc.nasa.gov",
-    "retrieved_at": "2026-11-11",
+    "retrieved_at": "2026-11-14",
     "is_synthetic": false,
     "point": [
       12.8314,
       108.1282
     ]
   },
-  "power/_cu_toa_do_vung": {
-    "source": "Bản sao lưu tọa độ vùng cũ",
-    "is_synthetic": false
-  },
   "ndvi/Ben_Tre_DBSCL.csv": {
     "source": "NASA MODIS MOD13Q1 v061 (ORNL DAAC REST API, 250m 16-day NDVI, 3x3 km median at 10.0992, 106.604)",
     "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1",
-    "retrieved_at": "2026-11-08",
+    "retrieved_at": "2026-11-14",
     "is_synthetic": false
   },
   "ndvi/Dak_Lak_Tay_Nguyen.csv": {
-    "source": "NASA MODIS MOD13Q1 v061 (ORNL DAAC REST API, 250m 16-day NDVI, 3x3 km median at 12.8314, 108.1282)",
-    "url": "https://modis.ornl.gov/rst/api/v1/MOD13Q1",
-    "retrieved_at": "2026-11-08",
-    "is_synthetic": false
+    "source": "NASA MODIS MOD13Q1 v061 (Google Earth Engine MODIS/061/MOD13Q1, 250 m 16-day NDVI, median of up to ~100 native pixels (2.1 x 2.1 km) with SummaryQA 0/1 at 12.8314, 108.1282); same QA rules as core/ndvi_fetch.py, used because the ORNL DAAC API returned errors. Check on Ben Tre: 181 common dates with the ORNL file, r = 0.999, mean absolute NDVI difference 0.0044",
+    "url": "https://developers.google.com/earth-engine/datasets/catalog/MODIS_061_MOD13Q1",
+    "retrieved_at": "2026-11-14",
+    "is_synthetic": false,
+    "platform": "Google Earth Engine",
+    "dataset_id": "MODIS/061/MOD13Q1"
+  },
+  "gee/srtm_stats_Ben_Tre_DBSCL.csv": {
+    "source": "NASA SRTM v3 (USGS/SRTMGL1_003, 30 m): slope (degrees, ee.Terrain.slope) and elevation statistics over the 3x3 km window at 10.0992, 106.604",
+    "dataset_id": "USGS/SRTMGL1_003",
+    "retrieved_at": "2026-11-14",
+    "is_synthetic": false,
+    "platform": "Google Earth Engine"
+  },
+  "gee/srtm_stats_Dak_Lak_Tay_Nguyen.csv": {
+    "source": "NASA SRTM v3 (USGS/SRTMGL1_003, 30 m): slope (degrees, ee.Terrain.slope) and elevation statistics over the 3x3 km window at 12.8314, 108.1282",
+    "dataset_id": "USGS/SRTMGL1_003",
+    "retrieved_at": "2026-11-14",
+    "is_synthetic": false,
+    "platform": "Google Earth Engine"
+  },
+  "gee/imerg_monthly_Ben_Tre_DBSCL.csv": {
+    "source": "NASA GPM IMERG Final monthly (NASA/GPM_L3/IMERG_MONTHLY_V07), mean precipitation rate (mm/hr) over 5 km around 10.0992, 106.604, converted to mm/month",
+    "dataset_id": "NASA/GPM_L3/IMERG_MONTHLY_V07",
+    "retrieved_at": "2026-11-14",
+    "is_synthetic": false,
+    "platform": "Google Earth Engine"
+  },
+  "gee/imerg_monthly_Dak_Lak_Tay_Nguyen.csv": {
+    "source": "NASA GPM IMERG Final monthly (NASA/GPM_L3/IMERG_MONTHLY_V07), mean precipitation rate (mm/hr) over 5 km around 12.8314, 108.1282, converted to mm/month",
+    "dataset_id": "NASA/GPM_L3/IMERG_MONTHLY_V07",
+    "retrieved_at": "2026-11-14",
+    "is_synthetic": false,
+    "platform": "Google Earth Engine"
+  },
+  "gee/mod09a1_Ben_Tre_DBSCL.csv": {
+    "source": "NASA MODIS MODIS/061/MOD09A1 (Terra 8-day 500 m surface reflectance), 3x3 km median of clear pixels (StateQA cloud, shadow, internal-cloud flags) at 10.0992, 106.604; EVI = 2.5(NIR-Red)/(NIR+6Red-7.5Blue+1), LSWI = (NIR-SWIR1)/(NIR+SWIR1) with SWIR1 = band 6",
+    "dataset_id": "MODIS/061/MOD09A1",
+    "retrieved_at": "2026-11-14",
+    "is_synthetic": false,
+    "platform": "Google Earth Engine"
+  },
+  "gee/mod09a1_Dak_Lak_Tay_Nguyen.csv": {
+    "source": "NASA MODIS MODIS/061/MOD09A1 (Terra 8-day 500 m surface reflectance), 3x3 km median of clear pixels (StateQA cloud, shadow, internal-cloud flags) at 12.8314, 108.1282; EVI = 2.5(NIR-Red)/(NIR+6Red-7.5Blue+1), LSWI = (NIR-SWIR1)/(NIR+SWIR1) with SWIR1 = band 6",
+    "dataset_id": "MODIS/061/MOD09A1",
+    "retrieved_at": "2026-11-14",
+    "is_synthetic": false,
+    "platform": "Google Earth Engine"
+  },
+  "gee/smap_monthly_Ben_Tre_DBSCL.csv": {
+    "source": "NASA SMAP L4 Global 3-hourly 9 km surface and root-zone soil moisture (NASA/SMAP/SPL4SMGP/008), monthly mean of the 9 km cell containing 10.0992, 106.604 (m3/m3)",
+    "dataset_id": "NASA/SMAP/SPL4SMGP/008",
+    "retrieved_at": "2026-11-14",
+    "is_synthetic": false,
+    "platform": "Google Earth Engine"
+  },
+  "gee/smap_monthly_Dak_Lak_Tay_Nguyen.csv": {
+    "source": "NASA SMAP L4 Global 3-hourly 9 km surface and root-zone soil moisture (NASA/SMAP/SPL4SMGP/008), monthly mean of the 9 km cell containing 12.8314, 108.1282 (m3/m3)",
+    "dataset_id": "NASA/SMAP/SPL4SMGP/008",
+    "retrieved_at": "2026-11-14",
+    "is_synthetic": false,
+    "platform": "Google Earth Engine"
   }
 }

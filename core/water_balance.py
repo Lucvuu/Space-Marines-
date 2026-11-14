@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """
 AERO-AGRI Water Balance Engine
-Tính toán nhu cầu nước cây trồng và lượng mưa hiệu quả (USDA-SCS hoặc FAO TM3).
-Tuân thủ:
-- Thiếu hụt nước cộng theo từng tháng: tháng mưa dư không bù cho tháng thiếu
-- Lúa dùng mưa hiệu quả theo FAO TM3 (Pe = 0,8P - 25 hoặc 0,6P - 10), cây khác dùng USDA-SCS
-- Nước lúa: cộng land_prep_mm và percolation_mm_day vào nhu cầu nước (presaturated bỏ sat_mm; percolation_mm_day ghi đè mức thấm)
-- Nội suy Kc tuyến tính theo từng giai đoạn sinh trưởng (ini/dev/mid/late)
-- Cây lâu năm (perennial=true): đánh giá trên các tháng mùa khô với Kc cố định = kc_mid
-- rice_shrimp (Kc=null): trả về None kèm status_note, không đoán mò Kc
+Crop water requirement and effective rainfall (USDA-SCS or FAO TM3).
+Rules:
+- Deficits are summed month by month: a wet month does not offset a dry one
+- Rice uses FAO TM3 effective rainfall (Pe = 0.8P - 25 or 0.6P - 10); other crops use USDA-SCS
+- Rice water: adds land_prep_mm and percolation_mm_day (presaturated drops sat_mm; percolation_mm_day overrides the rate)
+- Kc interpolated linearly across growth stages (ini/dev/mid/late)
+- Perennial crops: evaluated over dry-season months with constant Kc = kc_mid
+- rice_shrimp (Kc=null): returns None with a status_note; Kc is never guessed
 """
 import os
 import json
@@ -26,9 +26,9 @@ def load_config(name):
 
 def resolve_crop_season_start(reg_info, crop_id):
     """
-    Xác định ngày bắt đầu mùa vụ (MM-DD) cho một cây trồng trong vùng:
-    Ưu tiên reg_info['crop_season_start'][crop_id], sau đó reg_info['season_start'],
-    mặc định tháng đầu của dry_season_months (ví dụ '01-01').
+    Season start (MM-DD) for a crop in a region:
+    reg_info['crop_season_start'][crop_id] first, then reg_info['season_start'],
+    otherwise the first dry_season_months month (e.g. '01-01').
     """
     crop_starts = reg_info.get("crop_season_start") or {}
     if crop_id in crop_starts and crop_starts[crop_id]:
@@ -41,8 +41,8 @@ def resolve_crop_season_start(reg_info, crop_id):
 
 def get_annual_season_bounds(year, season_start_mmdd, season_days):
     """
-    Tính (start_date, end_date) cho cây hằng năm bắt đầu từ năm `year` + `season_start_mmdd` (MM-DD),
-    kéo dài `season_days` ngày (cho phép vắt qua năm y+1).
+    (start_date, end_date) of an annual crop sown in `year` on `season_start_mmdd` (MM-DD),
+    lasting `season_days` days (may run into year y+1).
     """
     parts = str(season_start_mmdd).split("-")
     month = int(parts[0])
@@ -54,9 +54,9 @@ def get_annual_season_bounds(year, season_start_mmdd, season_days):
 
 def get_crop_season_window_info(reg_info, crop_id, crop_info):
     """
-    Trả về dict {"start": "MM-DD", "end": "MM-DD"} biểu diễn cửa sổ mùa vụ của cây.
-    - Cây lâu năm (perennial=true): tính theo dry_season_months.
-    - Cây hằng năm: tính từ season_start + season_days - 1 (trên năm tham chiếu 2025).
+    Returns {"start": "MM-DD", "end": "MM-DD"}, the crop season window.
+    - Perennial crops: from dry_season_months.
+    - Annual crops: season_start + season_days - 1 (reference year 2025).
     """
     if crop_info.get("perennial", False):
         dry_months = reg_info.get("dry_season_months", [1, 2, 3, 4])
@@ -78,11 +78,11 @@ def get_crop_season_window_info(reg_info, crop_id, crop_info):
 
 def iter_crop_season_slices(df, reg_info, crop_id, crop_info):
     """
-    Hàm dùng chung giữa water_balance.py và scoring.py để trích xuất các lát cắt mùa vụ (year, df_season)
-    hợp lệ qua các năm có trong DataFrame `df` (đã có cột `date` kiểu datetime).
-    - Cây lâu năm (perennial=true): lọc theo dry_season_months trong từng năm (yêu cầu >= 30 ngày).
-    - Cây hằng năm: lọc từ start_date (năm y + season_start) đến end_date (start_date + season_days - 1),
-      cho phép vắt sang năm y+1 (yêu cầu >= 80% season_days).
+    Shared by water_balance.py and scoring.py: yields valid season slices (year, df_season)
+    for every year in `df` (which has a datetime `date` column).
+    - Perennial crops: dry_season_months of each year (needs >= 30 days).
+    - Annual crops: start_date (year y + season_start) to end_date (start_date + season_days - 1),
+      may run into year y+1 (needs >= 80% of season_days).
     """
     if df is None or len(df) == 0:
         return
@@ -108,7 +108,7 @@ def iter_crop_season_slices(df, reg_info, crop_id, crop_info):
 
 
 def collect_crop_season_df(df, reg_info, crop_id, crop_info):
-    """Gom toàn bộ các ngày thuộc mùa vụ hợp lệ của cây qua các năm thành 1 DataFrame."""
+    """All days of every valid season of the crop, as one DataFrame."""
     if df is None or len(df) == 0:
         return pd.DataFrame()
     work_df = df if pd.api.types.is_datetime64_any_dtype(df["date"]) else df.assign(date=pd.to_datetime(df["date"]))
@@ -119,7 +119,7 @@ def collect_crop_season_df(df, reg_info, crop_id, crop_info):
 
 def calculate_monthly_peff(p_mm):
     """
-    Tính lượng mưa hiệu quả USDA-SCS theo tháng (FAO Irrigation & Drainage Paper 24 / USDA SCS).
+    Monthly USDA-SCS effective rainfall (FAO Irrigation & Drainage Paper 24 / USDA SCS).
     P <= 250 mm: Peff = P * (125 - 0.2 * P) / 125
     P > 250 mm: Peff = 125 + 0.1 * P
     """
@@ -133,8 +133,8 @@ def calculate_monthly_peff(p_mm):
 
 def calculate_monthly_peff_tm3(p_mm):
     """
-    Mưa hiệu quả theo FAO Training Manual 3 (Brouwer & Heibloem 1986), Part II §4.2 và §4.4:
-    P > 75 mm/tháng: Pe = 0.8P - 25; P <= 75 mm/tháng: Pe = 0.6P - 10; không âm.
+    Effective rainfall per FAO Training Manual 3 (Brouwer & Heibloem 1986), Part II §4.2 and §4.4:
+    P > 75 mm/month: Pe = 0.8P - 25; P <= 75 mm/month: Pe = 0.6P - 10; never negative.
     """
     if p_mm <= 0.0:
         return 0.0
@@ -145,11 +145,11 @@ def calculate_monthly_peff_tm3(p_mm):
 
 def calculate_season_peff(df_all, df_season, rain_col="Rain_sim_mm"):
     """
-    Tính tổng mưa hiệu quả USDA-SCS cho một mùa vụ (df_season), phân bổ theo tỷ lệ ngày
-    cho các tháng lẻ:
-    Với mỗi tháng (YYYY-MM) có mặt trong df_season:
-      Peff_tháng = calculate_monthly_peff(tổng mưa CẢ tháng trong df_all)
-                   * (số ngày thuộc mùa vụ trong tháng đó / số ngày của tháng đó)
+    Total USDA-SCS effective rainfall for one season (df_season), pro-rated by days
+    for partial months:
+    For each month (YYYY-MM) in df_season:
+      Peff_month = calculate_monthly_peff(rain of the WHOLE month in df_all)
+                   * (season days in that month / days in that month)
     """
     if df_season is None or len(df_season) == 0:
         return 0.0
@@ -170,7 +170,7 @@ def calculate_season_peff(df_all, df_season, rain_col="Rain_sim_mm"):
 
 def build_daily_kc(stages, kc_ini, kc_mid, kc_end, season_days):
     """
-    Nội suy Kc tuyến tính theo từng giai đoạn sinh trưởng (FAO-56).
+    Linear Kc interpolation across growth stages (FAO-56).
     stages: {'ini': L_ini, 'dev': L_dev, 'mid': L_mid, 'late': L_late}
     """
     l_ini = stages.get("ini", 0)
@@ -195,8 +195,8 @@ def build_daily_kc(stages, kc_ini, kc_mid, kc_end, season_days):
 
 def calculate_water_balance(power_df, region_id, crop_id, delta_temp_c=0.0, delta_rain_pct=0.0, season_start=None, presaturated=False, percolation_mm_day=None):
     """
-    Tính toán cân bằng nước cho 1 vùng và 1 loại cây trồng qua các năm.
-    Trả về:
+    Water balance for one region and one crop across all years.
+    Returns:
     - mean_deficit_mm, p90_deficit_mm
     - mean_water_stress (irrigation_share), p90_water_stress
     - mean_etc_mm, mean_peff_mm
@@ -205,33 +205,36 @@ def calculate_water_balance(power_df, region_id, crop_id, delta_temp_c=0.0, delt
     crops_cfg = load_config("crops")
 
     if region_id not in regions_cfg:
-        raise ValueError(f"Vùng không tồn tại: {region_id}")
+        raise ValueError(f"Unknown region: {region_id}")
     if crop_id not in crops_cfg:
-        raise ValueError(f"Cây trồng không tồn tại: {crop_id}")
+        raise ValueError(f"Unknown crop: {crop_id}")
 
     reg_info = regions_cfg[region_id]
     if season_start is not None:
         reg_info = {**reg_info, "crop_season_start": {crop_id: season_start}}
     crop_info = crops_cfg[crop_id]
 
-    # Kiểm tra trường hợp cây đặc biệt không có Kc (ví dụ: rice_shrimp)
+    # Special crops without Kc (e.g. rice_shrimp)
     if crop_info.get("kc_mid") is None:
         return {
             "crop_id": crop_id,
             "crop_name": crop_info.get("name_vi", crop_id),
             "available": False,
             "mean_deficit_mm": None,
+            "p50_deficit_mm": None,
+            "p80_deficit_mm": None,
             "p90_deficit_mm": None,
+            "yearly_deficit_mm": [],
             "mean_water_stress": None,
             "mean_irrigation_share": None,
             "p90_water_stress": None,
             "mean_etc_mm": None,
             "mean_water_req_mm": None,
             "mean_peff_mm": None,
-            "status_note": "chưa tính bốc thoát hơi nước do thiếu Kc nông học (TODO)"
+            "status_note": "evapotranspiration not computed: no agronomic Kc available"
         }
 
-    # Tính toán chuỗi EToPenman-Monteith với kịch bản delta_temp_c
+    # FAO-56 Penman-Monteith ETo series under the delta_temp_c scenario
     df = power_df.copy()
     if not pd.api.types.is_datetime64_any_dtype(df["date"]):
         df["date"] = pd.to_datetime(df["date"])
@@ -240,10 +243,10 @@ def calculate_water_balance(power_df, region_id, crop_id, delta_temp_c=0.0, delt
     lat_deg = reg_info["lat"]
     elev_m = reg_info.get("elevation_m", 0.0)
 
-    # ETo tính lại trực tiếp theo FAO-56 Penman-Monteith (không dùng hệ số % tự chế)
+    # ETo recomputed with FAO-56 Penman-Monteith (no ad-hoc % factors)
     df["ETo_mm"] = calculate_eto_series(df, lat_deg, elev_m, delta_temp_c=delta_temp_c)
 
-    # Mô phỏng lượng mưa: delta_rain_pct
+    # Rainfall scenario: delta_rain_pct
     rain_factor = max(0.0, 1.0 + (delta_rain_pct / 100.0))
     df["Rain_sim_mm"] = df["PRECTOTCORR"] * rain_factor
 
@@ -251,7 +254,7 @@ def calculate_water_balance(power_df, region_id, crop_id, delta_temp_c=0.0, delt
     is_perennial = crop_info.get("perennial", False)
     yearly_results = []
 
-    # Khoản nước phụ trợ cho lúa (FAO TM3 §4.4): land_prep_mm = SAT + WL, tính vào tháng đầu vụ
+    # Extra rice water (FAO TM3 §4.4): land_prep_mm = SAT + WL, charged to the first month
     land_prep = float(crop_info.get("land_prep_mm") or 0.0)
     if presaturated:
         land_prep = max(land_prep - float(crop_info.get("sat_mm") or 0.0), 0.0)
@@ -275,7 +278,7 @@ def calculate_water_balance(power_df, region_id, crop_id, delta_temp_c=0.0, delt
             )
             df_season["ETc_mm"] = df_season["ETo_mm"] * df_season["Kc"]
 
-        # Cộng thiếu hụt theo từng tháng: tháng mưa dư không bù cho tháng thiếu
+        # Sum deficits month by month: a wet month does not offset a dry one
         ym = df_season["date"].dt.strftime("%Y-%m")
         total_etc = total_req = total_peff = deficit = 0.0
         for i, m in enumerate(ym.unique()):
@@ -305,19 +308,25 @@ def calculate_water_balance(power_df, region_id, crop_id, delta_temp_c=0.0, delt
             "crop_name": crop_info.get("name_vi", crop_id),
             "available": False,
             "mean_deficit_mm": None,
+            "p50_deficit_mm": None,
+            "p80_deficit_mm": None,
             "p90_deficit_mm": None,
+            "yearly_deficit_mm": [],
             "mean_water_stress": None,
             "mean_irrigation_share": None,
             "p90_water_stress": None,
             "mean_etc_mm": None,
             "mean_water_req_mm": None,
             "mean_peff_mm": None,
-            "status_note": "không đủ dữ liệu cho mùa vụ"
+            "status_note": "not enough data for the season"
         }
 
-    df_y = pd.DataFrame(yearly_results)
+    df_y = pd.DataFrame(yearly_results).sort_values("year").reset_index(drop=True)
     mean_def = float(df_y["deficit_mm"].mean())
     p90_def = float(df_y["deficit_mm"].quantile(0.90))
+    # P50 = median year; P80 = dry year exceeded about 1 year in 5 (design-rainfall convention)
+    p50_def = float(df_y["deficit_mm"].quantile(0.50))
+    p80_def = float(df_y["deficit_mm"].quantile(0.80))
     mean_stress = float(df_y["water_stress"].mean())
     p90_stress = float(df_y["water_stress"].quantile(0.90))
 
@@ -326,7 +335,13 @@ def calculate_water_balance(power_df, region_id, crop_id, delta_temp_c=0.0, delt
         "crop_name": crop_info.get("name_vi", crop_id),
         "available": True,
         "mean_deficit_mm": round(mean_def, 1),
+        "p50_deficit_mm": round(p50_def, 1),
+        "p80_deficit_mm": round(p80_def, 1),
         "p90_deficit_mm": round(p90_def, 1),
+        "yearly_deficit_mm": [
+            {"year": int(y), "deficit_mm": round(float(d), 1)}
+            for y, d in zip(df_y["year"], df_y["deficit_mm"])
+        ],
         "mean_water_stress": round(mean_stress, 3),
         "mean_irrigation_share": round(mean_stress, 3),
         "p90_water_stress": round(p90_stress, 3),

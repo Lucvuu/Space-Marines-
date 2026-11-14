@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 AERO-AGRI Synthetic Demo Data Generator
-Tạo dữ liệu thử nghiệm cho 2015-01-01 đến 2025-12-31.
-Tuân thủ: ĐÂY LÀ FILE DUY NHẤT ĐƯỢC PHÉP DÙNG RANDOM/NP.RANDOM.
-Ghi cờ "is_synthetic": true xuyên suốt vào manifest.
-Khí hậu 2 vùng khác nhau rõ rệt; chỉ sinh salinity cho Bến Tre.
+Generates test data for 2015-01-01 to 2025-12-31.
+Rule: THIS IS THE ONLY FILE ALLOWED TO USE RANDOM/NP.RANDOM.
+Writes the "is_synthetic": true flag to the manifest for every file.
+The two regions have clearly different climates; salinity is generated only for Bến Tre.
 """
 import os
 import sys
@@ -26,18 +26,18 @@ def generate_demo_dataset():
     day_of_year = dates.dayofyear.values
     month = dates.month.values
 
-    # Hạt giống cố định để dữ liệu tái lập được
+    # Fixed seed so the data is reproducible
     np.random.seed(42)
 
-    # 1. BẾN TRE (ĐBSCL) - Nóng ẩm, mùa khô tháng 1-4 có bốc hơi cao, hạn mặn
+    # 1. BẾN TRE (Mekong Delta) - hot and humid; dry season Jan-Apr with high evaporation, drought and salinity
     bt_is_dry = np.isin(month, [1, 2, 3, 4])
-    # T2M_MAX: trung bình 32-35°C vào mùa khô, 31-33°C mùa mưa
+    # T2M_MAX: mean 32-35°C in the dry season, 31-33°C in the rainy season
     bt_tmax = 32.0 + 2.0 * bt_is_dry + np.random.normal(0, 1.2, n)
     bt_tmin = 24.0 + np.random.normal(0, 0.8, n)
     bt_rh = np.where(bt_is_dry, np.random.uniform(65, 78, n), np.random.uniform(78, 92, n))
     bt_ws = np.where(bt_is_dry, np.random.uniform(2.5, 4.5, n), np.random.uniform(1.8, 3.2, n))
     bt_rad = np.where(bt_is_dry, np.random.uniform(19.0, 24.0, n), np.random.uniform(14.0, 19.0, n))
-    # Mưa Bến Tre: mùa khô ít mưa (vài cơn mưa nhỏ rải rác), mùa mưa mưa nhiều
+    # Bến Tre rain: little rain in the dry season (a few scattered showers), heavy rain in the rainy season
     bt_rain = np.where(
         bt_is_dry,
         np.where(np.random.rand(n) > 0.90, np.random.exponential(5.0, n), 0.0),
@@ -54,10 +54,10 @@ def generate_demo_dataset():
         "PRECTOTCORR": np.round(bt_rain, 2)
     })
 
-    # MODIS NDVI Bến Tre (16 ngày/lần, lặp lại chu kỳ vụ lúa)
+    # MODIS NDVI Bến Tre (every 16 days, repeating the rice crop cycle)
     bt_ndvi_base = 0.55 + 0.20 * np.sin(2 * np.pi * day_of_year / 120.0)
     bt_ndvi = np.clip(bt_ndvi_base + np.random.normal(0, 0.03, n), 0.15, 0.85)
-    # Lấy mẫu 16 ngày
+    # Sample every 16 days
     mask_16d = (np.arange(n) % 16 == 0)
     df_ndvi_bt = pd.DataFrame({
         "date": dates[mask_16d].strftime("%Y-%m-%d"),
@@ -71,7 +71,7 @@ def generate_demo_dataset():
         "sm_rootzone": np.round(bt_sm, 3)
     })
 
-    # Salinity Bến Tre: Tăng cao vào tháng 2-4 (đỉnh mặn 3 - 8‰)
+    # Salinity Bến Tre: high in Feb-Apr (salinity peak 3 - 8‰)
     bt_sal = np.where(
         bt_is_dry,
         np.clip(np.random.normal(4.5, 1.5, n), 0.5, 9.5),
@@ -82,15 +82,15 @@ def generate_demo_dataset():
         "salinity_ppt": np.round(bt_sal, 2)
     })
 
-    # 2. ĐẮK LẮK (TÂY NGUYÊN) - Cao nguyên, mùa khô gần như KHÔNG MƯA, biên độ nhiệt lớn
+    # 2. ĐẮK LẮK (Central Highlands) - plateau; almost NO RAIN in the dry season, large temperature range
     dl_is_dry = np.isin(month, [1, 2, 3, 4])
     dl_tmax = 30.0 + 2.5 * dl_is_dry + np.random.normal(0, 1.5, n)
-    # Đêm mát hơn do cao độ 530m
+    # Cooler nights because of the 530 m elevation
     dl_tmin = 18.0 - 1.5 * dl_is_dry + np.random.normal(0, 1.2, n)
     dl_rh = np.where(dl_is_dry, np.random.uniform(45, 65, n), np.random.uniform(75, 90, n))
     dl_ws = np.where(dl_is_dry, np.random.uniform(2.8, 5.0, n), np.random.uniform(1.5, 3.0, n))
     dl_rad = np.where(dl_is_dry, np.random.uniform(21.0, 26.0, n), np.random.uniform(15.0, 20.0, n))
-    # Mùa khô Đắk Lắk gần như tuyệt đối không mưa
+    # Đắk Lắk dry season: almost no rain at all
     dl_rain = np.where(
         dl_is_dry,
         np.where(np.random.rand(n) > 0.98, np.random.exponential(2.0, n), 0.0),
@@ -120,7 +120,7 @@ def generate_demo_dataset():
         "sm_rootzone": np.round(dl_sm, 3)
     })
 
-    # LƯU FILE VÀ CẬP NHẬT MANIFEST
+    # SAVE FILES AND UPDATE THE MANIFEST
     files_to_save = [
         ("power", "Ben_Tre_DBSCL", df_power_bt, "NASA POWER Synthetic Demo Daily"),
         ("ndvi", "Ben_Tre_DBSCL", df_ndvi_bt, "MODIS NDVI Synthetic Demo 16-day"),
@@ -129,7 +129,7 @@ def generate_demo_dataset():
         ("power", "Dak_Lak_Tay_Nguyen", df_power_dl, "NASA POWER Synthetic Demo Daily"),
         ("ndvi", "Dak_Lak_Tay_Nguyen", df_ndvi_dl, "MODIS NDVI Synthetic Demo 16-day"),
         ("soil_moisture", "Dak_Lak_Tay_Nguyen", df_sm_dl, "SMAP L4 Synthetic Demo Daily")
-        # Đắk Lắk KHÔNG có salinity
+        # Đắk Lắk has NO salinity file
     ]
 
     for stype, reg_id, df_data, src_desc in files_to_save:
@@ -145,7 +145,7 @@ def generate_demo_dataset():
             "retrieved_at": datetime.now().strftime("%Y-%m-%d"),
             "is_synthetic": True
         })
-        print(f"[DEMO DATA] Đã sinh {rel_path} ({len(df_data)} dòng)")
+        print(f"[DEMO DATA] Generated {rel_path} ({len(df_data)} rows)")
 
 if __name__ == "__main__":
     generate_demo_dataset()

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 AERO-AGRI HTTP Server & REST API
-Phục vụ API theo mục 6 và các tệp tĩnh web/ tại cổng 8050.
-Tuân thủ:
+Serves the API (spec section 6) and the static web/ files on port 8050.
+Rules:
 - stdlib http.server
-- Trả lỗi dạng JSON {"error": "..."} với mã 400/404/500, không traceback
-- Đọc data qua get_data_dir() / AERO_DATA_DIR
+- Errors are returned as JSON {"error": "..."} with status 400/404/500, never a traceback
+- Data is read through get_data_dir() / AERO_DATA_DIR
 """
 import os
 import sys
@@ -26,11 +26,12 @@ from core.eto import calculate_eto_series
 from core.scoring import evaluate_crop_suitability
 from core.rotation import evaluate_rotations
 from core.advisor import build_advice
+from core.validation import region_cross_checks
 
 WEB_DIR = os.path.join(AERO_ROOT, "web")
 
 def is_osm_reachable():
-    """Kiểm tra kết nối tới OSM tile server để tránh lỗi console khi chạy offline."""
+    """Check connectivity to the OSM tile server to avoid console errors when running offline."""
     try:
         socket.create_connection(("tile.openstreetmap.org", 80), timeout=0.5)
         return True
@@ -79,12 +80,12 @@ class AeroAgriAPIHandler(SimpleHTTPRequestHandler):
             elif path == "/api/climate":
                 reg_id = query.get("region", [None])[0]
                 if not reg_id:
-                    self.send_error_json(400, "Thiếu tham số query 'region'")
+                    self.send_error_json(400, "Missing query parameter 'region'")
                     return
 
                 power_df, power_meta = load_csv("power", reg_id)
                 if power_df is None or len(power_df) == 0:
-                    self.send_error_json(404, f"chưa có dữ liệu POWER cho vùng {reg_id}")
+                    self.send_error_json(404, f"no POWER data for region {reg_id}")
                     return
 
                 regions_cfg = load_config("regions")
@@ -94,7 +95,7 @@ class AeroAgriAPIHandler(SimpleHTTPRequestHandler):
                 df["ETo_mm"] = calculate_eto_series(df, reg_info["lat"], reg_info["elevation_m"])
                 df["year_month"] = df["date"].dt.strftime("%Y-%m")
 
-                # Thử đọc thêm ndvi và soil_moisture
+                # Also try to read ndvi and soil_moisture
                 ndvi_df, _ = load_csv("ndvi", reg_id)
                 if ndvi_df is not None:
                     ndvi_df["year_month"] = ndvi_df["date"].dt.strftime("%Y-%m")
@@ -147,10 +148,10 @@ class AeroAgriAPIHandler(SimpleHTTPRequestHandler):
                 return
 
         except Exception as e:
-            self.send_error_json(500, f"Lỗi máy chủ nội bộ: {str(e)}")
+            self.send_error_json(500, f"Internal server error: {str(e)}")
             return
 
-        # Phục vụ file tĩnh web/
+        # Serve static files from web/
         super().do_GET()
 
     def do_POST(self):
@@ -162,7 +163,7 @@ class AeroAgriAPIHandler(SimpleHTTPRequestHandler):
             raw_body = self.rfile.read(content_length).decode("utf-8")
             body = json.loads(raw_body) if raw_body else {}
         except Exception:
-            self.send_error_json(400, "Định dạng JSON trong body không hợp lệ")
+            self.send_error_json(400, "Invalid JSON in request body")
             return
 
         try:
@@ -170,7 +171,7 @@ class AeroAgriAPIHandler(SimpleHTTPRequestHandler):
             if path == "/api/evaluate":
                 reg_id = body.get("region")
                 if not reg_id:
-                    self.send_error_json(400, "Thiếu tham số 'region' trong body")
+                    self.send_error_json(400, "Missing 'region' parameter in body")
                     return
 
                 d_temp = float(body.get("delta_temp_c", 0.0))
@@ -178,7 +179,7 @@ class AeroAgriAPIHandler(SimpleHTTPRequestHandler):
 
                 res = evaluate_crop_suitability(reg_id, delta_temp_c=d_temp, delta_rain_pct=d_rain)
                 if not res.get("available"):
-                    self.send_error_json(404, res.get("error", f"chưa có dữ liệu POWER cho vùng {reg_id}"))
+                    self.send_error_json(404, res.get("error", f"no POWER data for region {reg_id}"))
                     return
 
                 self.send_json(200, res)
@@ -188,14 +189,14 @@ class AeroAgriAPIHandler(SimpleHTTPRequestHandler):
             elif path == "/api/rotations":
                 reg_id = body.get("region")
                 if not reg_id:
-                    self.send_error_json(400, "Thiếu tham số 'region' trong body")
+                    self.send_error_json(400, "Missing 'region' parameter in body")
                     return
 
                 try:
                     d_temp = float(body.get("delta_temp_c", 0.0))
                     d_rain = float(body.get("delta_rain_pct", 0.0))
                 except (ValueError, TypeError):
-                    self.send_error_json(400, "Tham số delta_temp_c hoặc delta_rain_pct không hợp lệ")
+                    self.send_error_json(400, "Invalid delta_temp_c or delta_rain_pct parameter")
                     return
 
                 try:
@@ -205,9 +206,10 @@ class AeroAgriAPIHandler(SimpleHTTPRequestHandler):
                     return
 
                 if not res.get("available"):
-                    self.send_error_json(404, res.get("error", f"chưa có dữ liệu POWER cho vùng {reg_id}"))
+                    self.send_error_json(404, res.get("error", f"no POWER data for region {reg_id}"))
                     return
 
+                res["cross_checks"] = region_cross_checks(reg_id, res, delta_temp_c=d_temp, delta_rain_pct=d_rain)
                 self.send_json(200, res)
                 return
 
@@ -215,7 +217,7 @@ class AeroAgriAPIHandler(SimpleHTTPRequestHandler):
             elif path == "/api/advise":
                 reg_id = body.get("region")
                 if not reg_id:
-                    self.send_error_json(400, "Thiếu tham số 'region' trong body")
+                    self.send_error_json(400, "Missing 'region' parameter in body")
                     return
 
                 d_temp = float(body.get("delta_temp_c", 0.0))
@@ -230,11 +232,11 @@ class AeroAgriAPIHandler(SimpleHTTPRequestHandler):
                 return
 
             else:
-                self.send_error_json(404, "API endpoint không tồn tại")
+                self.send_error_json(404, "API endpoint not found")
                 return
 
         except Exception as e:
-            self.send_error_json(500, f"Lỗi máy chủ nội bộ: {str(e)}")
+            self.send_error_json(500, f"Internal server error: {str(e)}")
             return
 
 def create_server(host="127.0.0.1", port=8050):
@@ -243,9 +245,9 @@ def create_server(host="127.0.0.1", port=8050):
 if __name__ == "__main__":
     port = 8050
     server = create_server("127.0.0.1", port)
-    print(f"[AERO-AGRI] Server đang chạy tại http://127.0.0.1:{port}")
+    print(f"[AERO-AGRI] Server running at http://127.0.0.1:{port}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\n[AERO-AGRI] Đã dừng server.")
+        print("\n[AERO-AGRI] Server stopped.")
         server.server_close()

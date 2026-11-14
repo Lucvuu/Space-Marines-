@@ -1,22 +1,22 @@
 # -*- coding: utf-8 -*-
 """
 AERO-AGRI Crop Suitability Scoring Engine
-Tính toán Điểm so sánh với hiện trạng (0 - 100), cấp độ rủi ro tuyệt đối, và thành phần rủi ro (Nước, Mặn, Nhiệt).
-Tuân thủ:
-- Thành phần nước chuẩn hóa theo deficit lớn nhất trong vùng:
-  water_component = deficit_mm / max(deficit_mm của các cây có deficit hợp lệ trong vùng)
-  (nếu max = 0 thì mọi cây có deficit hợp lệ đều có water_component = 0; cây có deficit None thì water_component = None).
-- Giữ irrigation_share (tỷ lệ ETc phải tưới = deficit_mm / total_req).
-- Ngưỡng mặn: chuyển đổi từ salinity_threshold_ece_dsm sang ‰ theo salinity_basis:
-  + Nếu salinity_basis == "soil_water_submerged" (lúa nước, FAO-56 Table 23 p.179, footnote 6): ppt = EC / 1.56
-  + Nếu salinity_basis == "ece" (cây cạn, FAO-56 Table 23 p.178-179): ppt = ECe / 1.5 / 1.56
-    Quy chuẩn nông học: ECe ≈ 1.5·ECw (FAO-29), 1‰ ≈ 1.56 dS/m.
-- Chỉ chia lại trọng số cho thành phần bị thiếu ở TẤT CẢ cây trong vùng.
-  Nếu thành phần chỉ thiếu ở một số cây -> score = None, risk_level = "INSUFFICIENT_DATA".
-- risk_level chỉ tính từ thành phần tuyệt đối: r = max(heat_ratio, salinity_exceed nếu có)
-  theo ngưỡng risk_thresholds_exceed_ratio: LOW < 0.10, MODERATE < 0.25, SEVERE < 0.50, còn lại CRITICAL.
-- Tính water_vs_baseline_pct so với cây đầu tiên trong candidate_crops (None khi deficit_mm = None).
-- Không bao giờ bịa số liệu, ghi rõ nguồn và cờ is_synthetic.
+Computes the relative comparison score (0 - 100), the absolute risk level, and the risk components (water, salinity, heat).
+Rules:
+- The water component is normalised by the largest deficit in the region:
+  water_component = deficit_mm / max(deficit_mm of the crops in the region with a valid deficit)
+  (if max = 0, every crop with a valid deficit gets water_component = 0; a crop with deficit None gets water_component = None).
+- Keep irrigation_share (share of ETc that must be irrigated = deficit_mm / total_req).
+- Salinity threshold: convert salinity_threshold_ece_dsm to ‰ according to salinity_basis:
+  + If salinity_basis == "soil_water_submerged" (flooded rice, FAO-56 Table 23 p.179, footnote 6): ppt = EC / 1.56
+  + If salinity_basis == "ece" (upland crops, FAO-56 Table 23 p.178-179): ppt = ECe / 1.5 / 1.56
+    Agronomic convention: ECe ≈ 1.5·ECw (FAO-29), 1‰ ≈ 1.56 dS/m.
+- Re-weight only a component that is missing for ALL crops in the region.
+  If a component is missing for only some crops -> score = None, risk_level = "INSUFFICIENT_DATA".
+- risk_level uses only absolute components: r = max(heat_ratio, salinity_exceed if available)
+  with the risk_thresholds_exceed_ratio thresholds: LOW < 0.10, MODERATE < 0.25, SEVERE < 0.50, otherwise CRITICAL.
+- Compute water_vs_baseline_pct against the first crop in candidate_crops (None when deficit_mm = None).
+- Never invent numbers; always state the source and the is_synthetic flag.
 """
 import os
 import json
@@ -34,9 +34,9 @@ AERO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def classify_risk_by_exceed(r_val, exceed_thresholds):
     """
-    Phân loại rủi ro từ tỷ lệ ngày mùa vụ vượt ngưỡng nhiệt/mặn:
-    r = max(heat_ratio, salinity_exceed nếu có).
-    LOW < 0.10, MODERATE < 0.25, SEVERE < 0.50, còn lại CRITICAL.
+    Classify risk from the share of season days above the heat/salinity threshold:
+    r = max(heat_ratio, salinity_exceed if available).
+    LOW < 0.10, MODERATE < 0.25, SEVERE < 0.50, otherwise CRITICAL.
     """
     if r_val is None:
         return "INSUFFICIENT_DATA"
@@ -51,12 +51,12 @@ def classify_risk_by_exceed(r_val, exceed_thresholds):
 
 def ece_to_water_salinity_ppt(ece_dsm, salinity_basis="ece"):
     """
-    Chuyển đổi ngưỡng độ dẫn điện (dS/m, FAO-56 Table 23 p.178-179) sang ngưỡng độ mặn nước (‰):
-    - Nếu salinity_basis == "soil_water_submerged" (FAO-56 Table 23 p.179, footnote 6 cho lúa ngập nước):
+    Convert an electrical conductivity threshold (dS/m, FAO-56 Table 23 p.178-179) to a water salinity threshold (‰):
+    - If salinity_basis == "soil_water_submerged" (FAO-56 Table 23 p.179, footnote 6 for flooded rice):
       ppt = EC / 1.56
-    - Nếu salinity_basis == "ece" (cây cạn):
+    - If salinity_basis == "ece" (upland crops):
       ppt = ECe / 1.5 / 1.56
-    Docstring quy chuẩn: ECe ≈ 1.5·ECw (FAO-29), 1‰ ≈ 1.56 dS/m.
+    Convention: ECe ≈ 1.5·ECw (FAO-29), 1‰ ≈ 1.56 dS/m.
     """
     if ece_dsm is None:
         return None
@@ -67,15 +67,15 @@ def ece_to_water_salinity_ppt(ece_dsm, salinity_basis="ece"):
 
 def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
     """
-    Đánh giá toàn bộ candidate_crops của 1 vùng.
-    Trả về danh sách kết quả scoring chi tiết và danh sách data_used.
+    Evaluate all candidate_crops of one region.
+    Returns the detailed scoring results and the data_used list.
     """
     regions_cfg = load_config("regions")
     crops_cfg = load_config("crops")
     scoring_cfg = load_config("scoring")
 
     if region_id not in regions_cfg:
-        raise ValueError(f"Vùng không tồn tại: {region_id}")
+        raise ValueError(f"Unknown region: {region_id}")
 
     reg_info = regions_cfg[region_id]
     candidate_crops = reg_info.get("candidate_crops", [])
@@ -87,25 +87,25 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
         "CRITICAL": 1.00
     })
 
-    # 1. Đọc dữ liệu POWER (bắt buộc)
+    # 1. Read POWER data (required)
     power_df, power_meta = load_csv("power", region_id)
     if power_df is None:
         return {
             "available": False,
             "region_id": region_id,
-            "error": "chưa có dữ liệu POWER cho vùng"
+            "error": "no POWER data for this region"
         }
 
-    # Đọc nguồn độ mặn phụ trợ (nếu có để tính rủi ro mặn)
+    # Read the optional salinity source (used for salinity risk when present)
     sal_df, sal_meta = load_csv("salinity", region_id)
 
-    # data_used chỉ liệt kê nguồn THỰC SỰ tham gia vào phép tính điểm (POWER và Salinity)
-    # NDVI và SMAP chỉ hiển thị trên biểu đồ khí hậu, không đưa vào điểm
+    # data_used lists only the sources that ACTUALLY enter the score (POWER and Salinity)
+    # NDVI and SMAP are only shown on the climate chart, not used in the score
     data_used = [power_meta]
     if sal_df is not None:
         data_used.append(sal_meta)
 
-    # 2. Xác định deficit của cây baseline (cây đầu tiên trong candidate_crops)
+    # 2. Deficit of the baseline crop (first crop in candidate_crops)
     baseline_crop_id = candidate_crops[0] if candidate_crops else None
     baseline_deficit_mm = None
     if baseline_crop_id and baseline_crop_id in crops_cfg:
@@ -116,7 +116,7 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
         )
         baseline_deficit_mm = wb_base.get("mean_deficit_mm")
 
-    # 3. Bước 1: Tính các thành phần (water, salinity, heat) cho từng cây trồng
+    # 3. Step 1: compute the components (water, salinity, heat) for each crop
     pre_crop_list = []
 
     for idx, crop_id in enumerate(candidate_crops):
@@ -124,7 +124,7 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
             continue
         c_info = crops_cfg[crop_id]
 
-        # A. Cân bằng nước & thành phần nước tương đối
+        # A. Water balance & relative water component
         wb = calculate_water_balance(
             power_df, region_id, crop_id,
             delta_temp_c=delta_temp_c,
@@ -134,10 +134,10 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
         irrigation_share = wb.get("mean_water_stress")
         deficit_mm = wb.get("mean_deficit_mm")
 
-        # Lọc dữ liệu theo đúng cửa sổ mùa vụ của từng cây (dùng chung iter_crop_season_slices / collect_crop_season_df)
+        # Filter data to each crop's season window (shared iter_crop_season_slices / collect_crop_season_df)
         df_crop_season = collect_crop_season_df(power_df, reg_info, crop_id, c_info)
 
-        # B. Rủi ro nhiệt (heat_ratio)
+        # B. Heat risk (heat_ratio)
         heat_thresh = c_info.get("heat_threshold_c")
         heat_ratio = None
         if heat_thresh is not None and len(df_crop_season) > 0:
@@ -145,7 +145,7 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
             heat_exceed_days = int((sim_tmax > heat_thresh).sum())
             heat_ratio = round(heat_exceed_days / max(len(df_crop_season), 1), 3)
 
-        # C. Rủi ro mặn (salinity_exceed) từ salinity_threshold_ece_dsm và salinity_basis
+        # C. Salinity risk (salinity_exceed) from salinity_threshold_ece_dsm and salinity_basis
         ece_thresh = c_info.get("salinity_threshold_ece_dsm")
         sal_basis = c_info.get("salinity_basis") or "ece"
         sal_thresh = ece_to_water_salinity_ppt(ece_thresh, salinity_basis=sal_basis)
@@ -159,14 +159,14 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
                     sal_exceed_days = int((sal_season["salinity_ppt"] > sal_thresh).sum())
                     salinity_exceed = round(sal_exceed_days / len(sal_season), 3)
                 else:
-                    missing_notes.append("chưa tính mặn do thiếu dữ liệu mùa khô")
+                    missing_notes.append("salinity not computed: no dry-season data")
             else:
-                missing_notes.append("chưa tính mặn do thiếu dữ liệu")
+                missing_notes.append("salinity not computed: no salinity data")
         else:
-            missing_notes.append("cây không có ngưỡng mặn")
+            missing_notes.append("crop has no salinity threshold")
 
         if deficit_mm is None:
-            missing_notes.append("chưa tính bốc thoát hơi nước do thiếu Kc nông học")
+            missing_notes.append("evapotranspiration not computed: no agronomic Kc")
 
         pre_crop_list.append({
             "crop_id": crop_id,
@@ -183,7 +183,7 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
             "missing_components": missing_notes
         })
 
-    # Chuẩn hóa water_component theo max(deficit_mm của các cây có deficit hợp lệ trong vùng)
+    # Normalise water_component by max(deficit_mm of the crops in the region with a valid deficit)
     valid_deficits = [item["deficit_mm"] for item in pre_crop_list if item["deficit_mm"] is not None]
     max_deficit_mm = max(valid_deficits) if valid_deficits else None
     for item in pre_crop_list:
@@ -195,7 +195,7 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
         else:
             item["components"]["water_component"] = 0.0
 
-    # 4. Bước 2: Xác định các thành phần active của vùng
+    # 4. Step 2: find the active components of the region
     comp_keys_map = {
         "water": "water_component",
         "salinity": "salinity_exceed",
@@ -206,13 +206,13 @@ def evaluate_crop_suitability(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
         if any(item["components"][field] is not None for item in pre_crop_list)
     ]
 
-    # 5. Bước 3: Tính score, r = max(heat_ratio, salinity_exceed), risk_level và water_vs_baseline_pct
+    # 5. Step 3: compute score, r = max(heat_ratio, salinity_exceed), risk_level and water_vs_baseline_pct
     final_crops = []
     for item in pre_crop_list:
         comp = item["components"]
         is_missing_any_active = any(comp[comp_keys_map[k]] is None for k in active_components)
 
-        # Tính r = max(heat_ratio, salinity_exceed nếu có)
+        # r = max(heat_ratio, salinity_exceed if available)
         abs_ratios = [v for v in [comp["heat_ratio"], comp["salinity_exceed"]] if v is not None]
         r_val = round(float(max(abs_ratios)), 3) if abs_ratios else None
         comp["exceed_ratio_r"] = r_val

@@ -16,7 +16,7 @@ def generate_sources_markdown() -> str:
         crops = json.load(f)
 
     lines = []
-    # Bảng 1: | Region | Strategy | Evidence | Source | Verified |
+    # Table 1: | Region | Strategy | Evidence | Source | Verified |
     lines.append("| Region | Strategy | Evidence | Source | Verified |")
     lines.append("|---|---|---|---|---|")
 
@@ -32,7 +32,7 @@ def generate_sources_markdown() -> str:
                 lines.append(f"| `{region_id}` | {strat_col} | {text_str} | {src_str} | `{ver_str}` |")
 
     lines.append("")
-    # Bảng 2: | Crop | Kc source | Salinity source | Heat threshold (°C) | Heat source | Water extra source | verified_params |
+    # Table 2: | Crop | Kc source | Salinity source | Heat threshold (°C) | Heat source | Water extra source | verified_params |
     lines.append("| Crop | Kc source | Salinity source | Heat threshold (°C) | Heat source | Water extra source | verified_params |")
     lines.append("|---|---|---|---|---|---|---|")
 

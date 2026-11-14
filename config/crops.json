@@ -1,6 +1,6 @@
 {
   "rice": {
-    "name_vi": "Lúa thâm canh",
+    "name_vi": "Intensive rice",
     "perennial": false,
     "season_days": 105,
     "stages": {
@@ -10,7 +10,7 @@
       "late": 15
     },
     "kc_ini": 1.05,
-    "kc_mid": 1.20,
+    "kc_mid": 1.2,
     "kc_end": 0.75,
     "land_prep_mm": 300,
     "percolation_mm_day": 4,
@@ -30,10 +30,17 @@
       "perc_low": "2 mm/day: Nguyen Trung Nam, VGU/TU Darmstadt master thesis on Ben Tre, p.29, citing TCVN 9168:2012 (standard not read). Used only as a sensitivity bound."
     },
     "verified": false,
-    "verified_params": ["kc", "salinity", "heat"]
+    "verified_params": [
+      "kc",
+      "salinity",
+      "heat"
+    ],
+    "vi": {
+      "name": "Lúa thâm canh"
+    }
   },
   "soybean": {
-    "name_vi": "Đậu tương",
+    "name_vi": "Soybean",
     "perennial": false,
     "season_days": 100,
     "stages": {
@@ -42,9 +49,9 @@
       "mid": 35,
       "late": 20
     },
-    "kc_ini": 0.40,
+    "kc_ini": 0.4,
     "kc_mid": 1.15,
-    "kc_end": 0.50,
+    "kc_end": 0.5,
     "land_prep_mm": null,
     "percolation_mm_day": null,
     "peff_method": "usda_scs",
@@ -55,13 +62,19 @@
       "kc": "FAO-56 Table 12 p.111 (Kc ini = Legumes group value 0.4)",
       "salinity": "FAO-56 Table 23 p.178",
       "heat": "VHD35 (Tmax >= 35 °C) is a climate-index definition (Plants 2026), not a measured damage threshold: low confidence.",
-      "water_extra": "N/A (cây cạn, null)"
+      "water_extra": "N/A (upland crop, null)"
     },
     "verified": false,
-    "verified_params": ["kc", "salinity"]
+    "verified_params": [
+      "kc",
+      "salinity"
+    ],
+    "vi": {
+      "name": "Đậu tương"
+    }
   },
   "maize": {
-    "name_vi": "Ngô sinh khối / ngô hạt",
+    "name_vi": "Maize (silage / grain)",
     "perennial": false,
     "season_days": 100,
     "stages": {
@@ -70,8 +83,8 @@
       "mid": 35,
       "late": 15
     },
-    "kc_ini": 0.30,
-    "kc_mid": 1.20,
+    "kc_ini": 0.3,
+    "kc_mid": 1.2,
     "kc_end": 0.35,
     "land_prep_mm": null,
     "percolation_mm_day": null,
@@ -83,13 +96,19 @@
       "kc": "FAO-56 Table 12 p.111 (Kc ini = Cereals group 0.3; Kc end 0.35 = dry harvest, footnote 11)",
       "salinity": "FAO-56 Table 23 p.179",
       "heat": "~35 °C air temperature for tropical maize pollination (Maydica 2016 heat-stress study; Lizaso et al. 2018 cited secondarily). Primary source not read: low confidence.",
-      "water_extra": "N/A (cây cạn, null)"
+      "water_extra": "N/A (upland crop, null)"
     },
     "verified": false,
-    "verified_params": ["kc", "salinity"]
+    "verified_params": [
+      "kc",
+      "salinity"
+    ],
+    "vi": {
+      "name": "Ngô sinh khối / ngô hạt"
+    }
   },
   "rice_shrimp": {
-    "name_vi": "Mô hình sinh thái Lúa - Tôm",
+    "name_vi": "Rice–shrimp ecological system",
     "perennial": false,
     "season_days": 120,
     "stages": null,
@@ -102,16 +121,19 @@
     "salinity_basis": null,
     "heat_threshold_c": 35.0,
     "source": {
-      "kc": "TODO: Tôm không có Kc thực vật, cần chuyên gia địa phương",
-      "salinity": "TODO: Tôm không có ECe thực vật, cần chuyên gia địa phương",
-      "heat": "TODO: cần nguồn",
-      "water_extra": "TODO: cần chuyên gia địa phương"
+      "kc": "TODO: shrimp has no plant Kc; local experts needed",
+      "salinity": "TODO: shrimp has no plant ECe; local experts needed",
+      "heat": "TODO: source needed",
+      "water_extra": "TODO: local experts needed"
     },
     "verified": false,
-    "verified_params": []
+    "verified_params": [],
+    "vi": {
+      "name": "Mô hình sinh thái Lúa - Tôm"
+    }
   },
   "coffee": {
-    "name_vi": "Cà phê Robusta độc canh (đất trần)",
+    "name_vi": "Robusta coffee monoculture (bare soil)",
     "perennial": true,
     "season_days": 120,
     "stages": {
@@ -120,7 +142,7 @@
       "mid": 30,
       "late": 30
     },
-    "kc_ini": 0.90,
+    "kc_ini": 0.9,
     "kc_mid": 0.95,
     "kc_end": 0.95,
     "land_prep_mm": null,
@@ -131,15 +153,20 @@
     "heat_threshold_c": null,
     "source": {
       "kc": "FAO-56 Table 12 p.112, Coffee - bare ground cover / - with weeds",
-      "salinity": "N/A (vùng cao nguyên không nhiễm mặn)",
+      "salinity": "N/A (highland region, no salinity)",
       "heat": "No sourced daily-Tmax damage threshold for Coffea canephora. Kath et al. 2020 (Global Change Biology 26:3677) give a growing-season mean optimum (mean Tmax <= 24.1 °C), not a daily threshold, so heat is not scored for coffee.",
-      "water_extra": "N/A (cây cạn, null)"
+      "water_extra": "N/A (upland crop, null)"
     },
     "verified": false,
-    "verified_params": ["kc"]
+    "verified_params": [
+      "kc"
+    ],
+    "vi": {
+      "name": "Cà phê Robusta độc canh (đất trần)"
+    }
   },
   "coffee_cover_crop": {
-    "name_vi": "Cà phê có cây phủ đất / cỏ",
+    "name_vi": "Robusta coffee with cover crop / grass",
     "perennial": true,
     "season_days": 120,
     "stages": {
@@ -149,8 +176,8 @@
       "late": 30
     },
     "kc_ini": 1.05,
-    "kc_mid": 1.10,
-    "kc_end": 1.10,
+    "kc_mid": 1.1,
+    "kc_end": 1.1,
     "land_prep_mm": null,
     "percolation_mm_day": null,
     "peff_method": "usda_scs",
@@ -159,11 +186,16 @@
     "heat_threshold_c": null,
     "source": {
       "kc": "FAO-56 Table 12 p.112, Coffee - bare ground cover / - with weeds",
-      "salinity": "N/A (vùng cao nguyên không nhiễm mặn)",
+      "salinity": "N/A (highland region, no salinity)",
       "heat": "No sourced daily-Tmax damage threshold for Coffea canephora. Kath et al. 2020 (Global Change Biology 26:3677) give a growing-season mean optimum (mean Tmax <= 24.1 °C), not a daily threshold, so heat is not scored for coffee.",
-      "water_extra": "N/A (cây cạn, null)"
+      "water_extra": "N/A (upland crop, null)"
     },
     "verified": false,
-    "verified_params": ["kc"]
+    "verified_params": [
+      "kc"
+    ],
+    "vi": {
+      "name": "Cà phê có cây phủ đất / cỏ"
+    }
   }
 }

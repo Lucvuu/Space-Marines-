@@ -102,64 +102,66 @@ components:
 
 # AERO-AGRI DESIGN SYSTEM (`DESIGN.md`)
 
-> Định dạng chuẩn hóa hệ thống giao diện trực quan theo đặc tả **`google-labs-code/design.md`**.  
-> Mọi AI Coding Agent, Developer và Designer làm việc trên repository này **bắt buộc phải đọc và tuân thủ các nguyên tắc dưới đây** trước khi thực hiện bất kỳ thay đổi nào liên quan tới thư mục `web/`.
+> Visual design system written in the **`google-labs-code/design.md`** format.  
+> Every AI coding agent, developer and designer working in this repository **must read and follow the rules below** before making any change to `web/`.
 
 ---
 
-## 1. Triết Lý Thiết Kế (Design Philosophy)
+## 1. Design Philosophy
 
-AERO-AGRI là công cụ khoa học hỗ trợ nông dân và cán bộ khuyến nông Việt Nam đưa ra quyết định chuyển đổi cơ cấu mùa vụ ("Field Shift") dựa trên dữ liệu vệ tinh NASA (POWER & MODIS 2015–2025) và mô hình vật lý FAO-56.
+AERO-AGRI is a science tool that helps Vietnamese farmers and agricultural extension officers decide on crop-calendar shifts ("Field Shift") using NASA data (POWER, MODIS, GPM IMERG, SMAP, SRTM; 2015–2025) and the FAO-56 physical model.
 
-Phong cách chủ đạo của dự án là **Swiss Editorial & Modern Data Product**:
-- **Khắc khổ, tinh tế & tôn trọng dữ liệu**: Giao diện mang tinh thần của một bản tin khí hậu chuyên sâu (như *NYT Climate*, *Apple Weather*, *Linear*). Giao diện không dùng để giải trí mà dùng để hỗ trợ người dùng ra quyết định sinh kế hàng vụ.
-- **Field-First & Space-Backed**: Mọi con số đều được kiểm chứng từ quỹ đạo vệ tinh và thực nghiệm đồng ruộng. Không có "hộp đen", không dùng AI sinh số ngẫu nhiên.
-- **Anti-Slop Discipline**: Loại bỏ triệt để các hội chứng thiết kế cẩu thả của AI (nền gradient loè loẹt, viền dày `4px`, đổ bóng nặng, rừng huy hiệu pill soup, và hộp lồng hộp lùng bùng).
-
----
-
-## 2. Quy Tắc Chống "AI Slop" (Negative Constraints & Don'ts)
-
-Khi chỉnh sửa `web/style.css`, `web/index.html` hoặc `web/app.js`:
-
-- ❌ **CẤM Gradient màu mè**: Không sử dụng `linear-gradient` trên nền thẻ, nút bấm hay callout. Ngoại lệ duy nhất là hoa văn sọc chéo `45deg` biểu thị pha nuôi tôm nước lợ trên thanh lịch.
-- ❌ **CẤM Viền trái dày (`border-left: 4px solid`)**: Không dùng viền dày để gây chú ý. Mọi phân cách đều dùng viền mảnh `1px solid var(--border)` (hoặc viền `1.5px solid var(--primary)` cho thẻ được khuyến nghị tốt nhất).
-- ❌ **CẤM Đổ bóng đậm**: Không dùng `box-shadow` dày hoặc mờ đục. Chỉ dùng bóng siêu nhẹ `0 1px 2px rgba(0,0,0,0.02)`.
-- ❌ **CẤM "Pill Soup"**: Mỗi thẻ phương án chỉ có **tối đa 1 badge trạng thái** ở góc trên (`Hiện tại`, `Tiết kiệm 52% nước`, `Thuận thiên`). Không nhồi 4–5 pill xanh đỏ.
-- ❌ **CẤM Chấm nhấp nháy (`@keyframes pulse`) và icon rác**: Không thêm hiệu ứng chớp tắt gây mất tập trung.
-- ❌ **CẤM Hộp lồng hộp (Box-in-Box)**: Bên trong một thẻ không tạo 3–4 hộp có viền và nền riêng biệt. Dùng đường kẻ ngang mảnh `1px solid #f1f5f9` để phân tách tự nhiên.
-- ❌ **CẤM Vượt quá 500 dòng CSS**: Giữ `web/style.css` dưới **500 dòng CSS** sạch, tập trung, dễ bảo trì.
-- ❌ **CẤM Thư viện CDN ngoài**: Hệ thống phải chạy Offline-First 100%. Không nhúng Google Fonts, Tailwind CDN, FontAwesome CDN.
+The style is **Swiss Editorial & Modern Data Product**:
+- **Restrained, precise, respectful of data**: the interface reads like an in-depth climate brief (*NYT Climate*, *Apple Weather*, *Linear*). It is not entertainment; it supports livelihood decisions season by season.
+- **Field-First & Space-Backed**: every number traces back to satellite records and field evidence. No black boxes, no AI-generated numbers.
+- **Farmer-first**: plain words (water to pump, months with bare soil, salt water months), one answer sentence first, detail one tap away; every number stays traceable to its source.
+- **Anti-Slop Discipline**: no loud gradient backgrounds, thick `4px` borders, heavy shadows, pill-badge soup or nested boxes.
+- **English UI by default**: everything judges see is in English (hackathon rule); a VI toggle serves Vietnamese farmers (see §5G). Place names keep their Vietnamese spelling (Bến Tre, Đắk Lắk). Numbers use en-US formatting (`15,329`, `1.5`); months use `Jan`…`Dec` (or initials `J F M …` where space is tight).
 
 ---
 
-## 3. Hệ Thống Token Màu Sắc & Ngữ Nghĩa (Semantic Palette)
+## 2. Anti-"AI Slop" Rules (Negative Constraints & Don'ts)
+
+When editing `web/style.css`, `web/index.html` or `web/app.js`:
+
+- ❌ **NO decorative gradients**: no `linear-gradient` on card, button or callout backgrounds. The only exception is the `45deg` diagonal stripe pattern for the brackish-water shrimp phase on the calendar bar.
+- ❌ **NO thick left borders (`border-left: 4px solid`)**: never use a thick border for emphasis. All separators are thin `1px solid var(--border)` (or `1.5px solid var(--primary)` for the best-recommended card).
+- ❌ **NO heavy shadows**: no thick or opaque `box-shadow`. Only the ultra-light `0 1px 2px rgba(0,0,0,0.02)`.
+- ❌ **NO "Pill Soup"**: each strategy card has **at most 1 status badge** in the top corner (`Current`, `Saves 52% water`, `Shrimp phase not modeled`). Never stack 4–5 green/red pills.
+- ❌ **NO pulsing dots (`@keyframes pulse`) or decorative icons/emoji**: no blinking effects that distract.
+- ❌ **NO Box-in-Box**: do not create 3–4 bordered, separately filled boxes inside one card. Use a thin horizontal rule `1px solid #f1f5f9` to separate content.
+- ❌ **NO more than 500 CSS lines**: keep `web/style.css` under **500 lines** of clean, focused CSS.
+- ❌ **NO external CDN libraries**: the app must be 100% offline-first. No Google Fonts, Tailwind CDN or FontAwesome CDN. Chart.js and Leaflet are vendored in `web/vendor/`.
+
+---
+
+## 3. Colour Tokens & Semantics (Semantic Palette)
 
 ```yaml
 colors:
-  bg: '#f7f7f5' # Nền trang màu giấy đá vôi ấm, dịu mắt hơn trắng tinh khiết
-  surface: '#ffffff' # Bề mặt thẻ trắng sáng
-  surface-subtle: '#f9f9f8' # Nền phụ siêu nhẹ cho code, input
-  border: '#e4e4df' # Đường kẻ mảnh hairline
-  text: '#191c1a' # Mực in sẫm cho chữ đọc
-  muted: '#5e6560' # Xám ghi cho nhãn phụ và chú thích
-  primary: '#15803d' # Xanh nông nghiệp trầm (Emerald Deep)
+  bg: '#f7f7f5' # warm limestone paper background, softer than pure white
+  surface: '#ffffff' # white card surface
+  surface-subtle: '#f9f9f8' # very light secondary background for code, inputs
+  border: '#e4e4df' # hairline border
+  text: '#191c1a' # dark ink for reading text
+  muted: '#5e6560' # grey for secondary labels and captions
+  primary: '#15803d' # deep agricultural green (Emerald Deep)
 ```
 
-### Bảng màu Mùa vụ & Cây trồng:
-- **Lúa nước (`rice`)**: `#15803d` — Xanh lá lúa truyền thống.
-- **Tôm sú nước lợ (`shrimp`)**: `#0284c7` kèm hoa văn sọc chéo `repeating-linear-gradient(45deg, #0284c7, #0284c7 4px, #0369a1 4px, #0369a1 8px)`.
-- **Đậu tương (`soybean`)**: `#b45309` — Vàng hổ phách / đất họ đậu.
-- **Ngô (`maize`)**: `#c2410c` — Cam đất sinh khối.
-- **Cà phê vối (`coffee`)**: `#78350f` — Nâu đất bazan Tây Nguyên.
-- **Thảm cỏ che phủ đất (`cover_crop`)**: `#16a34a` — Xanh ngọc thực nghiệm WASI.
-- **Đất trống (`bare`)**: `#e5e7eb` — Xám sáng biểu thị đất nghỉ.
-- **Xâm nhập mặn (`sal`)**: Chữ `#be123c`, vạch đỏ mảnh trên lịch.
-- **Cảnh báo nắng nóng quá ngưỡng (`heat`)**: Chấm tròn cam `#d97706`.
+### Season & crop colours:
+- **Rice (`rice`)**: `#15803d` — traditional rice green.
+- **Tiger shrimp, brackish water (`shrimp`)**: `#0284c7` with the diagonal stripe `repeating-linear-gradient(45deg, #0284c7, #0284c7 4px, #0369a1 4px, #0369a1 8px)`.
+- **Soybean (`soybean`)**: `#b45309` — legume amber.
+- **Maize (`maize`)**: `#c2410c` — biomass orange.
+- **Robusta coffee (`coffee`)**: `#78350f` — Central Highlands basalt brown.
+- **Cover crop (`cover_crop`)**: `#16a34a` — WASI trial green.
+- **Bare soil (`bare`)**: `#e5e7eb` — light grey for fallow soil.
+- **Salinity intrusion (`sal`)**: text `#be123c`, thin red line on the calendar; also marks documented stress years in the year-to-year strip.
+- **Heat above threshold (`heat`)**: orange dot `#d97706`.
 
 ---
 
-## 4. Kỷ Luật Typography & Số Liệu Thủy Văn
+## 4. Typography & Hydrology Number Discipline
 
 ```yaml
 typography:
@@ -168,70 +170,85 @@ typography:
     fontVariantNumeric: tabular-nums
 ```
 
-- **Quy tắc Tabular Nums bắt buộc**: Mọi vùng hiển thị số liệu đo đạc (`m³/ha`, `mm`, `ETo`, `ETc`, `NDVI`, nhiệt độ, lượng mưa, bảng đánh giá cây trồng) **BẮT BUỘC** phải có `font-variant-numeric: tabular-nums`. Điều này ngăn hiện tượng co giãn giao diện khi người dùng kéo thanh trượt kịch bản thời tiết.
-- **Tỷ lệ kích thước chữ khiêm tốn**: Tiêu đề trang `20px`, tiêu đề thẻ `15.5px`, số liệu lớn `19px–22px`. Không dùng font quá khổ gây tốn diện tích hiển thị.
+- **Mandatory tabular nums**: every measured value (`m³/ha`, `mm`, `ETo`, `ETc`, `NDVI`, temperature, rainfall, crop table) **MUST** use `font-variant-numeric: tabular-nums`. This keeps the layout from jittering when users drag the weather-scenario sliders.
+- **Modest type scale**: page title `20px`, card title `15.5px`, large metrics `19px–22px`. No oversized fonts that waste space.
 
 ---
 
-## 5. Đặc Tả Thành Phần Giao Diện (Component Specifications)
+## 5. Component Specifications
 
-### A. Compact Sticky Header (`.topbar`)
-- Chiều cao cố định `56px`, nền trắng mờ `backdrop-filter: blur(10px)`.
-- Logo `AERO-AGRI` đi kèm nhãn nhỏ `NASA Space Apps`.
-- Nút chuyển vùng dạng **Segmented Control** (`Bến Tre • ĐBSCL` | `Đắk Lắk • Tây Nguyên`).
-- Nút liên kết nhanh tới Agro-AI Copilot ở góc phải.
+The page is **farmer-first with progressive disclosure**: the answer and the option cards come first, every number has its source one tap away, and the expert material (charts, method, tables) sits in one collapsed section at the end. Four steps, each answering one Field Shift question:
 
-### B. Compact Simulator Bento (`.scenario`)
-- Tích hợp gọn trong dải Intro cùng `#heroCard`.
-- 3 nút kịch bản 1-chạm (`Mặc định`, `El Niño`, `Khắc nghiệt`).
-- 2 thanh trượt mượt mà cho Nhiệt độ và Lượng mưa, hiển thị nhãn `+X °C` và `+Y%` rõ ràng.
+| Step | Section id | Question it answers |
+|------|------------|---------------------|
+| 1 Your field today | `#step1` | How much fresh water does my field need now, what is the best saving, when is the salt water / slope risk? |
+| 2 Compare options | `#rotationsSection` | Which rotation needs less water, leaves fewer bare-soil months, avoids salt water months? |
+| 3 What satellites tell us | `#evidenceSection` | Do independent NASA data (MODIS, IMERG, SMAP, SRTM) agree with the model? |
+| 4 Plan & report | `#reportSection` | Take a printable report or CSV to the extension officer; experts open "data & method". |
 
-### C. Thẻ Phương Án Luân Canh Chuẩn Spec-Sheet (`.rot-card`)
-- Hiển thị theo lưới ngang (`strategy-grid-horizontal`): 4 cột đối với Bến Tre, 2 cột đối xứng đối với Đắk Lắk.
-- Mỗi thẻ gồm 5 tầng:
-  1. **Đầu thẻ**: Tên phương án + 1 badge trạng thái duy nhất.
-  2. **Mô tả ngắn**: 1–2 dòng nêu lý do (`why`).
-  3. **2 Chỉ số Lớn nằm ngang**: Nước tưới ngọt phải bù (`m³/ha` kèm delta kịch bản) và Số tháng đất trống (`tháng/năm`).
-  4. **Gantt Bar 12 Tháng**: Liền mạch cao `24px–26px`, vạch đỏ tháng mặn phía trên, chấm cam nóng phía trong.
-  5. **Lưu ý Khoa học & Hành động**: Khối chú thích thực nghiệm WASI (`D1`) hoặc thuận thiên mặn (`S1`); 2–3 gạch đầu dòng ngắn gọn; chân thẻ có `<details>` xem nguồn và nút **`Hỏi AI về phương án này →`**.
+### A. Top bar (`.topbar`) and step nav (`#stepNav`)
+- Top bar `56px`, translucent white with `backdrop-filter: blur(10px)`: logo, region segmented control (`Bến Tre (Mekong Delta)` | `Đắk Lắk (Central Highlands)`), `EN | VI` toggle (`#langToggle`), `Report` link.
+- Sticky step nav below it: 4 pills; the active pill follows the scroll position. On phones the top bar scrolls away and only the active pill shows its label.
 
-### D. Trợ Lý Khuyến Nông Thông Minh (Agro-AI Copilot `#aiSection`)
-- Giao diện dạng Copilot sạch sẽ như *Perplexity / Claude*.
-- Thanh ngữ cảnh hiển thị rõ trạm dữ liệu và kịch bản khí hậu mà AI đang phân tích.
-- 3 chip câu hỏi gợi ý nhanh cho nông dân.
-- Khung trả lời `#chatOutput` tự động format rõ ràng, làm đậm các con số và giải pháp.
-- Nút Floating AI Pill (`#floatingAiBtn`) ở góc dưới bên phải màn hình giúp người dùng mở khung chat từ mọi vị trí.
+### B. Step 1: answer card (`#heroCard`) and weather chips (`.scenario`)
+- `#heroTitle` is **one plain sentence built only from API numbers**: best non-partial option vs current practice, with the per-year check (`annual_deficit_by_year`): "in every year since 2015" only when it holds in all matched crop years, otherwise "in N of M years". When no option saves water (Đắk Lắk), the sentence says so and adds the erosion result when available.
+- Three tiles separated by hairlines (no boxes): water to pump today (m³/ha and per 1,000 m²), best saving % (or extra water), salt water months (Bến Tre) or SRTM slope + IMERG wet-season share (Đắk Lắk).
+- Weather: 3 large chips (`Today`, `Hot & dry`, `Very hot & dry`, 44 px); the two sliders sit under an `Adjust` disclosure, with a value bubble above the thumb. Inline status text ("Updating…"), never toasts.
+
+### C. Step 2: option card (`.rot-card`), one set only
+- Collapsed: single badge (above the title), big number m³/ha with the per-1,000 m² figure, bare-soil months, a relative bar against current practice (tick = current practice), typical vs dry-year line, 12-month calendar (red underline = salt water month, orange dot = heat), top 1 benefit + top 1 risk, `Details` button.
+- `Details` expands with an animated height (`grid-template-rows 0fr → 1fr`) to: year strip (one bar per crop year, stress years in salinity red with event + source, `not yet verified` when unverified), lower-percolation range, per-1,000 m² breakdown (`plainLine`), config note, erosion block for `D1`, all benefits / risks / info gaps, sources, water-balance arithmetic, `View report for this strategy →`.
+
+### D. Step 3: evidence tiles (`.ev-tile`)
+- One takeaway line each + `See data` disclosure (same animation): `#sowingCheck` (MODIS MOD09A1 sowing dates, Bến Tre; years with fewer detections than expected are always stated, with the cloud explanation), `#rainCheck` (GPM IMERG vs NASA POWER, both regions), `#smapCard` (SMAP L4 dry-season anomaly vs modeled deficit, Đắk Lắk; the driest-year disagreement stated plainly), `#erosionCheck` (RUSLE C-factor + SRTM slope + IMERG wet-season share, Đắk Lắk, `not yet verified`). Tiles hide when the API says `available: false`.
+
+### E. Step 4: report and expert section
+- `#btnReport` (big primary), `#btnPrint`, `#btnCsv`; output in `#chatOutput`. Phones get a sticky bottom `Build report` bar.
+- `<details id="techSection">` "For experts: data & method": data chips (`chip-*`), `#climateChart` (POWER and IMERG bars + ETo line), NDVI strip with the model calendar above it, `#methodCard`, crop table, assumptions. Links into it (e.g. `#methodCard`) open it first.
+
+### F. Motion and interaction (subtle, purposeful)
+- Number count-up on region / scenario change, static skeleton placeholders while loading, fade/slide-in of cards the first time a step scrolls into view, animated expand/collapse, slider value bubble, 1 px hover lift + border colour change (no heavy shadow), visible `:focus-visible` rings, 44 px touch targets.
+- Everything respects `prefers-reduced-motion: reduce` (no transitions, no count-up, no smooth scroll).
+
+### G. Language (EN | VI)
+- Default English. Static text lives in `index.html` with `data-i18n` keys (English captured at start-up); `I18N.vi` replaces it. Dynamic text uses `t(key)` with `I18N = { en, vi }`. The choice persists in `localStorage` (wrapped in try/catch) and sets `<html lang>`. Numbers use `en-US` / `vi-VN`; months `Jan…Dec` / `T1…T12`.
+- Config text in Vietnamese comes from the API `vi` blocks (strategy `vi.name/why/note/benefits/risks/info_gaps/evidence_text`, phase `label_vi`, region `vi.assumptions/salinity_months_source/ndvi_years_source`, stress year `event_vi`), with English fallback. Citations stay as published. The advisory report is English for now; in VI the page says "Báo cáo hiện có bằng tiếng Anh".
 
 ---
 
-## 6. Danh Mục 28 DOM IDs & Chuỗi Bất Biến (Test Invariants)
+## 6. Required DOM IDs & Invariant Strings (Test Invariants)
 
-Các ID và chuỗi dưới đây là quy ước giao diện. Pytest không đọc index.html; chỉ test_fix8_1 grep các chuỗi bị cấm trong web/app.js, web/index.html và core/advisor.py. Đừng giữ một câu chữ chỉ vì tưởng có test khoá nó.
+These IDs and strings are UI conventions. Pytest does not parse index.html for most IDs; test_fix8_1 greps banned strings in web/app.js, web/index.html and core/advisor.py, test_fix11_2 / test_fix13_1 check the step anchors, role entries and method card, test_fix14_1 checks the satellite cross-check IDs and API fields, and test_fix15_1 checks the EN | VI toggle and the I18N dictionary. Do not keep wording only because you think a test locks it.
 
-### 28 DOM IDs Bắt Buộc trong `web/index.html`:
+### 36 required DOM IDs in `web/index.html` (26 core + 10 added by the cross-checks and the redesign):
 ```text
-1. rotationsSection         11. valTemp                21. chip-sal
-2. rotationCardsGrid        12. valRain                22. climateChart
-3. rotationLegend           13. btnReset               23. ndviStrip
-4. rotationAssumptionsBox   14. chatInput              24. ndviNote
-5. heroCard                 15. btnAsk                 25. cropTableWrapper
-6. heroPlace                16. chatOutput             26. cropTableBody
-7. heroTitle                17. statusBar              27. waterOnlyScoreNote
-8. heroBody                 18. chip-power             28. evaluateEmpty
-9. sliderTemp               19. chip-ndvi
-10. sliderRain              20. chip-sm
-```
+1. rotationsSection         10. sliderRain             19. chip-sal
+2. rotationCardsGrid        11. valTemp                20. climateChart
+3. rotationLegend           12. valRain                21. ndviStrip
+4. rotationAssumptionsBox   13. btnReset               22. ndviNote
+5. heroCard                 14. chatOutput             23. cropTableWrapper
+6. heroPlace                15. statusBar              24. cropTableBody
+7. heroTitle                16. chip-power             25. waterOnlyScoreNote
+8. heroBody                 17. chip-ndvi              26. evaluateEmpty
+9. sliderTemp               18. chip-sm (SMAP L4)
 
-### Chuỗi Văn Bản Bắt Buộc trong `web/app.js`:
-- `"11-01"` (Cửa sổ vụ khô Bến Tre).
-- `"04-30"` (Mùa khô Đắk Lắk).
-- `"chưa tính giai đoạn nuôi tôm"` (Cờ `partial` vụ tôm nước lợ).
-- `"loại đất giả định"` (Giả định thấm và làm đất lúa).
-- `"chưa kiểm chứng"` (Bằng chứng chưa nghiệm thu).
+Satellite cross-checks and redesign:
+27. sowingCheck   28. rainCheck   29. smapCard   30. erosionCheck   31. chip-imerg
+32. chip-srtm     33. chip-mod09  34. evidenceSection   35. stepNav   36. langToggle
+```
+Also kept as anchors: `step1`, `reportSection`, `techSection`, `methodCard`, `btnCsv`, `btnPrint`, `btnReport`, `ndviModelRow`.
+
+### Required text strings in `web/app.js` (English dictionary):
+- `"11-01"` (Bến Tre dry-season sowing window).
+- `"04-30"` (end of the Đắk Lắk dry season).
+- `"shrimp phase not modeled"` (shown when a strategy has `partial: true`, the brackish-water shrimp phase).
+- `"assumed soil type"` (percolation and rice land-preparation assumption).
+- `"not yet verified"` (evidence with `verified: false`).
+
+Behaviour in `app.js` is driven by structured API fields (`is_existing`, `partial`, `phases[].modeled`, `water_full_year`, `salinity_months`, `stress_years[].verified`, `components.salinity_exceed`, `available`), never by substring-matching config text, because config text exists in two languages.
 
 ---
 
-## 7. Tài Liệu Tham Khảo (References)
-- Đặc tả gốc: [`docs/design-md-spec/spec.md`](docs/design-md-spec/spec.md) (Google Labs `design.md` alpha format).
-- Triết lý gốc: [`docs/design-md-spec/PHILOSOPHY.md`](docs/design-md-spec/PHILOSOPHY.md).
-
+## 7. References
+- Source spec: [`docs/design-md-spec/spec.md`](docs/design-md-spec/spec.md) (Google Labs `design.md` alpha format).
+- Source philosophy: [`docs/design-md-spec/PHILOSOPHY.md`](docs/design-md-spec/PHILOSOPHY.md).

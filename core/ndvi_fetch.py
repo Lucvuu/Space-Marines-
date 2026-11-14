@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """
 AERO-AGRI NASA MODIS NDVI Live Fetcher (ORNL DAAC REST API)
-Tải chuỗi thời gian chỉ số thực vật MOD13Q1 (250m, 16 ngày), band 250m_16_days_NDVI
-kèm lọc mây qua band 250m_16_days_pixel_reliability trên cửa sổ 3x3 km (kmAboveBelow=1, kmLeftRight=1, 81 pixel).
-Tuân thủ:
-- Dùng tọa độ ndvi_point trong config/regions.json nếu có, nếu không dùng lat/lon của vùng
-- Mỗi request subset tối đa 10 ngày (giới hạn ORNL DAAC), nghỉ 1 giây giữa các batch
-- Timeout 60s, retry 3 lần
-- Chỉ giữ pixel có reliability là 0 (good) hoặc 1 (marginal), không phải fill (-3000), và sau khi nhân 0.0001 nằm trong [-0.2, 1.0]
-- Ngày nào còn dưới 20 pixel hợp lệ thì bỏ cả ngày đó
-- Lấy median các pixel hợp lệ và ghi thêm cột n_valid_pixels vào CSV
-- Lỗi mạng -> in lỗi và thoát, KHÔNG sinh dữ liệu thay thế
+Downloads the MOD13Q1 vegetation index time series (250 m, 16-day), band 250m_16_days_NDVI,
+with cloud filtering via band 250m_16_days_pixel_reliability over a 3x3 km window (kmAboveBelow=1, kmLeftRight=1, 81 pixels).
+Rules:
+- Use the ndvi_point coordinates in config/regions.json if present, otherwise the region lat/lon
+- Each subset request covers at most 10 dates (ORNL DAAC limit), with a 1 second pause between batches
+- Timeout 60 s, 3 retries
+- Keep only pixels with reliability 0 (good) or 1 (marginal), not fill (-3000), and within [-0.2, 1.0] after scaling by 0.0001
+- Drop any date with fewer than 20 valid pixels
+- Take the median of the valid pixels and also write an n_valid_pixels column to the CSV
+- Network error -> print the error and exit; NEVER generate substitute data
 """
 import os
 import sys
@@ -35,12 +35,12 @@ MIN_VALID_PIXELS = 20
 
 
 def load_region_ndvi_coords(region_id):
-    """Đọc tọa độ ndvi_point (nếu có) hoặc lat/lon của vùng từ config/regions.json."""
+    """Read the ndvi_point coordinates (if any) or the region lat/lon from config/regions.json."""
     cfg_path = os.path.join(AERO_ROOT, "config", "regions.json")
     with open(cfg_path, "r", encoding="utf-8") as f:
         regions_cfg = json.load(f)
     if region_id not in regions_cfg:
-        raise ValueError(f"Vùng không xác định: {region_id}")
+        raise ValueError(f"Unknown region: {region_id}")
     reg = regions_cfg[region_id]
     ndvi_pt = reg.get("ndvi_point")
     if isinstance(ndvi_pt, dict) and "lat" in ndvi_pt and "lon" in ndvi_pt:
@@ -59,7 +59,7 @@ def load_region_ndvi_coords(region_id):
 
 
 def request_with_retry(url, params, retries=3, timeout=60):
-    """Gọi HTTP GET với header Accept: application/json và cơ chế retry."""
+    """HTTP GET with an Accept: application/json header and retries."""
     headers = {"Accept": "application/json"}
     last_err = None
     for attempt in range(1, retries + 1):
@@ -71,11 +71,11 @@ def request_with_retry(url, params, retries=3, timeout=60):
             last_err = e
             if attempt < retries:
                 time.sleep(1.5)
-    raise RuntimeError(f"Request thất bại sau {retries} lần thử ({url}): {last_err}")
+    raise RuntimeError(f"Request failed after {retries} attempts ({url}): {last_err}")
 
 
 def filter_modis_dates(dates_payload, start_year=2015, end_year=2025):
-    """Lọc danh sách modis_date trong khoảng năm start_year..end_year."""
+    """Keep the modis_date entries within years start_year..end_year."""
     raw_dates = dates_payload.get("dates", [])
     filtered = []
     for item in raw_dates:
@@ -104,12 +104,12 @@ def _extract_calendar_date(item):
 
 def parse_subset_response(subset_payload, reliability_payload=None, min_valid_pixels=MIN_VALID_PIXELS):
     """
-    Parse JSON trả về từ endpoint /subset của ORNL DAAC:
-    - Kết hợp band 250m_16_days_NDVI và 250m_16_days_pixel_reliability (từ reliability_payload hoặc chung trong subset_payload)
-    - Chỉ giữ pixel có reliability là 0 (good) hoặc 1 (marginal) (nếu có dữ liệu reliability cho ngày đó)
-    - Loại bỏ giá trị fill (-3000) và giá trị sau khi nhân 0.0001 nằm ngoài [-0.2, 1.0]
-    - Ngày nào còn dưới min_valid_pixels (mặc định 20) pixel hợp lệ thì bỏ cả ngày đó
-    - Lấy median các pixel hợp lệ và trả về [{"date": ..., "ndvi": ..., "n_valid_pixels": ...}]
+    Parse the JSON returned by the ORNL DAAC /subset endpoint:
+    - Combine bands 250m_16_days_NDVI and 250m_16_days_pixel_reliability (from reliability_payload or inside subset_payload)
+    - Keep only pixels with reliability 0 (good) or 1 (marginal) (when reliability data exists for that date)
+    - Drop fill values (-3000) and values outside [-0.2, 1.0] after scaling by 0.0001
+    - Drop any date with fewer than min_valid_pixels (default 20) valid pixels
+    - Take the median of the valid pixels and return [{"date": ..., "ndvi": ..., "n_valid_pixels": ...}]
     """
     all_items = list(subset_payload.get("subset", []))
     if reliability_payload and isinstance(reliability_payload, dict):
@@ -144,7 +144,7 @@ def parse_subset_response(subset_payload, reliability_payload=None, min_valid_pi
         for idx, raw_val in enumerate(data_vals):
             if raw_val is None:
                 continue
-            # Kiểm tra pixel_reliability nếu có
+            # Check pixel_reliability when available
             if rel_vals is not None:
                 if idx >= len(rel_vals) or rel_vals[idx] is None:
                     continue
@@ -160,7 +160,7 @@ def parse_subset_response(subset_payload, reliability_payload=None, min_valid_pi
             except (ValueError, TypeError):
                 continue
 
-            # Bỏ giá trị fill (-3000)
+            # Drop fill values (-3000)
             if int(round(raw_num)) == -3000:
                 continue
 
@@ -186,8 +186,8 @@ def parse_subset_response(subset_payload, reliability_payload=None, min_valid_pi
 def fetch_ndvi_for_region(region_id, start_year=2015, end_year=2025):
     coords = load_region_ndvi_coords(region_id)
     print(
-        f"[MODIS NDVI] Đang lấy danh sách ngày quan trắc cho {coords['name']} "
-        f"tại ({coords['lat']}, {coords['lon']}) ({start_year}-{end_year})..."
+        f"[MODIS NDVI] Fetching observation dates for {coords['name']} "
+        f"at ({coords['lat']}, {coords['lon']}) ({start_year}-{end_year})..."
     )
     try:
         dates_json = request_with_retry(
@@ -197,20 +197,20 @@ def fetch_ndvi_for_region(region_id, start_year=2015, end_year=2025):
             timeout=60
         )
     except Exception as e:
-        print(f"[ERROR] Lỗi khi tải danh sách ngày MODIS ORNL DAAC cho {region_id}: {e}", file=sys.stderr)
+        print(f"[ERROR] Failed to download the MODIS ORNL DAAC date list for {region_id}: {e}", file=sys.stderr)
         return False
 
     target_dates = filter_modis_dates(dates_json, start_year=start_year, end_year=end_year)
     if not target_dates:
-        print(f"[ERROR] Không tìm thấy ngày MODIS nào cho {region_id} trong giai đoạn {start_year}-{end_year}", file=sys.stderr)
+        print(f"[ERROR] No MODIS dates found for {region_id} in {start_year}-{end_year}", file=sys.stderr)
         return False
 
-    # Chia thành từng batch tối đa 10 ngày quan trắc / request
+    # Split into batches of at most 10 observation dates per request
     chunk_size = 10
     chunks = [target_dates[i:i + chunk_size] for i in range(0, len(target_dates), chunk_size)]
     all_rows = []
 
-    print(f"[MODIS NDVI] Tổng cộng {len(target_dates)} kỳ quan trắc ({len(chunks)} batches, cửa sổ 3x3 km = 81 pixel)...")
+    print(f"[MODIS NDVI] {len(target_dates)} composites in total ({len(chunks)} batches, 3x3 km window = 81 pixels)...")
     for idx, chunk in enumerate(chunks, 1):
         start_modis = chunk[0]["modis_date"]
         end_modis = chunk[-1]["modis_date"]
@@ -230,14 +230,14 @@ def fetch_ndvi_for_region(region_id, start_year=2015, end_year=2025):
             batch_rows = parse_subset_response(ndvi_json, reliability_payload=rel_json, min_valid_pixels=MIN_VALID_PIXELS)
             all_rows.extend(batch_rows)
         except Exception as e:
-            print(f"[ERROR] Lỗi khi tải batch {idx}/{len(chunks)} ({start_modis}..{end_modis}): {e}", file=sys.stderr)
+            print(f"[ERROR] Failed to download batch {idx}/{len(chunks)} ({start_modis}..{end_modis}): {e}", file=sys.stderr)
             return False
 
         if idx < len(chunks):
             time.sleep(1.0)
 
     if not all_rows:
-        print(f"[ERROR] Không có dòng NDVI hợp lệ nào cho {region_id}", file=sys.stderr)
+        print(f"[ERROR] No valid NDVI rows for {region_id}", file=sys.stderr)
         return False
 
     df = pd.DataFrame(all_rows)
@@ -259,13 +259,13 @@ def fetch_ndvi_for_region(region_id, start_year=2015, end_year=2025):
         "retrieved_at": datetime.now().strftime("%Y-%m-%d"),
         "is_synthetic": False
     })
-    print(f"[SUCCESS] Đã lưu {len(df)} dòng NDVI (kèm n_valid_pixels) vào {out_path}")
+    print(f"[SUCCESS] Saved {len(df)} NDVI rows (with n_valid_pixels) to {out_path}")
     return True
 
 
 def main():
     if "--help" in sys.argv or "-h" in sys.argv:
-        print("Sử dụng: python core/ndvi_fetch.py — Tải dữ liệu MODIS NDVI (MOD13Q1) cho Bến Tre và Đắk Lắk.")
+        print("Usage: python core/ndvi_fetch.py — download MODIS NDVI (MOD13Q1) data for Bến Tre and Đắk Lắk.")
         sys.exit(0)
     cfg_path = os.path.join(AERO_ROOT, "config", "regions.json")
     with open(cfg_path, "r", encoding="utf-8") as f:

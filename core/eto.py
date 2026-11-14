@@ -1,27 +1,27 @@
 # -*- coding: utf-8 -*-
 """
 AERO-AGRI Evapotranspiration Engine (FAO-56 Penman-Monteith)
-Hiện thực hóa công thức tính bốc thoát hơi nước tham chiếu hàng ngày theo FAO Irrigation and Drainage Paper No. 56.
+Implements daily reference evapotranspiration according to FAO Irrigation and Drainage Paper No. 56.
 
-Công thức cốt lõi (FAO-56 Eq. 6):
+Core equation (FAO-56 Eq. 6):
         0.408 * Δ * (Rn - G) + γ * (900 / (Tmean + 273)) * u2 * (es - ea)
 ETo = --------------------------------------------------------------------
                           Δ + γ * (1 + 0.34 * u2)
 
-Trong đó:
-- Rn: Bức xạ thuần mặt đất (MJ/m²/ngày) = Rns - Rnl (Eq. 40)
-- G: Dòng nhiệt trong đất = 0 đối với bước thời gian ngày (MJ/m²/ngày)
-- Tmean: Nhiệt độ trung bình ngày = (Tmax + Tmin) / 2 (°C)
-- u2: Vận tốc gió ở độ cao 2m (m/s)
-- es: Áp suất hơi bão hòa trung bình (kPa) (Eq. 12)
-- ea: Áp suất hơi thực tế (kPa) = es * (RHmean / 100)
-- Δ: Độ dốc đường cong áp suất hơi bão hòa ở Tmean (kPa/°C) (Eq. 13)
-- γ: Hằng số tâm lý (kPa/°C) = 0.665e-3 * P (Eq. 8)
-- P: Áp suất khí quyển ở cao độ z (kPa) (Eq. 7)
-- Ra: Bức xạ ngoài khí quyển tính từ vĩ độ và ngày trong năm (Eq. 21)
-- Rso: Bức xạ bầu trời quang = (0.75 + 2e-5 * z) * Ra (Eq. 37)
-- Rnl: Bức xạ sóng dài ròng (Eq. 39), tỉ số Rs/Rso chặn tối đa 1.0
-- Chặn dưới tốc độ gió u2: FAO-56 ch.3, p.63: u2 should be limited to about u2 >= 0.5 m/s when used in Eq. 6 (verified: true)
+Where:
+- Rn: net radiation at the crop surface (MJ/m²/day) = Rns - Rnl (Eq. 40)
+- G: soil heat flux = 0 for a daily time step (MJ/m²/day)
+- Tmean: mean daily temperature = (Tmax + Tmin) / 2 (°C)
+- u2: wind speed at 2 m height (m/s)
+- es: mean saturation vapour pressure (kPa) (Eq. 12)
+- ea: actual vapour pressure (kPa) = es * (RHmean / 100)
+- Δ: slope of the saturation vapour pressure curve at Tmean (kPa/°C) (Eq. 13)
+- γ: psychrometric constant (kPa/°C) = 0.665e-3 * P (Eq. 8)
+- P: atmospheric pressure at elevation z (kPa) (Eq. 7)
+- Ra: extraterrestrial radiation from latitude and day of year (Eq. 21)
+- Rso: clear-sky radiation = (0.75 + 2e-5 * z) * Ra (Eq. 37)
+- Rnl: net longwave radiation (Eq. 39), with the Rs/Rso ratio capped at 1.0
+- Lower bound on wind speed u2: FAO-56 ch.3, p.63: u2 should be limited to about u2 >= 0.5 m/s when used in Eq. 6 (verified: true)
 """
 import os
 import json
@@ -31,8 +31,8 @@ import pandas as pd
 
 def _load_u2_min_ms():
     """
-    Đọc ngưỡng chặn dưới tốc độ gió u2 từ config/scoring.json.
-    Nguồn: FAO-56 ch.3, p.63: u2 should be limited to about u2 >= 0.5 m/s when used in Eq. 6 (verified: true).
+    Read the lower bound on wind speed u2 from config/scoring.json.
+    Source: FAO-56 ch.3, p.63: u2 should be limited to about u2 >= 0.5 m/s when used in Eq. 6 (verified: true).
     """
     cfg_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "scoring.json")
     try:
@@ -45,31 +45,31 @@ def _load_u2_min_ms():
         return 0.5
 
 def calculate_atmospheric_pressure(elevation_m):
-    """FAO-56 Eq. 7: Áp suất khí quyển P (kPa) theo cao độ z (m)."""
+    """FAO-56 Eq. 7: atmospheric pressure P (kPa) at elevation z (m)."""
     return 101.3 * ((293.0 - 0.0065 * elevation_m) / 293.0) ** 5.26
 
 def calculate_psychrometric_constant(pressure_kpa):
-    """FAO-56 Eq. 8: Hằng số tâm lý γ (kPa/°C)."""
+    """FAO-56 Eq. 8: psychrometric constant γ (kPa/°C)."""
     return 0.665e-3 * pressure_kpa
 
 def calculate_saturation_vapor_pressure(t_celsius):
-    """FAO-56 Eq. 11: Áp suất hơi bão hòa e°(T) (kPa) ở nhiệt độ T (°C)."""
+    """FAO-56 Eq. 11: saturation vapour pressure e°(T) (kPa) at temperature T (°C)."""
     return 0.6108 * np.exp((17.27 * t_celsius) / (t_celsius + 237.3))
 
 def calculate_slope_vapor_pressure_curve(tmean_celsius):
-    """FAO-56 Eq. 13: Độ dốc đường cong áp suất hơi Δ (kPa/°C) ở Tmean."""
+    """FAO-56 Eq. 13: slope of the vapour pressure curve Δ (kPa/°C) at Tmean."""
     numerator = 4098.0 * (0.6108 * np.exp((17.27 * tmean_celsius) / (tmean_celsius + 237.3)))
     denominator = (tmean_celsius + 237.3) ** 2
     return numerator / denominator
 
 def calculate_extraterrestrial_radiation(lat_deg, day_of_year):
-    """FAO-56 Eq. 21, 23, 24, 25: Bức xạ ngoài khí quyển Ra (MJ/m²/ngày)."""
+    """FAO-56 Eq. 21, 23, 24, 25: extraterrestrial radiation Ra (MJ/m²/day)."""
     phi = np.radians(lat_deg)
     dr = 1.0 + 0.033 * np.cos(2.0 * np.pi * day_of_year / 365.0)
     delta = 0.409 * np.sin(2.0 * np.pi * day_of_year / 365.0 - 1.39)
 
     x = -np.tan(phi) * np.tan(delta)
-    # Xử lý trường hợp cực quang hoặc cực đêm
+    # Handle polar day / polar night
     if isinstance(x, np.ndarray) or isinstance(x, pd.Series):
         omega_s = np.where(x <= -1.0, np.pi, np.where(x >= 1.0, 0.0, np.arccos(np.clip(x, -1.0, 1.0))))
     else:
@@ -86,13 +86,13 @@ def calculate_extraterrestrial_radiation(lat_deg, day_of_year):
     return ra
 
 def calculate_clear_sky_radiation(ra, elevation_m):
-    """FAO-56 Eq. 37: Bức xạ bầu trời quang Rso (MJ/m²/ngày)."""
+    """FAO-56 Eq. 37: clear-sky radiation Rso (MJ/m²/day)."""
     return (0.75 + 2e-5 * elevation_m) * ra
 
 def calculate_daily_eto(tmax, tmin, rh_mean, u2, rs, lat_deg, elevation_m, day_of_year):
     """
-    Tính bốc thoát hơi nước tham chiếu hàng ngày ETo (mm/ngày) theo FAO-56 Penman-Monteith.
-    Hỗ trợ cả số đơn lẻ và mảng numpy / Series pandas.
+    Daily reference evapotranspiration ETo (mm/day) by FAO-56 Penman-Monteith.
+    Accepts scalars as well as numpy arrays / pandas Series.
     """
     tmean = (tmax + tmin) / 2.0
     pressure = calculate_atmospheric_pressure(elevation_m)
@@ -107,10 +107,10 @@ def calculate_daily_eto(tmax, tmin, rh_mean, u2, rs, lat_deg, elevation_m, day_o
     ra = calculate_extraterrestrial_radiation(lat_deg, day_of_year)
     rso = calculate_clear_sky_radiation(ra, elevation_m)
 
-    # Net shortwave radiation (Eq. 38) với albedo = 0.23
+    # Net shortwave radiation (Eq. 38) with albedo = 0.23
     rns = (1.0 - 0.23) * rs
 
-    # Ràng buộc kỹ thuật #6: Chặn tỉ số Rs/Rso không vượt quá 1.0 trước khi tính Rnl
+    # Technical constraint #6: cap the Rs/Rso ratio at 1.0 before computing Rnl
     safe_rso = np.where(rso > 0.01, rso, 0.01) if isinstance(rso, (np.ndarray, pd.Series)) else max(rso, 0.01)
     rs_rso_ratio = np.clip(rs / safe_rso, 0.0, 1.0)
 
@@ -143,8 +143,8 @@ def calculate_daily_eto(tmax, tmin, rh_mean, u2, rs, lat_deg, elevation_m, day_o
 
 def calculate_eto_series(df, lat_deg, elevation_m, delta_temp_c=0.0):
     """
-    Tính ETo cho một DataFrame khí tượng (đã có T2M_MAX, T2M_MIN, RH2M, WS2M, ALLSKY_SFC_SW_DWN).
-    Hỗ trợ kịch bản mô phỏng biến đổi khí hậu bằng delta_temp_c cộng trực tiếp vào Tmax/Tmin.
+    Compute ETo for a weather DataFrame (with T2M_MAX, T2M_MIN, RH2M, WS2M, ALLSKY_SFC_SW_DWN).
+    Supports a climate what-if scenario: delta_temp_c is added directly to Tmax/Tmin.
     """
     doy = df["date"].dt.dayofyear.values
     tmax = df["T2M_MAX"].values + delta_temp_c
