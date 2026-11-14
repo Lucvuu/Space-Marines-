@@ -3,18 +3,20 @@ version: alpha
 name: AERO-AGRI Swiss Editorial Agro-Climate
 description: Minimalist, data-dense, anti-slop design system for NASA Space Apps agro-climate decision platform.
 colors:
-  bg: "#f7f7f5"
-  surface: "#ffffff"
-  surface-subtle: "#f9f9f8"
-  border: "#e4e4df"
+  bg: "#f7f5ee"
+  surface: "#fffefb"
+  surface-subtle: "#f3f1e9"
+  border: "#e5e1d5"
   border-focus: "#15803d"
-  text: "#191c1a"
+  text: "#14261b"
   muted: "#5e6560"
   muted-light: "#878f89"
 
   primary: "#15803d"
   primary-hover: "#166534"
-  primary-light: "#f0fdf4"
+  primary-ink: "#14532d"
+  mark: "#fcd977"
+  primary-light: "#e4f2dc"
 
   good: "#15803d"
   good-bg: "#f0fdf4"
@@ -128,7 +130,7 @@ When editing `web/style.css`, `web/index.html` or `web/app.js`:
 - ❌ **NO thick left borders (`border-left: 4px solid`)**: never use a thick border for emphasis. All separators are thin `1px solid var(--border)` (or `1.5px solid var(--primary)` for the best-recommended card).
 - ❌ **NO heavy shadows**: no thick or opaque `box-shadow`. Only the ultra-light `0 1px 2px rgba(0,0,0,0.02)`.
 - ❌ **NO "Pill Soup"**: each strategy card has **at most 1 status badge** in the top corner (`Current`, `Saves 52% water`, `Shrimp phase not modeled`). Never stack 4–5 green/red pills.
-- ❌ **NO pulsing dots (`@keyframes pulse`) or decorative icons/emoji**: no blinking effects that distract.
+- ❌ **NO pulsing dots (`@keyframes pulse`) or emoji**: no blinking effects that distract. Line icons come only from the inline SVG sprite in `index.html` (`<use href="#i-…">`) and only where they help find or read something: menu items, step headers, tile labels, weather presets, action buttons. No decorative imagery or AI-generated photos.
 - ❌ **NO Box-in-Box**: do not create 3–4 bordered, separately filled boxes inside one card. Use a thin horizontal rule `1px solid #f1f5f9` to separate content.
 - ❌ **NO more than 500 CSS lines**: keep `web/style.css` under **500 lines** of clean, focused CSS.
 - ❌ **NO external CDN libraries**: the app must be 100% offline-first. No Google Fonts, Tailwind CDN or FontAwesome CDN. Chart.js and Leaflet are vendored in `web/vendor/`.
@@ -139,13 +141,16 @@ When editing `web/style.css`, `web/index.html` or `web/app.js`:
 
 ```yaml
 colors:
-  bg: '#f7f7f5' # warm limestone paper background, softer than pure white
-  surface: '#ffffff' # white card surface
+  bg: '#f7f5ee' # warm cream paper background
+  surface: '#fffefb' # card surface
   surface-subtle: '#f9f9f8' # very light secondary background for code, inputs
-  border: '#e4e4df' # hairline border
-  text: '#191c1a' # dark ink for reading text
+  border: '#e5e1d5' # hairline border
+  text: '#14261b' # dark green ink for reading text
   muted: '#5e6560' # grey for secondary labels and captions
-  primary: '#15803d' # deep agricultural green (Emerald Deep)
+  primary: '#15803d' # agricultural green (links, focus, best-option border)
+  primary-ink: '#14532d' # dark green: active menu item, buttons, step icons
+  primary-light: '#e4f2dc' # light green: answer panel, Details buttons
+  mark: '#fcd977' # yellow marker for key phrases and step number dots
 ```
 
 ### Season & crop colours:
@@ -171,13 +176,13 @@ typography:
 ```
 
 - **Mandatory tabular nums**: every measured value (`m³/ha`, `mm`, `ETo`, `ETc`, `NDVI`, temperature, rainfall, crop table) **MUST** use `font-variant-numeric: tabular-nums`. This keeps the layout from jittering when users drag the weather-scenario sliders.
-- **Modest type scale**: page title `20px`, card title `15.5px`, large metrics `19px–22px`. No oversized fonts that waste space.
+- **Type scale**: intro `h1` `30px`, step title `26px`, answer sentence `26px`, card title `19px`, large metrics `34px`, body `15px` (smaller on phones). System fonts only.
 
 ---
 
 ## 5. Component Specifications
 
-The page is **farmer-first with progressive disclosure**: the answer and the option cards come first, every number has its source one tap away, and the expert material (charts, method, tables) sits in one collapsed section at the end. Four steps, each answering one Field Shift question:
+The app is **farmer-first with progressive disclosure** and shows **one screen per step**: a fixed side menu (bottom tab bar on phones) switches between the four steps, so there is no long scrolling page. The answer comes first, every number has its source one tap away in the detail panel, and the expert material (charts, method, tables) sits in one collapsed section on the report screen. Four steps, each answering one Field Shift question:
 
 | Step | Section id | Question it answers |
 |------|------------|---------------------|
@@ -186,29 +191,31 @@ The page is **farmer-first with progressive disclosure**: the answer and the opt
 | 3 What satellites tell us | `#evidenceSection` | Do independent NASA data (MODIS, IMERG, SMAP, SRTM) agree with the model? |
 | 4 Plan & report | `#reportSection` | Take a printable report or CSV to the extension officer; experts open "data & method". |
 
-### A. Top bar (`.topbar`) and step nav (`#stepNav`)
-- Top bar `56px`, translucent white with `backdrop-filter: blur(10px)`: logo, region segmented control (`Bến Tre (Mekong Delta)` | `Đắk Lắk (Central Highlands)`), `EN | VI` toggle (`#langToggle`), `Report` link.
-- Sticky step nav below it: 4 pills; the active pill follows the scroll position. On phones the top bar scrolls away and only the active pill shows its label.
+### A. Top bar (`.topbar`), side menu (`#stepNav`) and screens
+- Top bar `64px`, fixed while scrolling: round logo + `AERO-AGRI`, region segmented control with a line icon (`Bến Tre (Mekong Delta)` | `Đắk Lắk (Central Highlands)`), `EN | VI` toggle (`#langToggle`). No extra report button: the menu already reaches every step.
+- Side menu `236px`, fixed under the top bar: 4 items (icon with step number, `Step N`, step name), a `Data & method` link (opens `#techSection`), the NASA product line at the bottom. The active item is dark green with a yellow number dot. On phones (≤ 860 px) it becomes a fixed bottom tab bar with short labels (`Field`, `Compare`, `Satellites`, `Report`).
+- Only the active step section is shown (`hidden` on the others). The URL hash keeps the place (`#rotationsSection`; back/forward work); a link to an element inside a step (`#methodCard`, `#btnCsv`) opens that step, opens any `<details>` around the target and scrolls to it. Steps 1–3 end with one `Next: <step>` link.
 
-### B. Step 1: answer card (`#heroCard`) and weather chips (`.scenario`)
-- `#heroTitle` is **one plain sentence built only from API numbers**: best non-partial option vs current practice, with the per-year check (`annual_deficit_by_year`): "in every year since 2015" only when it holds in all matched crop years, otherwise "in N of M years". When no option saves water (Đắk Lắk), the sentence says so and adds the erosion result when available.
-- Three tiles separated by hairlines (no boxes): water to pump today (m³/ha and per 1,000 m²), best saving % (or extra water), salt water months (Bến Tre) or SRTM slope + IMERG wet-season share (Đắk Lắk).
-- Weather: 3 large chips (`Today`, `Hot & dry`, `Very hot & dry`, 44 px); the two sliders sit under an `Adjust` disclosure, with a value bubble above the thumb. Inline status text ("Updating…"), never toasts.
+### B. Step 1: answer panel (`#heroCard`) and weather presets (`.scenario`)
+- Short intro (the page `h1`) on top, then the step header (dark green icon square with a yellow number dot, title, one-line hint).
+- `#heroTitle` sits in a light green panel: **one plain sentence built only from API numbers**: best non-partial option vs current practice, with the per-year check (`annual_deficit_by_year`): "in every year since 2015" only when it holds in all matched crop years, otherwise "in N of M years". When no option saves water (Đắk Lắk), the sentence says so and adds the erosion result when available. Key phrases (`<b>`) get a flat yellow marker background.
+- Three tiles under the panel, each a separate white card with an icon circle and label: water to pump today (m³/ha and per 1,000 m²), best saving % (or extra water), salt water months with a 12-month strip (Bến Tre) or SRTM slope + IMERG wet-season share (Đắk Lắk).
+- Weather: 3 large preset buttons with icons (`Today`, `Hot & dry`, `Very hot & dry`); the two sliders sit under an `Adjust` disclosure, with a value bubble above the thumb. Inline status text ("Updating…"), never toasts.
 
-### C. Step 2: option card (`.rot-card`), one set only
-- Collapsed: single badge (above the title), big number m³/ha with the per-1,000 m² figure, bare-soil months, a relative bar against current practice (tick = current practice), typical vs dry-year line, 12-month calendar (red underline = salt water month, orange dot = heat), top 1 benefit + top 1 risk, `Details` button.
-- `Details` expands with an animated height (`grid-template-rows 0fr → 1fr`) to: year strip (one bar per crop year, stress years in salinity red with event + source, `not yet verified` when unverified), lower-percolation range, per-1,000 m² breakdown (`plainLine`), config note, erosion block for `D1`, all benefits / risks / info gaps, sources, water-balance arithmetic, `View report for this strategy →`.
+### C. Step 2: option card (`.rot-card`), one set only, two columns on desktop
+- Card: single badge (above the title), `S0`-style id + name, big blue number m³/ha with the per-1,000 m² figure, two comparison bars (this option vs current practice), `↘ N% less than today`, typical vs dry-year line, `N months with bare soil` above the 12-month calendar (red underline = salt water month, orange dot = heat), top 1 benefit + top 1 risk, full-width `Details ›` button. The best complete option gets the `1.5px` green border.
+- `Details` opens the **detail panel** (`#drawer`): a right-side panel on desktop, a bottom sheet on phones, with backdrop, close button, Escape and focus kept inside. It shows the summary again, the year bar chart (one bar per crop year, stress years in salinity red with event + source, `not yet verified` when unverified), lower-percolation range, per-1,000 m² rows (`plainLine`), config note, erosion block for `D1`, benefits / risks / info gaps side by side, sources, water-balance arithmetic, and `View report for this strategy →` (goes to Step 4). The panel follows language, weather and region changes.
 
 ### D. Step 3: evidence tiles (`.ev-tile`)
-- One takeaway line each + `See data` disclosure (same animation): `#sowingCheck` (MODIS MOD09A1 sowing dates, Bến Tre; years with fewer detections than expected are always stated, with the cloud explanation), `#rainCheck` (GPM IMERG vs NASA POWER, both regions), `#smapCard` (SMAP L4 dry-season anomaly vs modeled deficit, Đắk Lắk; the driest-year disagreement stated plainly), `#erosionCheck` (RUSLE C-factor + SRTM slope + IMERG wet-season share, Đắk Lắk, `not yet verified`). Tiles hide when the API says `available: false`.
+- Icon circle + dataset tag, title, one takeaway line, `See data ›` (opens the same detail panel): `#sowingCheck` (MODIS MOD09A1 sowing dates, Bến Tre; years with fewer detections than expected are always stated, with the cloud explanation), `#rainCheck` (GPM IMERG vs NASA POWER, both regions), `#smapCard` (SMAP L4 dry-season anomaly vs modeled deficit, Đắk Lắk; the driest-year disagreement stated plainly), `#erosionCheck` (RUSLE C-factor + SRTM slope + IMERG wet-season share, Đắk Lắk, `not yet verified`). Tiles hide when the API says `available: false`.
 
 ### E. Step 4: report and expert section
-- `#btnReport` (big primary), `#btnPrint`, `#btnCsv`; output in `#chatOutput`. Phones get a sticky bottom `Build report` bar.
-- `<details id="techSection">` "For experts: data & method": data chips (`chip-*`), `#climateChart` (POWER and IMERG bars + ETo line), NDVI strip with the model calendar above it, `#methodCard`, crop table, assumptions. Links into it (e.g. `#methodCard`) open it first.
+- `#btnReport` (big primary), `#btnPrint`, `#btnCsv` with icons; output in `#chatOutput` (empty state until built). Printing shows only the report.
+- `<details id="techSection">` "For experts: data & method" (a full-width row with chevron): data chips (`chip-*`), `#climateChart` (POWER and IMERG bars + ETo line), NDVI strip with the model calendar above it, `#methodCard`, crop table, assumptions. Links into it (e.g. `#methodCard`) open it first.
 
 ### F. Motion and interaction (subtle, purposeful)
-- Number count-up on region / scenario change, static skeleton placeholders while loading, fade/slide-in of cards the first time a step scrolls into view, animated expand/collapse, slider value bubble, 1 px hover lift + border colour change (no heavy shadow), visible `:focus-visible` rings, 44 px touch targets.
-- Everything respects `prefers-reduced-motion: reduce` (no transitions, no count-up, no smooth scroll).
+- Number count-up on region / scenario change, static skeleton placeholders while loading, screen fade-in and staggered card entrance each time a step opens, sliding detail panel, slider value bubble, 2 px hover lift + border colour change (no heavy shadow), visible `:focus-visible` rings, 44 px touch targets.
+- Everything respects `prefers-reduced-motion: reduce` (no transitions or animations, no count-up, no smooth scroll).
 
 ### G. Language (EN | VI)
 - Default English. Static text lives in `index.html` with `data-i18n` keys (English captured at start-up); `I18N.vi` replaces it. Dynamic text uses `t(key)` with `I18N = { en, vi }`. The choice persists in `localStorage` (wrapped in try/catch) and sets `<html lang>`. Numbers use `en-US` / `vi-VN`; months `Jan…Dec` / `T1…T12`.
@@ -218,7 +225,7 @@ The page is **farmer-first with progressive disclosure**: the answer and the opt
 
 ## 6. Required DOM IDs & Invariant Strings (Test Invariants)
 
-These IDs and strings are UI conventions. Pytest does not parse index.html for most IDs; test_fix8_1 greps banned strings in web/app.js, web/index.html and core/advisor.py, test_fix11_2 / test_fix13_1 check the step anchors, role entries and method card, test_fix14_1 checks the satellite cross-check IDs and API fields, and test_fix15_1 checks the EN | VI toggle and the I18N dictionary. Do not keep wording only because you think a test locks it.
+These IDs and strings are UI conventions. Pytest does not parse index.html for most IDs; test_fix8_1 greps banned strings in web/app.js, web/index.html and core/advisor.py, test_fix11_2 / test_fix13_1 check the step anchors, side menu, detail panel and method card, test_fix14_1 checks the satellite cross-check IDs and API fields, and test_fix15_1 checks the EN | VI toggle and the I18N dictionary. Do not keep wording only because you think a test locks it.
 
 ### 36 required DOM IDs in `web/index.html` (26 core + 10 added by the cross-checks and the redesign):
 ```text
@@ -236,7 +243,7 @@ Satellite cross-checks and redesign:
 27. sowingCheck   28. rainCheck   29. smapCard   30. erosionCheck   31. chip-imerg
 32. chip-srtm     33. chip-mod09  34. evidenceSection   35. stepNav   36. langToggle
 ```
-Also kept as anchors: `step1`, `reportSection`, `techSection`, `methodCard`, `btnCsv`, `btnPrint`, `btnReport`, `ndviModelRow`.
+Also kept as anchors: `step1`, `reportSection`, `techSection`, `methodCard`, `btnCsv`, `btnPrint`, `btnReport`, `ndviModelRow`, `drawer`.
 
 ### Required text strings in `web/app.js` (English dictionary):
 - `"11-01"` (Bến Tre dry-season sowing window).
