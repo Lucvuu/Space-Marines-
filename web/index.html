@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AERO-AGRI | Lựa Chọn Mô Hình Luân Canh Thích Ứng Khí Hậu Vệ Tinh NASA</title>
+    <title>AERO-AGRI | Climate-Adaptive Crop Rotation from NASA Satellite Data</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%2315803d'/%3E%3Cpath d='M8 13.5V8M8 8C8 5 6 3 3 3c0 3 2 5 5 5zM8 9.5c0-2.5 2-4.5 5-4.5 0 2.5-2 4.5-5 4.5z' fill='none' stroke='%23fff' stroke-width='1.4'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -19,187 +20,197 @@
                 <span class="brand-tag">NASA Space Apps</span>
             </a>
 
-            <!-- Segmented Control Chọn Vùng -->
-            <nav class="region-tabs" aria-label="Chọn vùng canh tác">
-                <button type="button" class="region-tab" data-region="Ben_Tre_DBSCL" aria-pressed="true">Bến Tre (ĐBSCL)</button>
-                <button type="button" class="region-tab" data-region="Dak_Lak_Tay_Nguyen" aria-pressed="false">Đắk Lắk (Tây Nguyên)</button>
+            <!-- Region segmented control -->
+            <nav class="region-tabs" aria-label="Choose a farming region">
+                <button type="button" class="region-tab" data-region="Ben_Tre_DBSCL" aria-pressed="true">Bến Tre (Mekong Delta)</button>
+                <button type="button" class="region-tab" data-region="Dak_Lak_Tay_Nguyen" aria-pressed="false">Đắk Lắk (Central Highlands)</button>
             </nav>
 
             <div class="header-actions">
                 <a href="#reportSection" class="top-ask-btn">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                    Báo cáo tư vấn
+                    Advisory report
                 </a>
             </div>
         </div>
     </header>
 
     <main class="container">
-        <section class="howto" aria-label="Cách dùng trang này">
-            <h1 class="howto-hook">Chọn cách luân canh ít tốn nước ngọt hơn cho ruộng lúa Bến Tre và vườn cà phê Đắk Lắk</h1>
-            <p class="howto-sub">Mỗi phương án được so theo lượng nước ngọt phải tưới, số tháng đất trống và mùa mặn. Số liệu tính từ NASA POWER, MODIS (2015–2025) và các tài liệu khoa học Việt Nam đã kiểm chứng.</p>
+        <section class="howto" aria-label="How to use this page">
+            <h1 class="howto-hook">Choose a crop rotation that needs less fresh water for rice fields in Bến Tre and coffee farms in Đắk Lắk</h1>
+            <p class="howto-sub">Each strategy is compared by supplemental fresh water, bare-soil months and the salinity season. Numbers are computed from NASA POWER, MODIS (2015–2025) and verified Vietnamese scientific sources.</p>
             <ol class="howto-steps">
-                <li><a href="#step1"><b>1</b>Vùng và thời tiết</a></li>
-                <li><a href="#rotationsSection"><b>2</b>So sánh phương án</a></li>
-                <li><a href="#reportSection"><b>3</b>Xem báo cáo</a></li>
-                <li><a href="#techSection"><b>4</b>Kiểm tra dữ liệu</a></li>
+                <li><a href="#step1"><b>1</b>Region and weather</a></li>
+                <li><a href="#rotationsSection"><b>2</b>Compare strategies</a></li>
+                <li><a href="#reportSection"><b>3</b>Read the report</a></li>
+                <li><a href="#techSection"><b>4</b>Check the data</a></li>
             </ol>
             <div class="howto-roles">
-                <a class="role" href="#rotationsSection"><b>Nông dân</b><span>Xem khung "Mỗi 1.000 m²" trên từng thẻ ở Bước 2: vụ nào phải tưới bao nhiêu nước ngọt. Bấm "In báo cáo" ở Bước 3 để mang đi hỏi cán bộ khuyến nông.</span></a>
-                <a class="role" href="#btnCsv"><b>Cán bộ khuyến nông, nhà nghiên cứu</b><span>So các phương án ở Bước 2, thử thời tiết khô nóng ở Bước 1, tải số liệu từng vụ (CSV) để tự tính tiếp.</span></a>
-                <a class="role" href="#methodCard"><b>Nhà khoa học</b><span>Bước 4 có công thức, nguồn của từng tham số, lịch mô hình đặt cạnh ảnh vệ tinh và những gì mô hình chưa tính.</span></a>
+                <a class="role" href="#rotationsSection"><b>Farmers</b><span>Look at the "Per 1,000 m²" box on each card in Step 2: how much fresh water each season needs. Press "Print report" in Step 3 to take it to your extension officer.</span></a>
+                <a class="role" href="#btnCsv"><b>Extension officers &amp; researchers</b><span>Compare strategies in Step 2, try hotter and drier weather in Step 1, and download per-season numbers (CSV) for your own analysis.</span></a>
+                <a class="role" href="#methodCard"><b>Scientists</b><span>Step 4 has the formulas, the source of every parameter, the model calendar next to the satellite record, and what the model does not cover yet.</span></a>
             </div>
         </section>
 
-        <!-- Banner cảnh báo nếu dùng dữ liệu giả lập -->
+        <!-- Warning banner when synthetic data is in use -->
         <div id="dataBadgeArea"></div>
 
         <div class="step-head" id="step1">
-            <span class="step-num">Bước 1</span>
-            <h2 class="section-title">Hiện trạng và thử thời tiết</h2>
+            <span class="step-num">Step 1</span>
+            <h2 class="section-title">Current practice and weather test</h2>
         </div>
-        <p class="step-hint">Chọn vùng ở thanh trên cùng. Kéo thanh trượt hoặc bấm "Khô nóng" để xem lượng nước của từng phương án đổi ra sao.</p>
+        <p class="step-hint">Pick a region in the top bar. Move the sliders or press "Hot &amp; dry" to see how each strategy's water need changes.</p>
 
-        <!-- 2. BENTO INTRO: TỔNG QUAN HIỆN TRẠNG & THANH ĐIỀU KHIỂN KHÍ HẬU GỌN -->
+        <!-- 2. INTRO: CURRENT PRACTICE & COMPACT CLIMATE CONTROLS -->
         <section class="intro-grid">
-            <!-- Thẻ Hiện Trạng -->
             <div class="card hero" id="heroCard">
                 <div>
-                    <span class="hero-kicker" id="heroPlace">Đang tải vị trí...</span>
-                    <h2 class="hero-title" id="heroTitle">Đang nạp dữ liệu vùng...</h2>
+                    <span class="hero-kicker" id="heroPlace">Loading location...</span>
+                    <h2 class="hero-title" id="heroTitle">Loading region data...</h2>
                 </div>
                 <div id="heroBody"></div>
             </div>
 
-            <!-- Thanh Mô Phỏng Kịch Bản Khí Hậu Gọn (Compact Simulator) -->
+            <!-- Compact climate scenario simulator -->
             <div class="card scenario">
                 <div class="scenario-header">
-                    <h2 class="card-heading" style="font-size: 15px;">Thử thời tiết khô nóng hơn</h2>
+                    <h2 class="card-heading" style="font-size: 15px;">Try hotter, drier weather</h2>
                     <div class="preset-chips">
-                        <button type="button" class="preset-chip active" data-temp="0" data-rain="0">Hiện nay</button>
-                        <button type="button" class="preset-chip" data-temp="1.5" data-rain="-20" title="Nhiệt độ +1,5 °C, mưa −20%. Kịch bản giả định, không phải dự báo.">Khô nóng</button>
-                        <button type="button" class="preset-chip" data-temp="2.5" data-rain="-35" title="Nhiệt độ +2,5 °C, mưa −35%. Kịch bản giả định, không phải dự báo.">Rất khô nóng</button>
+                        <button type="button" class="preset-chip active" data-temp="0" data-rain="0">Today</button>
+                        <button type="button" class="preset-chip" data-temp="1.5" data-rain="-20" title="Temperature +1.5 °C, rain −20%. A what-if scenario, not a forecast.">Hot &amp; dry</button>
+                        <button type="button" class="preset-chip" data-temp="2.5" data-rain="-35" title="Temperature +2.5 °C, rain −35%. A what-if scenario, not a forecast.">Very hot &amp; dry</button>
                     </div>
                 </div>
 
                 <div class="slider-row">
-                    <label for="sliderTemp">Nhiệt độ</label>
+                    <label for="sliderTemp">Temperature</label>
                     <input type="range" id="sliderTemp" min="-1.0" max="3.0" step="0.5" value="0.0">
-                    <span id="valTemp" class="slider-value">Như hiện nay</span>
+                    <span id="valTemp" class="slider-value">As today</span>
                 </div>
 
                 <div class="slider-row">
-                    <label for="sliderRain">Lượng mưa</label>
+                    <label for="sliderRain">Rainfall</label>
                     <input type="range" id="sliderRain" min="-50" max="30" step="10" value="0">
-                    <span id="valRain" class="slider-value">Như hiện nay</span>
+                    <span id="valRain" class="slider-value">As today</span>
                 </div>
 
                 <div class="scenario-footer">
-                    <span class="muted" style="font-size: 11.5px;">Kịch bản giả định, không phải dự báo</span>
-                    <button type="button" id="btnReset" class="btn-reset">Đặt lại đo đạc gốc</button>
+                    <span class="muted" style="font-size: 11.5px;">What-if scenario, not a forecast</span>
+                    <button type="button" id="btnReset" class="btn-reset">Reset to measured climate</button>
                 </div>
             </div>
         </section>
 
-        <!-- 3. LƯỚI SO SÁNH PHƯƠNG ÁN LUÂN CANH CĂN HÀNG NGANG -->
+        <!-- Satellite check of the sowing calendar (MODIS MOD09A1), filled from /api/rotations observed_sowing -->
+        <section class="card sowing-card" id="sowingCheck" aria-label="Sowing dates seen from space" hidden></section>
+
+        <!-- 3. STRATEGY COMPARISON GRID -->
         <section id="rotationsSection">
             <div class="section-header-compact">
-                <div><span class="step-num">Bước 2</span><h2 class="section-title">So sánh các phương án luân canh cả năm</h2></div>
+                <div><span class="step-num">Step 2</span><h2 class="section-title">Compare whole-year rotation strategies</h2></div>
                 <div class="legend-compact" id="rotationLegend"></div>
             </div>
 
-            <p class="step-hint">Dòng đầu là cách đang làm. Thanh màu xanh dương càng ngắn là càng ít nước ngọt phải tưới. Trên lịch 12 tháng, tháng gạch đỏ là tháng nước mặn, chấm cam là có ngày nóng vượt ngưỡng của cây.</p>
+            <p class="step-hint">The first row is current practice. A shorter blue bar means less supplemental fresh water. On the 12-month calendar, red-underlined months are salinity months and an orange dot marks days hotter than the crop's threshold.</p>
             <div id="rotationsContent">
-                <div class="section-tools"><button type="button" id="btnCsv" class="btn-ghost" title="Mỗi dòng là một vụ: ETc, mưa hiệu quả, nước thêm cho lúa, lượng phải tưới (mm). 1 mm = 10 m³/ha.">Tải số liệu từng vụ (CSV)</button></div>
-                <div class="card compare" id="compareBars" aria-label="So sánh nhanh lượng nước ngọt"></div>
+                <div class="section-tools"><button type="button" id="btnCsv" class="btn-ghost" title="One row per season: ETc, effective rain, extra water for rice, water to supply (mm), plus one row per crop year. 1 mm = 10 m³/ha.">Download per-season data (CSV)</button></div>
+                <div class="card compare" id="compareBars" aria-label="Quick comparison of supplemental fresh water"></div>
                 <div id="rotationCardsGrid" class="strategy-grid-horizontal"></div>
             </div>
             <div id="rotationsEmpty" class="empty-state" hidden>
-                Chưa có dữ liệu khí tượng cho vùng này. Thả file vào <code>data/raw/power/&lt;vùng&gt;.csv</code> rồi tải lại trang.
+                No weather data for this region yet. Put a file at <code>data/raw/power/&lt;region&gt;.csv</code> and reload the page.
             </div>
         </section>
 
-        <!-- 3. Báo cáo cho phương án -->
+        <!-- 3. Strategy report -->
         <section id="reportSection">
             <div class="step-head">
-                <span class="step-num">Bước 3</span>
-                <h2 class="section-title">Báo cáo cho phương án</h2>
+                <span class="step-num">Step 3</span>
+                <h2 class="section-title">Strategy report</h2>
             </div>
-            <p class="step-hint">Bấm "Xem báo cáo cho phương án này" trên một thẻ ở Bước 2, hoặc bấm nút dưới đây để xem cả vùng. Báo cáo được ghép từ chính số liệu trên trang, theo kịch bản thời tiết đang chọn. Không dùng AI tạo chữ.</p>
+            <p class="step-hint">Press "View report for this strategy" on a card in Step 2, or use the button below for the whole region. The report is assembled from the same numbers shown on this page, for the selected weather scenario. No AI-generated text.</p>
             <div class="card">
                 <p class="report-context" id="reportContext"></p>
                 <div class="report-actions">
-                    <button type="button" id="btnReport" class="btn-primary">Tạo báo cáo cho cả vùng</button>
-                    <button type="button" id="btnPrint" class="btn-ghost">In báo cáo</button>
+                    <button type="button" id="btnReport" class="btn-primary">Build report for the whole region</button>
+                    <button type="button" id="btnPrint" class="btn-ghost">Print report</button>
                 </div>
-                <div class="chat-output" id="chatOutput" role="status" aria-live="polite">Bấm nút để tạo báo cáo.</div>
+                <div class="chat-output" id="chatOutput" role="status" aria-live="polite">Press the button to build a report.</div>
             </div>
         </section>
 
-        <!-- 5. SỐ LIỆU CHI TIẾT & BẢO ĐẢM KHOA HỌC NASA -->
+        <!-- 5. DETAILED DATA & NASA SCIENCE -->
         <section class="tech-section" id="techSection">
             <div class="section-header-compact">
-                <div><span class="step-num">Bước 4</span><h2 class="section-title">Dữ liệu và cách tính</h2></div>
+                <div><span class="step-num">Step 4</span><h2 class="section-title">Data and method</h2></div>
                 <div class="status-bar-clean" id="statusBar">
-                    <span class="chip chip-missing" id="chip-power">NASA POWER: kiểm tra...</span>
-                    <span class="chip chip-missing" id="chip-ndvi">MODIS NDVI: kiểm tra...</span>
-                    <span class="chip chip-missing" id="chip-sm">SMAP: kiểm tra...</span>
-                    <span class="chip chip-missing" id="chip-sal">Độ mặn: kiểm tra...</span>
+                    <span class="chip chip-missing" id="chip-power">NASA POWER: checking...</span>
+                    <span class="chip chip-missing" id="chip-ndvi">MODIS NDVI: checking...</span>
+                    <span class="chip chip-missing" id="chip-imerg">GPM IMERG: checking...</span>
+                    <span class="chip chip-missing" id="chip-sm">SMAP L4: checking...</span>
+                    <span class="chip chip-missing" id="chip-srtm">SRTM: checking...</span>
+                    <span class="chip chip-missing" id="chip-mod09">MODIS MOD09A1: checking...</span>
+                    <span class="chip chip-missing" id="chip-sal">Salinity: checking...</span>
                 </div>
             </div>
-            <p class="step-hint">Đối chiếu mưa và bốc hơi (NASA POWER 2015–2025) với độ xanh từ vệ tinh (MODIS NDVI) theo 12 tháng, cùng bảng nhu cầu nước từng cây và các giả định của mô hình. Phần này dành cho kỹ sư và giám khảo.</p>
+            <p class="step-hint">Compare rain and evaporative demand (NASA POWER 2015–2025) with satellite greenness (MODIS NDVI) across 12 months, plus each crop's water need and the model assumptions. This part is for engineers and judges.</p>
 
-            <!-- Biểu đồ NASA POWER và Dải MODIS NDVI thẳng hàng 12 tháng -->
+            <!-- NASA POWER chart and MODIS NDVI strip, 12 months aligned -->
             <div class="tech-grid-clean">
                 <div class="card">
-                    <h3 class="card-heading" style="font-size: 14.5px;">Mưa và bốc hơi ETo trung bình theo tháng (NASA POWER 2015–2025)</h3>
-                    <p class="muted">Cột xanh là mưa tổng, chưa trừ phần chảy tràn. Tháng nào đường nâu cao hơn cột xanh là tháng thiếu nước.</p>
+                    <h3 class="card-heading" style="font-size: 14.5px;">Mean monthly rain and reference evapotranspiration ETo (NASA POWER 2015–2025)</h3>
+                    <p class="muted">Dark blue bars are NASA POWER rain (used by the model), light blue bars are GPM IMERG rain (independent satellite cross-check), both before runoff losses. Months where the brown line is above the bars are water-deficit months.</p>
                     <div class="chart-container-clean" id="chartWrapper"><canvas id="climateChart"></canvas></div>
-                    <div id="climateEmpty" class="empty-state" hidden>Chưa có dữ liệu khí tượng.</div>
+                    <p class="muted xc-note" id="rainCheck" hidden></p>
+                    <div id="climateEmpty" class="empty-state" hidden>No weather data yet.</div>
                 </div>
 
                 <div class="card">
-                    <h3 class="card-heading" style="font-size: 14.5px;">Độ xanh từ vệ tinh (MODIS NDVI, trung vị ô 3×3 km)</h3>
-                    <p class="muted" id="ndviNote">Chỉ số NDVI trung bình 12 tháng. Giá trị cao phản ánh thảm phủ phát triển mạnh.</p>
+                    <h3 class="card-heading" style="font-size: 14.5px;">Satellite greenness (MODIS NDVI, median of a 3×3 km window)</h3>
+                    <p class="muted" id="ndviNote">Mean NDVI for each of 12 months. High values mean dense green cover.</p>
                     <div id="ndviModelRow"></div>
                     <div id="ndviStrip" class="ndvi-strip-swiss"></div>
                 </div>
             </div>
 
-            <!-- FIX 13: cách tính, để nhà khoa học kiểm tra lại -->
+            <!-- SMAP L4 dry-season soil moisture vs modeled deficit (Đắk Lắk), from cross_checks.soil_moisture -->
+            <div class="card smap-card" id="smapCard" hidden></div>
+
+            <!-- FIX 13: method, so scientists can re-check it -->
             <div class="card method-card" id="methodCard">
-                <h3 class="card-heading" style="font-size: 14.5px;">Cách tính (để kiểm tra lại)</h3>
-                <p class="muted" style="font-size: 12.5px;">Mã nguồn ở <code>core/eto.py</code>, <code>core/water_balance.py</code>, <code>core/rotation.py</code>. Tham số và nguồn từng con số ở <code>config/crops.json</code> và <code>config/rotations.json</code>.</p>
+                <h3 class="card-heading" style="font-size: 14.5px;">Method (for re-checking)</h3>
+                <p class="muted" style="font-size: 12.5px;">Source code in <code>core/eto.py</code>, <code>core/water_balance.py</code>, <code>core/rotation.py</code>. Parameters and the source of every number are in <code>config/crops.json</code> and <code>config/rotations.json</code>.</p>
                 <ol>
-                    <li><b>Bốc thoát hơi chuẩn ETo:</b> FAO-56 Penman-Monteith (Allen và cs., 1998), tính theo ngày từ NASA POWER (<code>T2M_MAX</code>, <code>T2M_MIN</code>, <code>RH2M</code>, <code>WS2M</code>, <code>ALLSKY_SFC_SW_DWN</code>), gió tối thiểu 0,5 m/s (FAO-56 tr.63). Kịch bản nóng hơn cộng ΔT vào cả nhiệt độ cao nhất và thấp nhất, giữ nguyên độ ẩm.</li>
-                    <li><b>Nhu cầu nước của cây:</b> ETc = Kc × ETo. Kc lấy từ FAO-56 Bảng 12 (tr.111–112), nội suy theo giai đoạn sinh trưởng. Cà phê dùng Kc giữa vụ cho cả mùa khô.</li>
-                    <li><b>Mưa hiệu quả Pe:</b> từ mưa tháng <code>PRECTOTCORR</code>; kịch bản mưa nhân với (1 + Δ%). Lúa theo FAO Training Manual 3 mục 4.2: Pe = 0,8P − 25 khi P &gt; 75 mm/tháng, Pe = 0,6P − 10 khi P ≤ 75. Cây cạn và cà phê theo USDA-SCS (dạng dùng trong CROPWAT của FAO): Pe = P(125 − 0,2P)/125 khi P ≤ 250 mm, Pe = 125 + 0,1P khi P &gt; 250.</li>
-                    <li><b>Nước thêm cho lúa</b> (FAO Training Manual 3 mục 4.4): làm đất 300 mm ở tháng đầu vụ (bão hòa đất 200 + lớp nước 100); vụ Đông Xuân gieo sau tháng 9–10 mưa nhiều thì bỏ phần bão hòa 200 mm; nước thấm 4 mm/ngày, cận dưới 2 mm/ngày.</li>
-                    <li><b>Lượng phải tưới:</b> mỗi tháng trong vụ, thiếu = max(0; ETc + thấm + làm đất − Pe). Cộng các tháng; tháng mưa dư không bù tháng thiếu vì mô hình chưa tính nước trữ trong đất. Lấy trung bình các năm 2015–2025. Đổi đơn vị: 1 mm = 10 m³/ha = 1 m³ trên 1.000 m².</li>
-                    <li><b>Độ xanh vệ tinh:</b> MODIS MOD13Q1 (250 m, 16 ngày) qua ORNL DAAC, trung vị ô 3×3 km quanh điểm ruộng, chỉ giữ điểm ảnh có độ tin cậy 0 hoặc 1. Chỉ dùng để đối chiếu lịch mùa vụ, không đưa vào công thức nước.</li>
-                    <li><b>Chưa tính:</b> nước trữ trong đất, diễn biến độ mặn theo ngày, nước và rủi ro của vụ tôm, năng suất, chi phí, giá bán.</li>
+                    <li><b>Reference evapotranspiration ETo:</b> FAO-56 Penman-Monteith (Allen et al., 1998), computed daily from NASA POWER (<code>T2M_MAX</code>, <code>T2M_MIN</code>, <code>RH2M</code>, <code>WS2M</code>, <code>ALLSKY_SFC_SW_DWN</code>), minimum wind 0.5 m/s (FAO-56 p.63). The warmer scenario adds ΔT to both daily maximum and minimum temperature and keeps humidity unchanged.</li>
+                    <li><b>Crop water need:</b> ETc = Kc × ETo. Kc from FAO-56 Table 12 (pp.111–112), interpolated by growth stage. Coffee uses the mid-season Kc for the whole dry season.</li>
+                    <li><b>Effective rain Pe:</b> from monthly rain <code>PRECTOTCORR</code>; the rain scenario multiplies by (1 + Δ%). Rice follows FAO Training Manual 3 section 4.2: Pe = 0.8P − 25 when P &gt; 75 mm/month, Pe = 0.6P − 10 when P ≤ 75. Upland crops and coffee follow USDA-SCS (the form used in FAO CROPWAT): Pe = P(125 − 0.2P)/125 when P ≤ 250 mm, Pe = 125 + 0.1P when P &gt; 250.</li>
+                    <li><b>Extra water for rice</b> (FAO Training Manual 3 section 4.4): land preparation 300 mm in the first month of the season (soil saturation 200 + standing water 100); a Winter–Spring rice crop sown after wet September–October months skips the 200 mm saturation; percolation 4 mm/day, lower bound 2 mm/day.</li>
+                    <li><b>Water to supply:</b> for each month in the season, deficit = max(0; ETc + percolation + land preparation − Pe). Months are summed; a wet month does not offset a dry month because the model does not track soil water storage yet. The headline number is the mean over crop years 2015–2025; the card also shows the median year and the dry year exceeded 1 year in 5. Unit conversion: 1 mm = 10 m³/ha = 1 m³ per 1,000 m².</li>
+                    <li><b>Satellite greenness:</b> MODIS MOD13Q1 (250 m, 16-day) via ORNL DAAC, median of a 3×3 km window around the field point, keeping only pixels with reliability 0 or 1. Used only to cross-check the crop calendar, not in the water formula.</li>
+                    <li><b>Satellite cross-checks</b> (shown next to the model, not used in the water formula): GPM IMERG monthly rain against NASA POWER rain; SMAP L4 dry-season soil moisture against the modeled deficit (Đắk Lắk); MODIS MOD09A1 flooding and greenness signals for observed rice sowing dates (Bến Tre); SRTM slope and published RUSLE C-factors for the cover-crop erosion comparison (Đắk Lắk). Sources and assumptions are listed next to each result.</li>
+                    <li><b>Not modeled yet:</b> soil water storage, daily salinity dynamics, water and risk of the shrimp phase, yield, cost, market price.</li>
                 </ol>
             </div>
 
-            <!-- Bảng Đánh Giá Từng Cây Trồng Vụ Khô -->
+            <!-- Dry-season crop water table -->
             <div class="card" style="margin-bottom: 16px;">
-                <h3 class="card-heading" style="font-size: 14.5px;">Nhu cầu nước từng cây trồng vụ khô</h3>
+                <h3 class="card-heading" style="font-size: 14.5px;">Water need of each dry-season crop</h3>
                 <div id="cropTableWrapper" style="overflow-x: auto; margin-top: 8px;">
                     <table class="table-clean">
                         <thead>
                             <tr>
-                                <th>Cây trồng</th>
-                                <th>Cửa sổ mùa vụ</th>
-                                <th style="text-align: right;">Nước tưới cần</th>
-                                <th style="text-align: right;">So với cây đầu</th>
-                                <th>Rủi ro thời tiết</th>
+                                <th>Crop</th>
+                                <th>Season window</th>
+                                <th style="text-align: right;">Irrigation need</th>
+                                <th style="text-align: right;">vs. first crop</th>
+                                <th>Weather risk</th>
                             </tr>
                         </thead>
                         <tbody id="cropTableBody"></tbody>
                     </table>
-                    <p id="waterOnlyScoreNote" class="muted" style="margin-top: 8px; font-size: 12px;" hidden>Bảng chỉ so nhu cầu nước. Rủi ro mặn chưa tính vì chưa có số đo độ mặn tại ruộng.</p>
+                    <p id="waterOnlyScoreNote" class="muted" style="margin-top: 8px; font-size: 12px;" hidden>This table compares water need only. Salinity risk is not modeled because there are no in-field salinity measurements yet.</p>
                 </div>
-                <div id="evaluateEmpty" class="empty-state" hidden>Chưa có dữ liệu để đánh giá.</div>
+                <div id="evaluateEmpty" class="empty-state" hidden>No data to evaluate yet.</div>
             </div>
 
             <div class="card" id="rotationAssumptionsBox"></div>
@@ -208,7 +219,7 @@
 
     <!-- FOOTER -->
     <footer>
-        <p>AERO-AGRI · NASA International Space Apps Challenge (Field Shift) · Đội ngũ phát triển AI20K</p>
+        <p>AERO-AGRI · NASA International Space Apps Challenge (Field Shift) · Team AI20K</p>
     </footer>
 
     <script src="vendor/chartjs/chart.umd.js"></script>

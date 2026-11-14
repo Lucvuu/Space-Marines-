@@ -144,7 +144,7 @@ class TestAeroAgriStep2(unittest.TestCase):
 
                 with self.assertRaises(ValueError) as ctx:
                     load_csv("power", "Test_Region")
-                self.assertIn("thiếu các cột bắt buộc", str(ctx.exception))
+                self.assertIn("missing required columns", str(ctx.exception))
 
                 # 2. Tạo file hợp lệ có -999
                 good_csv = os.path.join(power_dir, "Test_Good.csv")
@@ -447,7 +447,7 @@ class TestAeroAgriStep6(unittest.TestCase):
             try:
                 res = evaluate_crop_suitability("Ben_Tre_DBSCL")
                 self.assertFalse(res["available"])
-                self.assertIn("chưa có dữ liệu POWER", res["error"])
+                self.assertIn("no POWER data", res["error"])
             finally:
                 if old_data_dir:
                     os.environ["AERO_DATA_DIR"] = old_data_dir
@@ -508,13 +508,12 @@ class TestAeroAgriStep6(unittest.TestCase):
                 self.assertIn("markdown", advice)
                 self.assertFalse(advice["used_llm"])
                 md = advice["markdown"]
-                self.assertIn("1. Hiện trạng số liệu", md)
-                self.assertIn("2. Bảng so sánh", md)
-                self.assertIn("3. Việc nên làm", md)
-                self.assertIn("DỮ LIỆU MẪU", md)  # Gắn cờ dữ liệu mẫu
-                self.assertNotIn("mất trắng", md.lower())
-                self.assertNotIn("mất mùa", md.lower())
-                self.assertNotIn("năng suất", md.lower())
+                self.assertIn("1. Dry-season data status", md)
+                self.assertIn("2. Whole-year fresh water comparison", md)
+                self.assertIn("3. What to do", md)
+                self.assertIn("SYNTHETIC DEMO DATA", md)  # Synthetic data flag
+                for bad in ("mất trắng", "mất mùa", "năng suất", "total crop loss", "crop failure", "yield"):
+                    self.assertNotIn(bad, md.lower())
 
             finally:
                 if old_data_dir:
@@ -954,12 +953,13 @@ class TestAeroAgriFix6(unittest.TestCase):
         self.assertLess(dl["ndvi_years"][0], 2022)
 
     def test_fix8_1_web_khong_con_chu_chua_kiem_chung(self):
-        """Fix 8: web và advisor không còn số WASI chưa kiểm chứng và chữ quảng cáo."""
+        """Fix 8: web and advisor no longer show unverified WASI numbers or marketing wording."""
         txt = ""
         for rel in ("web/app.js", "web/index.html", "core/advisor.py"):
             with open(os.path.join(AERO_ROOT, rel), encoding="utf-8") as fh:
                 txt += fh.read()
-        for bad in ("2,5%", "4,2%", "65%", "20%–25%", "Thuận thiên", "Zero Black-Box", "AI Copilot", "7 ngày", "isRecommended"):
+        for bad in ("2,5%", "4,2%", "2.5%", "4.2%", "65%", "20%–25%", "Thuận thiên", "Zero Black-Box", "AI Copilot",
+                    "7 ngày", "isRecommended"):
             self.assertNotIn(bad, txt)
 
     def test_fix8_2_ghi_chu_phuong_an_tu_config(self):
@@ -971,9 +971,9 @@ class TestAeroAgriFix6(unittest.TestCase):
             self.skipTest("Thiếu dữ liệu POWER")
         s1 = next(s for s in bt["strategies"] if s["id"] == "S1")
         d1 = next(s for s in dl["strategies"] if s["id"] == "D1")
-        self.assertIn("chưa tính giai đoạn nuôi tôm", s1["note"])
-        self.assertIn("QĐ 26", d1["note"])
-        self.assertIn("Chưa tìm thấy số đo", d1["note"])
+        self.assertIn("shrimp phase not modeled", s1["note"])
+        self.assertIn("Decision 26", d1["note"])
+        self.assertIn("No measurements from the Central Highlands were found", d1["note"])
 
     def test_fix8_3_bao_cao_theo_phuong_an(self):
         """Fix 8: báo cáo liệt kê phương án luân canh, không chọn cây theo điểm."""
@@ -985,15 +985,17 @@ class TestAeroAgriFix6(unittest.TestCase):
         if not ev.get("available") or not rot.get("available"):
             self.skipTest("Thiếu dữ liệu POWER")
         md = build_advice("Ben_Tre_DBSCL", ev, question="", rotations=rot)["markdown"]
-        self.assertIn("3. Việc nên làm trước vụ tới", md)
-        self.assertIn("Kịch bản mô phỏng", md)
+        self.assertIn("3. What to do before the next season", md)
+        self.assertIn("Simulated scenario", md)
         for s in rot["strategies"]:
             if not s["is_existing"]:
                 self.assertIn(s["name_vi"], md)
-        self.assertIn("Chưa tính giai đoạn nuôi tôm", md)
+        self.assertIn("Shrimp phase not modeled", md)
         self.assertNotIn("Cân nhắc chuẩn bị đất và giống", md)
+        self.assertNotIn("Consider preparing land and seed", md)
         self.assertNotIn("Mẫu: False", md)
-        for bad in ("mất trắng", "mất mùa", "năng suất"):
+        self.assertNotIn("Synthetic: False", md)
+        for bad in ("mất trắng", "mất mùa", "năng suất", "total crop loss", "crop failure", "yield"):
             self.assertNotIn(bad, md.lower())
 
     def _fix9_power_df(self):
@@ -1084,21 +1086,24 @@ class TestAeroAgriFix6(unittest.TestCase):
             self.skipTest("Thiếu dữ liệu POWER")
         s = {x["id"]: x for x in rot["strategies"]}
         md = build_advice("Ben_Tre_DBSCL", ev, rotations=rot, strategy_id="S3")["markdown"]
-        self.assertIn("Phương án đang xem: **" + s["S3"]["name_vi"] + "**", md)
-        self.assertIn("Ngô rất nhạy mặn", md)
-        sec3 = md.split("3. Việc nên làm trước vụ tới", 1)[1]
+        self.assertIn("Selected strategy: **" + s["S3"]["name_vi"] + "**", md)
+        self.assertIn("Maize is very salt-sensitive", md)
+        sec3 = md.split("3. What to do before the next season", 1)[1]
         self.assertLess(sec3.index("- **" + s["S3"]["name_vi"]), sec3.index("- **" + s["S2"]["name_vi"]))
         md0 = build_advice("Ben_Tre_DBSCL", ev, rotations=rot)["markdown"]
-        self.assertNotIn("Phương án đang xem", md0)
-        for bad in ("mất trắng", "mất mùa", "năng suất"):
+        self.assertNotIn("Selected strategy", md0)
+        for bad in ("mất trắng", "mất mùa", "năng suất", "total crop loss", "crop failure", "yield"):
             self.assertNotIn(bad, md.lower())
 
     def test_fix11_2_trang_co_4_buoc(self):
-        """Fix 11: trang có 4 bước, 4 nút dẫn đường, đúng 1 thẻ h1, không còn tên kịch bản không nguồn."""
+        """Fix 11: the page has 4 steps, 4 guide links, exactly one h1, no unsourced scenario names; English UI."""
         with open(os.path.join(AERO_ROOT, "web", "index.html"), encoding="utf-8") as fh:
             html = fh.read()
+        self.assertIn('<html lang="en">', html)
+        self.assertIn('rel="icon"', html)
         for i in range(1, 5):
-            self.assertIn(f"Bước {i}", html)
+            self.assertIn(f"Step {i}", html)
+            self.assertNotIn(f"Bước {i}", html)
         for anchor in ('href="#step1"', 'href="#rotationsSection"', 'href="#reportSection"', 'href="#techSection"'):
             self.assertIn(anchor, html)
         self.assertIn('id="reportSection"', html)
@@ -1110,7 +1115,7 @@ class TestAeroAgriFix6(unittest.TestCase):
         """Fix 12: bảng mục 2 dùng số cả năm như thẻ phương án; không còn '.;'."""
         from core.scoring import evaluate_crop_suitability
         from core.rotation import evaluate_rotations
-        from core.advisor import build_advice, _vn_int
+        from core.advisor import build_advice, _fmt_int
         ev = evaluate_crop_suitability("Ben_Tre_DBSCL", 0.0, 0.0)
         rot = evaluate_rotations("Ben_Tre_DBSCL", 0.0, 0.0)
         if not ev.get("available") or not rot.get("available"):
@@ -1119,32 +1124,394 @@ class TestAeroAgriFix6(unittest.TestCase):
         sec2 = md.split("#### 2.")[1].split("#### 3.")[0]
         s = {x["id"]: x for x in rot["strategies"]}
         b = s["S0"]["annual_deficit_mm"]
-        self.assertIn("Mốc so sánh", sec2)
-        self.assertIn(_vn_int(b * 10), sec2)
+        self.assertIn("Baseline", sec2)
+        self.assertIn(_fmt_int(b * 10), sec2)
+        self.assertIn(",", _fmt_int(b * 10))  # English thousands separator
         for sid in ("S2", "S3"):
             d = s[sid]["annual_deficit_mm"]
-            self.assertIn(_vn_int(d * 10), sec2)
+            self.assertIn(_fmt_int(d * 10), sec2)
             self.assertIn(f"−{abs(round((d - b) / b * 100))}%", sec2)
-        self.assertIn("chưa tính vụ tôm", sec2)
-        self.assertNotIn("Tỷ lệ phải tưới", md)
-        self.assertNotIn("So với cây đầu", md)
-        self.assertNotIn("rủi ro &", md)
+        self.assertIn("shrimp phase not modeled", sec2)
+        self.assertNotIn("Irrigation share", md)
+        self.assertNotIn("vs. first crop", md)
+        self.assertNotIn("risk &", md)
         self.assertNotIn(".;", md)
 
     def test_fix13_1_loi_vao_theo_vai(self):
-        """Fix 13: trang có lối vào cho nông dân, cán bộ/nhà nghiên cứu, nhà khoa học; có CSV, in, cách tính."""
+        """Fix 13: entry points for farmers, extension officers/researchers and scientists; CSV, print, method card."""
         def read(*p):
             with open(os.path.join(AERO_ROOT, *p), encoding="utf-8") as fh:
                 return fh.read()
         html, js, css = read("web", "index.html"), read("web", "app.js"), read("web", "style.css")
-        for s in ("howto-roles", "Nông dân", "Cán bộ khuyến nông", "Nhà khoa học",
+        for s in ("howto-roles", "Farmers", "Extension officers &amp; researchers", "Scientists",
                   'href="#btnCsv"', 'href="#methodCard"', 'id="btnCsv"', 'id="btnPrint"',
-                  'id="methodCard"', 'id="ndviModelRow"', "FAO-56 Penman-Monteith", "0,8P − 25", "Chưa tính:"):
+                  'id="methodCard"', 'id="ndviModelRow"', "FAO-56 Penman-Monteith", "0.8P − 25", "Not modeled yet:"):
             self.assertIn(s, html)
-        for s in ("function plainLine", "function downloadCsv", "Mỗi 1.000 m²", "fromCharCode(0xFEFF)"):
+        for s in ("function plainLine", "function downloadCsv", "Per 1,000 m²", "fromCharCode(0xFEFF)",
+                  'toLocaleString("en-US"', "annual_deficit_by_year", "stress_years"):
             self.assertIn(s, js)
+        # app.js must not branch on (translatable) config wording
+        self.assertNotIn("chưa tính mặn", js)
+        self.assertNotIn("Hiện trạng", js)
         self.assertIn("@media print", css)
         self.assertEqual(html.count("<h1"), 1)
+
+    def test_fix14_1_web_hien_kiem_cheo_ve_tinh(self):
+        """Fix 14: web shows the satellite cross-checks (MOD09A1 sowing, IMERG, SMAP L4, SRTM/erosion) from API fields."""
+        def read(*p):
+            with open(os.path.join(AERO_ROOT, *p), encoding="utf-8") as fh:
+                return fh.read()
+        html, js, css = read("web", "index.html"), read("web", "app.js"), read("web", "style.css")
+        for i in ("sowingCheck", "rainCheck", "smapCard", "chip-imerg", "chip-sm", "chip-srtm", "chip-mod09"):
+            self.assertIn(f'id="{i}"', html)
+        for s in ("observed_sowing", "cross_checks", "seasons_per_year", "ground_truth_checks", "median_offset_days",
+                  "expected_error", "monthly_correlation", "imerg_mm", "correlation_anomaly_vs_deficit",
+                  "agrees_driest_year", "reduction_pct", "slope_deg_p50", "wet_season_rain_share", "caveats",
+                  "Sowing dates seen from space", "not yet verified", "sowing_detected", "rain_monthly",
+                  "smap_dry_season", "erosion_c_factor"):
+            self.assertIn(s, js)
+        self.assertLess(css.count("\n"), 500)
+        self.assertNotIn("linear-gradient(var", css)
+
+
+class TestT2YearlyVariability(unittest.TestCase):
+    """T2: per-year deficits, P50 / P80 (1-in-5 dry year) and documented stress years."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls._tmp_dir = tempfile.TemporaryDirectory()
+        cls.old_data_dir = os.environ.get("AERO_DATA_DIR")
+        os.environ["AERO_DATA_DIR"] = cls._tmp_dir.name
+        from scripts.make_demo_data import generate_demo_dataset
+        generate_demo_dataset()
+        from core.rotation import evaluate_rotations
+        cls.bt = evaluate_rotations("Ben_Tre_DBSCL", 0.0, 0.0)
+        cls.dl = evaluate_rotations("Dak_Lak_Tay_Nguyen", 0.0, 0.0)
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls.old_data_dir:
+            os.environ["AERO_DATA_DIR"] = cls.old_data_dir
+        else:
+            os.environ.pop("AERO_DATA_DIR", None)
+        cls._tmp_dir.cleanup()
+
+    def test_t2_1_water_balance_yearly_and_percentiles(self):
+        """calculate_water_balance exposes each year's deficit plus P50 and P80."""
+        from core.water_balance import calculate_water_balance
+        from core.loaders import load_csv
+        df, _ = load_csv("power", "Ben_Tre_DBSCL")
+        wb = calculate_water_balance(df, "Ben_Tre_DBSCL", "rice", 0.0, 0.0, season_start="05-25")
+        yearly = wb["yearly_deficit_mm"]
+        self.assertEqual(len(yearly), wb["years_evaluated"])
+        self.assertEqual([y["year"] for y in yearly], sorted(y["year"] for y in yearly))
+        vals = pd.Series([y["deficit_mm"] for y in yearly])
+        self.assertAlmostEqual(vals.mean(), wb["mean_deficit_mm"], delta=0.1)
+        self.assertAlmostEqual(vals.quantile(0.5), wb["p50_deficit_mm"], delta=0.1)
+        self.assertAlmostEqual(vals.quantile(0.8), wb["p80_deficit_mm"], delta=0.1)
+        self.assertGreaterEqual(wb["p80_deficit_mm"], wb["p50_deficit_mm"])
+
+    def test_t2_2_rotation_by_crop_year_sums_phases(self):
+        """Ben Tre S0: each crop year = Summer-Autumn (05-25, y) + Winter-Spring (11-01, y), only complete years."""
+        from core.water_balance import calculate_water_balance
+        from core.loaders import load_csv
+        df, _ = load_csv("power", "Ben_Tre_DBSCL")
+        ht = {y["year"]: y["deficit_mm"] for y in calculate_water_balance(
+            df, "Ben_Tre_DBSCL", "rice", 0.0, 0.0, season_start="05-25")["yearly_deficit_mm"]}
+        dx = {y["year"]: y["deficit_mm"] for y in calculate_water_balance(
+            df, "Ben_Tre_DBSCL", "rice", 0.0, 0.0, season_start="11-01", presaturated=True)["yearly_deficit_mm"]}
+        s0 = next(s for s in self.bt["strategies"] if s["id"] == "S0")
+        by_year = s0["annual_deficit_by_year"]
+        self.assertEqual([r["crop_year"] for r in by_year], sorted(set(ht) & set(dx)))
+        self.assertNotIn(2025, [r["crop_year"] for r in by_year])  # Winter-Spring 2025/26 runs past the data
+        for r in by_year:
+            self.assertAlmostEqual(r["deficit_mm"], ht[r["crop_year"]] + dx[r["crop_year"]], delta=0.2)
+            self.assertEqual(r["label"], f"{r['crop_year']}/{str(r['crop_year'] + 1)[-2:]}")
+        vals = pd.Series([r["deficit_mm"] for r in by_year])
+        self.assertAlmostEqual(s0["annual_deficit_p50_mm"], vals.quantile(0.5), delta=0.1)
+        self.assertAlmostEqual(s0["annual_deficit_p80_mm"], vals.quantile(0.8), delta=0.1)
+        self.assertEqual(s0["driest_crop_year"]["deficit_mm"], max(r["deficit_mm"] for r in by_year))
+
+    def test_t2_3_perennial_labels_single_year(self):
+        """Dak Lak coffee is evaluated in Jan-Apr, so crop-year labels are single calendar years."""
+        for s in self.dl["strategies"]:
+            self.assertGreater(len(s["annual_deficit_by_year"]), 5)
+            for r in s["annual_deficit_by_year"]:
+                self.assertEqual(r["label"], str(r["crop_year"]))
+            self.assertGreaterEqual(s["annual_deficit_p80_mm"], s["annual_deficit_p50_mm"])
+
+    def test_t2_4_partial_strategy_still_has_years(self):
+        """S1 (shrimp phase unmodeled) reports yearly fresh-water deficits of its rice phase only."""
+        s1 = next(s for s in self.bt["strategies"] if s["id"] == "S1")
+        self.assertTrue(s1["partial"])
+        self.assertGreater(len(s1["annual_deficit_by_year"]), 5)
+
+    def test_t2_5_stress_years_from_config_with_source(self):
+        """Stress years come from config with a source; Dak Lak has none configured."""
+        crop_years = [y["crop_year"] for y in self.bt["stress_years"]]
+        self.assertEqual(crop_years, [2015, 2019])
+        for y in self.bt["stress_years"]:
+            self.assertTrue(y.get("source"))
+            self.assertIn("verified", y)
+        self.assertEqual(self.dl["stress_years"], [])
+
+
+class TestT3SowingDetection(unittest.TestCase):
+    """T3: rice sowing dates from the MODIS flooding signal (LSWI + 0.05 >= EVI, then EVI green-up)."""
+
+    @staticmethod
+    def _series(flood_dates, start="2018-01-01", end="2019-12-31"):
+        """Synthetic 8-day EVI/LSWI: bare soil, flooded at each flood date, green-up peaking 0.6 after ~60 days."""
+        dates = pd.date_range(start, end, freq="8D")
+        evi, lswi = [], []
+        floods = [pd.Timestamp(d) for d in flood_dates]
+        for d in dates:
+            e, w = 0.20, 0.05  # bare / fallow: LSWI + 0.05 < EVI
+            for f in floods:
+                age = (d - f).days
+                if -8 < age <= 0:
+                    e, w = 0.10, 0.30  # flooded field
+                elif 0 < age <= 100:
+                    e = 0.10 + 0.50 * (age / 60.0 if age <= 60 else max(0.0, 1 - (age - 60) / 40.0))
+                    w = 0.10
+            evi.append(round(e, 3))
+            lswi.append(w)
+        return pd.DataFrame({"date": dates, "evi": evi, "lswi": lswi})
+
+    def test_t3_1_detects_two_rice_seasons_per_year(self):
+        from core.phenology import detect_sowing_dates, load_params
+        truth = ["2018-05-25", "2018-11-05", "2019-05-20", "2019-11-01"]
+        found = detect_sowing_dates(self._series(truth), load_params())
+        self.assertEqual(len(found), 4)
+        for f, t in zip(found, truth):
+            self.assertLessEqual(abs((f - pd.Timestamp(t)).days), 8)
+
+    def test_t3_2_permanent_water_and_bare_soil_not_detected(self):
+        from core.phenology import detect_sowing_dates, load_params
+        dates = pd.date_range("2018-01-01", "2019-12-31", freq="8D")
+        water = pd.DataFrame({"date": dates, "evi": 0.05, "lswi": 0.30})
+        bare = pd.DataFrame({"date": dates, "evi": 0.20, "lswi": 0.05})
+        self.assertEqual(detect_sowing_dates(water, load_params()), [])
+        self.assertEqual(detect_sowing_dates(bare, load_params()), [])
+
+    def test_t3_3_missing_values_are_skipped(self):
+        from core.phenology import detect_sowing_dates, load_params
+        df = self._series(["2018-05-25"], end="2018-12-31")
+        df.loc[df.index[::4], "evi"] = np.nan
+        found = detect_sowing_dates(df, load_params())
+        self.assertEqual(len(found), 1)
+
+    def test_t3_4_compare_with_configured_calendar(self):
+        from core.phenology import compare_with_calendar
+        found = [pd.Timestamp(d) for d in ("2018-05-30", "2018-11-12", "2019-05-15", "2019-10-28")]
+        res = compare_with_calendar(found, {"Summer-Autumn": "05-25", "Winter-Spring": "11-01"})
+        labels = [e["phase_label"] for e in res["events"]]
+        self.assertEqual(labels, ["Summer-Autumn", "Winter-Spring", "Summer-Autumn", "Winter-Spring"])
+        self.assertEqual([e["offset_days"] for e in res["events"]], [5, 11, -10, -4])
+        self.assertEqual(res["seasons_per_year"], {2018: 2, 2019: 2})
+        self.assertEqual(res["median_offset_days"], {"Summer-Autumn": -2.5, "Winter-Spring": 3.5})
+
+    def test_t3_4b_far_detections_are_unmatched(self):
+        """A detection farther than max_offset_days from every configured date is not assigned to a phase."""
+        from core.phenology import compare_with_calendar
+        found = [pd.Timestamp(d) for d in ("2018-05-30", "2018-08-20", "2018-11-12")]
+        res = compare_with_calendar(found, {"Summer-Autumn": "05-25", "Winter-Spring": "11-01"}, max_offset_days=60)
+        self.assertEqual([e["phase_label"] for e in res["events"]], ["Summer-Autumn", None, "Winter-Spring"])
+        self.assertIsNone(res["events"][1]["offset_days"])
+        self.assertEqual(res["n_unmatched"], 1)
+        self.assertEqual(res["median_offset_days"], {"Summer-Autumn": 5.0, "Winter-Spring": 11.0})
+        self.assertEqual(res["seasons_per_year"], {2018: 3})
+
+    def test_t3_4c_ground_truth_needs_a_detection_nearby(self):
+        """Ground check only pairs a report with a detection within max_offset_days; otherwise 'not detected'."""
+        from core.phenology import ground_truth_checks
+        found = [pd.Timestamp(d) for d in ("2022-11-25", "2023-11-17")]
+        gt = [{"date": "2023-11-22", "text": "t", "source": "s", "verified": True},
+              {"date": "2024-11-20", "text": "t", "source": "s", "verified": True}]
+        res = ground_truth_checks(found, gt, max_offset_days=60)
+        self.assertEqual((res[0]["detected_date"], res[0]["difference_days"]), ("2023-11-17", -5))
+        self.assertIsNone(res[1]["detected_date"])
+        self.assertIsNone(res[1]["difference_days"])
+
+    def test_t3_6_corrupt_optional_files_do_not_break_api(self):
+        """An empty/garbled GEE CSV gives available:false for that check, never an exception."""
+        from scripts.make_demo_data import generate_demo_dataset
+        from core.rotation import evaluate_rotations
+        from core.validation import region_cross_checks
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            old = os.environ.get("AERO_DATA_DIR")
+            os.environ["AERO_DATA_DIR"] = tmp_dir
+            try:
+                generate_demo_dataset()
+                gee_dir = os.path.join(tmp_dir, "raw", "gee")
+                os.makedirs(gee_dir, exist_ok=True)
+                for name in ("mod09a1_Ben_Tre_DBSCL", "imerg_monthly_Dak_Lak_Tay_Nguyen",
+                             "smap_monthly_Dak_Lak_Tay_Nguyen", "srtm_stats_Dak_Lak_Tay_Nguyen"):
+                    open(os.path.join(gee_dir, name + ".csv"), "w").close()
+                with open(os.path.join(gee_dir, "imerg_monthly_Ben_Tre_DBSCL.csv"), "w") as fh:
+                    fh.write("foo,bar\n1,2\n")
+                bt = evaluate_rotations("Ben_Tre_DBSCL")
+                dl = evaluate_rotations("Dak_Lak_Tay_Nguyen")
+                cc_bt = region_cross_checks("Ben_Tre_DBSCL", bt)
+                cc_dl = region_cross_checks("Dak_Lak_Tay_Nguyen", dl)
+            finally:
+                if old:
+                    os.environ["AERO_DATA_DIR"] = old
+                else:
+                    os.environ.pop("AERO_DATA_DIR", None)
+        self.assertTrue(bt["available"])
+        self.assertFalse(bt["observed_sowing"]["available"])
+        self.assertFalse(cc_bt["rainfall"]["available"])
+        self.assertFalse(cc_dl["rainfall"]["available"])
+        self.assertFalse(cc_dl["soil_moisture"]["available"])
+        self.assertIsNone(cc_dl["erosion"]["slope_deg_p50"])
+
+    def test_t3_5_rotation_api_reports_observed_sowing(self):
+        """evaluate_rotations adds observed sowing for the current rice practice (S0) when MOD09A1 data exists."""
+        from scripts.make_demo_data import generate_demo_dataset
+        from core.rotation import evaluate_rotations
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            old = os.environ.get("AERO_DATA_DIR")
+            os.environ["AERO_DATA_DIR"] = tmp_dir
+            try:
+                generate_demo_dataset()
+                bt0 = evaluate_rotations("Ben_Tre_DBSCL")
+                self.assertFalse(bt0["observed_sowing"]["available"])
+                gee_dir = os.path.join(tmp_dir, "raw", "gee")
+                os.makedirs(gee_dir, exist_ok=True)
+                self._series(["2018-05-25", "2018-11-05", "2019-05-20", "2019-11-01"]).to_csv(
+                    os.path.join(gee_dir, "mod09a1_Ben_Tre_DBSCL.csv"), index=False)
+                bt = evaluate_rotations("Ben_Tre_DBSCL")
+                dl = evaluate_rotations("Dak_Lak_Tay_Nguyen")
+            finally:
+                if old:
+                    os.environ["AERO_DATA_DIR"] = old
+                else:
+                    os.environ.pop("AERO_DATA_DIR", None)
+        obs = bt["observed_sowing"]
+        self.assertTrue(obs["available"])
+        s0_labels = {p["label"] for p in next(s for s in bt["strategies"] if s["id"] == "S0")["phases"]}
+        self.assertEqual(len(obs["events"]), 4)
+        self.assertTrue({e["phase_label"] for e in obs["events"]} <= s0_labels)
+        self.assertEqual(obs["seasons_per_year"], {"2018": 2, "2019": 2})
+        self.assertIn("configured_start", obs["phases"][0])
+        self.assertTrue(obs["source"])
+        gt = obs["ground_truth_checks"][0]  # 2023-11-22 report; synthetic detections stop in 2019 -> not detected
+        self.assertIsNone(gt["detected_date"])
+        self.assertIsNone(gt["difference_days"])
+        self.assertEqual(obs["n_unmatched"], 0)
+        self.assertFalse(dl["observed_sowing"]["available"])
+
+
+class TestT4T5Validation(unittest.TestCase):
+    """T5: POWER vs GPM IMERG rainfall; T4: SMAP root-zone anomaly vs modeled yearly deficit."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.old = os.environ.get("AERO_DATA_DIR")
+        os.environ["AERO_DATA_DIR"] = self._tmp.name
+        gee = os.path.join(self._tmp.name, "raw", "gee")
+        pw = os.path.join(self._tmp.name, "raw", "power")
+        os.makedirs(gee)
+        os.makedirs(pw)
+        days = pd.date_range("2016-01-01", "2017-12-31", freq="D")
+        # POWER: 2 mm/day in Jan-Jun, 6 mm/day in Jul-Dec
+        pd.DataFrame({"date": days.strftime("%Y-%m-%d"), "T2M_MAX": 32.0, "T2M_MIN": 24.0, "RH2M": 80.0,
+                      "WS2M": 2.0, "ALLSKY_SFC_SW_DWN": 18.0,
+                      "PRECTOTCORR": [2.0 if d.month <= 6 else 6.0 for d in days]}).to_csv(
+            os.path.join(pw, "Dak_Lak_Tay_Nguyen.csv"), index=False)
+        months = pd.date_range("2016-01-01", "2017-12-01", freq="MS")
+        # IMERG: exactly 1.5x POWER each month
+        pd.DataFrame({"month": months.strftime("%Y-%m"),
+                      "precip_mm": [1.5 * (2.0 if m.month <= 6 else 6.0) * m.days_in_month for m in months]}).to_csv(
+            os.path.join(gee, "imerg_monthly_Dak_Lak_Tay_Nguyen.csv"), index=False)
+        # SMAP: 0.30 everywhere except dry 2016 Jan-Apr (0.20) -> 2016 negative, 2017 positive anomaly
+        pd.DataFrame({"month": months.strftime("%Y-%m"),
+                      "sm_rootzone": [0.20 if (m.year == 2016 and m.month <= 4) else 0.30 for m in months],
+                      "sm_surface": 0.3}).to_csv(os.path.join(gee, "smap_monthly_Dak_Lak_Tay_Nguyen.csv"), index=False)
+
+    def tearDown(self):
+        if self.old:
+            os.environ["AERO_DATA_DIR"] = self.old
+        else:
+            os.environ.pop("AERO_DATA_DIR", None)
+        self._tmp.cleanup()
+
+    def test_t5_rainfall_power_vs_imerg(self):
+        from core.validation import rainfall_power_vs_imerg
+        res = rainfall_power_vs_imerg("Dak_Lak_Tay_Nguyen")
+        self.assertTrue(res["available"])
+        self.assertEqual([m["month"] for m in res["monthly"]], list(range(1, 13)))
+        jan = res["monthly"][0]
+        self.assertAlmostEqual(jan["power_mm"], 62.0, delta=0.1)
+        self.assertAlmostEqual(jan["imerg_mm"], 93.0, delta=0.1)
+        self.assertAlmostEqual(res["annual_ratio_imerg_to_power"], 1.5, delta=0.01)
+        self.assertEqual(res["n_months"], 24)
+        self.assertTrue(res["source_imerg"])
+
+    def test_t4_smap_dry_season_anomaly_by_year(self):
+        from core.validation import smap_dry_season_anomaly
+        res = smap_dry_season_anomaly("Dak_Lak_Tay_Nguyen", months=[1, 2, 3, 4],
+                                      modeled_by_year=[{"crop_year": 2016, "deficit_mm": 450.0},
+                                                       {"crop_year": 2017, "deficit_mm": 250.0}])
+        self.assertTrue(res["available"])
+        by = {r["year"]: r for r in res["by_year"]}
+        self.assertLess(by[2016]["anomaly"], 0)
+        self.assertGreater(by[2017]["anomaly"], 0)
+        self.assertEqual(by[2016]["modeled_deficit_mm"], 450.0)
+        self.assertEqual(res["n_years_compared"], 2)
+        self.assertTrue(res["agrees_driest_year"])
+
+    def test_t7_erosion_relative_reduction(self):
+        """T7: D1 vs D0 soil loss ratio from C only, with SRTM slope and IMERG wet-season share as site context."""
+        from core.erosion import erosion_comparison
+        gee = os.path.join(self._tmp.name, "raw", "gee")
+        pd.DataFrame([{"slope_deg_mean": 5.5, "slope_deg_p50": 5.0, "slope_deg_p90": 9.8,
+                       "elevation_mean": 513.2}]).to_csv(os.path.join(gee, "srtm_stats_Dak_Lak_Tay_Nguyen.csv"), index=False)
+        res = erosion_comparison("Dak_Lak_Tay_Nguyen")
+        self.assertTrue(res["available"])
+        self.assertAlmostEqual(res["reduction_pct"], round((1 - 0.006 / 0.045) * 100, 1), delta=0.05)
+        self.assertEqual(res["baseline_strategy"], "D0")
+        self.assertEqual(res["slope_deg_p50"], 5.0)
+        # IMERG fixture: 2 mm/day-equivalent Jan-Jun, 6 Jul-Dec -> May-Oct share
+        months = pd.date_range("2016-01-01", "2017-12-01", freq="MS")
+        rain = {m: 1.5 * (2.0 if m.month <= 6 else 6.0) * m.days_in_month for m in months}
+        wet = sum(v for m, v in rain.items() if 5 <= m.month <= 10) / sum(rain.values())
+        self.assertAlmostEqual(res["wet_season_rain_share"], round(wet, 3), delta=0.001)
+        self.assertFalse(res["verified"])
+        self.assertFalse(erosion_comparison("Ben_Tre_DBSCL")["available"])
+
+    def test_t4_t5_t7_api_cross_checks(self):
+        """POST /api/rotations carries cross_checks: rainfall (T5), soil_moisture (T4, perennial only), erosion (T7)."""
+        from core.validation import region_cross_checks
+        rot = {"strategies": [{"id": "D0", "is_existing": True,
+                               "annual_deficit_by_year": [{"crop_year": 2016, "label": "2016", "deficit_mm": 450.0},
+                                                          {"crop_year": 2017, "label": "2017", "deficit_mm": 250.0}]}]}
+        cc = region_cross_checks("Dak_Lak_Tay_Nguyen", rot)
+        self.assertTrue(cc["rainfall"]["available"])
+        self.assertTrue(cc["soil_moisture"]["available"])
+        self.assertEqual(cc["soil_moisture"]["strategy_id"], "D0")
+        self.assertIn("erosion", cc)
+        bt = region_cross_checks("Ben_Tre_DBSCL", {"strategies": []})
+        self.assertFalse(bt["soil_moisture"]["available"])
+
+    def test_t4_smap_check_ignores_weather_scenario(self):
+        """Observed SMAP is compared with the baseline model, never with a slider scenario."""
+        from core.validation import region_cross_checks
+        from core.rotation import evaluate_rotations
+        base = evaluate_rotations("Dak_Lak_Tay_Nguyen", 0.0, 0.0)
+        scen = evaluate_rotations("Dak_Lak_Tay_Nguyen", 2.0, -30.0)
+        cc = region_cross_checks("Dak_Lak_Tay_Nguyen", scen, delta_temp_c=2.0, delta_rain_pct=-30.0)
+        d0 = next(s for s in base["strategies"] if s["id"] == "D0")
+        expect = {r["crop_year"]: r["deficit_mm"] for r in d0["annual_deficit_by_year"]}
+        got = {r["year"]: r["modeled_deficit_mm"] for r in cc["soil_moisture"]["by_year"]}
+        self.assertEqual(got, {y: expect.get(y) for y in got})
+        self.assertTrue(cc["soil_moisture"]["baseline_weather"])
+
+    def test_t4_t5_missing_files(self):
+        from core.validation import rainfall_power_vs_imerg, smap_dry_season_anomaly
+        self.assertFalse(rainfall_power_vs_imerg("Ben_Tre_DBSCL")["available"])
+        self.assertFalse(smap_dry_season_anomaly("Ben_Tre_DBSCL", [1, 2, 3, 4], [])["available"])
 
 
 if __name__ == "__main__":

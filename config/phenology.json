@@ -1,0 +1,34 @@
+{
+  "_about": "Parameters for detecting rice sowing (flooding) dates from MODIS EVI/LSWI time series (task T3). Used only for regions with paddy rice.",
+  "flood_signal": {
+    "lswi_offset": 0.05,
+    "rule": "A composite is 'flooded' when LSWI + 0.05 >= EVI.",
+    "source": "Xiao et al. (2005), Remote Sensing of Environment 95: 480-492 (MODIS paddy rice mapping); applied to 13 Mekong Delta provinces by Tran Thi Hien & Vo Quang Minh (2014), Can Tho University",
+    "verified": false
+  },
+  "green_up": {
+    "max_composites_after_flood": 5,
+    "fraction_of_cycle_peak": 0.5,
+    "cycle_days": 120,
+    "rule": "The flooding is accepted as rice establishment if EVI reaches half of the crop-cycle maximum within five 8-day composites (40 days) after the flood signal.",
+    "source": "Xiao et al. (2005), Remote Sensing of Environment 95: 480-492",
+    "verified": false
+  },
+  "app_assumptions": {
+    "min_cycle_peak_evi": 0.35,
+    "min_days_between_seasons": 60,
+    "min_clear_fraction": 0.5,
+    "max_offset_days": 60,
+    "note": "App assumptions (not from a source): a crop cycle must peak at EVI >= 0.35 to exclude permanent water and bare soil; two detected sowings closer than 60 days are merged into one season; a composite is used only if at least half of the 3x3 km window is cloud-free; a detection more than 60 days from every configured sowing date is listed as 'unmatched' (possible extra crop or artefact) and left out of the medians, and a ground report is compared only with a detection within 60 days."
+  },
+  "ground_truth": {
+    "Ben_Tre_DBSCL": [
+      {"date": "2023-11-22", "approximate": true, "text": "Ba Tri: Winter-Spring rice sown around 22 Nov 2023 and harvested at the end of Feb 2024.", "source": "Báo Nông nghiệp Việt Nam [Vietnam Agriculture newspaper], 22/02/2024", "verified": true}
+    ]
+  },
+  "expected_error_days": {
+    "text": "Published MODIS rice-calendar methods in the Mekong Delta report errors of about 9-18 days (Sakamoto et al.: RMSE 9-12 days; Diem et al. 2021: MAE 15 days, RMSE 18 days for Winter-Spring).",
+    "source": "Sakamoto et al., JARQ 43(3); Diem et al. (2021) - abstracts read",
+    "verified": false
+  }
+}

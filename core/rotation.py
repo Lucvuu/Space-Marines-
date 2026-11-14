@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 """
 AERO-AGRI Whole-Year Crop Rotation Strategy Evaluator
-Đánh giá các chiến lược luân canh cả năm từ config/rotations.json:
-- Tính cân bằng nước (deficit_mm, etc_mm, peff_mm) và heat_ratio cho từng pha có mô hình
-- Giữ nguyên pha chưa mô hình hóa (crop: null, modeled: false, ví dụ tôm sú nước lợ)
-- Dựng lịch 12 tháng theo _display_rule (>= 15 ngày trên năm tham chiếu 2025, có vắt năm)
-- Tổng hợp annual_deficit_mm, partial, bare_months và dữ liệu NDVI trung bình 12 tháng
-- Không tự đặt trọng số hay tính điểm tổng hợp cho chiến lược
+Evaluates whole-year rotation strategies from config/rotations.json:
+- Water balance (deficit_mm, etc_mm, peff_mm) and heat_ratio for each modeled phase
+- Keeps unmodeled phases as-is (crop: null, modeled: false, e.g. brackish-water tiger shrimp)
+- Builds the 12-month calendar per _display_rule (>= 15 days in reference year 2025, wrapping years)
+- Aggregates annual_deficit_mm, per-crop-year deficits (P50/P80), partial, bare_months and 12-month mean NDVI
+- Never invents weights or a composite score for strategies
 """
 import pandas as pd
 from core.loaders import load_csv
+from core.phenology import observed_sowing_for_region
 from core.water_balance import (
     load_config,
     calculate_water_balance,
@@ -25,10 +26,10 @@ MIN_PHASE_DAYS_FOR_DISPLAY = 15
 
 def _count_phase_days_per_month(phase, reg_info, crops_cfg, ignore_perennial=False):
     """
-    Tính số ngày thuộc pha trong từng tháng (1..12) trên năm tham chiếu 2025 (có vắt năm).
-    - Cây lâu năm (perennial=true): cả 12 tháng đều có cây (>= 28 ngày/tháng) trừ khi ignore_perennial=True.
-    - Cây hằng năm hoặc ignore_perennial=True: tính từ start_date kéo dài season_days ngày.
-    - Pha không có crop (ví dụ tôm sú): tính từ start đến end trong config.
+    Days of a phase falling in each month (1..12) of reference year 2025 (wrapping into 2026).
+    - Perennial crops: all 12 months are occupied unless ignore_perennial=True.
+    - Annual crops (or ignore_perennial=True): from start_date for season_days days.
+    - Phases without a crop (e.g. shrimp): from start to end as configured.
     """
     counts = {m: 0 for m in range(1, 13)}
     crop_id = phase.get("crop")
@@ -50,7 +51,7 @@ def _count_phase_days_per_month(phase, reg_info, crops_cfg, ignore_perennial=Fal
             counts[int(m)] += 1
         return counts
 
-    # Pha có crop: null (dùng start và end dạng MM-DD)
+    # Phase with crop: null (uses start and end as MM-DD)
     start_str = phase.get("start")
     end_str = phase.get("end")
     if not start_str or not end_str:
@@ -68,8 +69,8 @@ def _count_phase_days_per_month(phase, reg_info, crops_cfg, ignore_perennial=Fal
 
 def _ndvi_monthly(ndvi_df, years=None):
     """
-    Tính trung bình NDVI 12 tháng, tùy chọn lọc theo khoảng năm [y0, y1].
-    Trả về (monthly, used_years).
+    12-month mean NDVI, optionally limited to years [y0, y1].
+    Returns (monthly, used_years).
     """
     if ndvi_df is None or len(ndvi_df) == 0 or "ndvi" not in ndvi_df.columns:
         return None, None
@@ -90,16 +91,50 @@ def _ndvi_monthly(ndvi_df, years=None):
     return monthly, used_years
 
 
+def _phase_crosses_year(phase, reg_info, crops_cfg):
+    """True when an annual crop phase sown in year y ends in year y+1 (perennial phases never do)."""
+    crop_id = phase.get("crop")
+    c_info = crops_cfg.get(crop_id, {}) if crop_id is not None else {}
+    if crop_id is None or c_info.get("perennial", False):
+        return False
+    start_mmdd = phase.get("start") or resolve_crop_season_start(reg_info, crop_id)
+    start_dt, end_dt = get_annual_season_bounds(2025, start_mmdd, int(c_info.get("season_days") or 100))
+    return end_dt.year > start_dt.year
+
+
+def _summarize_crop_years(phase_yearly, crosses_year):
+    """
+    Combine per-phase yearly deficits into crop-year totals.
+    Crop year y = every modeled phase sown in year y; only years where all modeled phases
+    have a complete season are kept. Returns (by_year, p50, p80, driest).
+    """
+    if not phase_yearly:
+        return [], None, None, None
+    common = set(phase_yearly[0])
+    for py in phase_yearly[1:]:
+        common &= set(py)
+    by_year = []
+    for y in sorted(common):
+        label = f"{y}/{str(y + 1)[-2:]}" if crosses_year else str(y)
+        total = round(float(sum(py[y] for py in phase_yearly)), 1)
+        by_year.append({"crop_year": int(y), "label": label, "deficit_mm": total})
+    if not by_year:
+        return [], None, None, None
+    vals = pd.Series([r["deficit_mm"] for r in by_year])
+    driest = max(by_year, key=lambda r: r["deficit_mm"])
+    return by_year, round(float(vals.quantile(0.5)), 1), round(float(vals.quantile(0.8)), 1), dict(driest)
+
+
 def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
     """
-    Đánh giá các chiến lược luân canh cả năm cho vùng `region_id`.
+    Evaluate the whole-year rotation strategies for `region_id`.
     """
     regions_cfg = load_config("regions")
     crops_cfg = load_config("crops")
     rotations_cfg = load_config("rotations")
 
     if region_id not in regions_cfg or region_id not in rotations_cfg:
-        raise ValueError(f"Vùng không tồn tại trong cấu hình luân canh: {region_id}")
+        raise ValueError(f"Region not found in rotation config: {region_id}")
 
     reg_info = regions_cfg[region_id]
     reg_rot = rotations_cfg[region_id]
@@ -110,10 +145,10 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
         return {
             "available": False,
             "region_id": region_id,
-            "error": f"chưa có dữ liệu POWER cho vùng {region_id}"
+            "error": f"no NASA POWER data for region {region_id}"
         }
 
-    # Tính trung bình NDVI theo 12 tháng (nếu có file NDVI)
+    # 12-month mean NDVI (if an NDVI file exists)
     ndvi_df, ndvi_meta = load_csv("ndvi", region_id)
     ndvi_monthly, ndvi_years = _ndvi_monthly(ndvi_df, reg_rot.get("ndvi_years"))
 
@@ -124,6 +159,8 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
     for strat in reg_rot.get("strategies", []):
         phases_out = []
         phase_month_counts = []
+        phase_yearly = []
+        crosses_year = False
 
         for ph in strat.get("phases", []):
             crop_id = ph.get("crop")
@@ -162,6 +199,10 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
                     deficit_low_mm = wb_low.get("mean_deficit_mm")
                 else:
                     deficit_low_mm = wb.get("mean_deficit_mm")
+
+                if wb.get("available"):
+                    phase_yearly.append({r["year"]: r["deficit_mm"] for r in wb.get("yearly_deficit_mm", [])})
+                    crosses_year = crosses_year or _phase_crosses_year(ph, reg_info, crops_cfg)
 
                 window = get_crop_season_window_info(reg_override, crop_id, c_info)
 
@@ -215,7 +256,7 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
                     "heat_ratio": None
                 })
 
-        # Số liệu cả năm
+        # Whole-year figures
         modeled_defs = [
             p["deficit_mm"] for p in phases_out
             if p["modeled"] and p["deficit_mm"] is not None
@@ -227,8 +268,9 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
         ]
         annual_deficit_low_mm = round(float(sum(modeled_defs_low)), 1) if modeled_defs_low else None
         partial = any(not p["modeled"] for p in phases_out)
+        by_year, p50_mm, p80_mm, driest = _summarize_crop_years(phase_yearly, crosses_year)
 
-        # Lịch 12 tháng theo _display_rule (>= 15 ngày thuộc pha)
+        # 12-month calendar per _display_rule (>= 15 days in a phase)
         calendar_12m = []
         bare_months = []
         for m in range(1, 13):
@@ -267,7 +309,7 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
                 "heat_ratio": month_heat_ratio
             })
 
-        # Đếm ngày cho các pha có mô hình với ignore_perennial=True để xác định water_months
+        # Count days of modeled phases with ignore_perennial=True to get water_months
         water_month_days = {m: 0 for m in range(1, 13)}
         modeled_labels = set()
         for p in phases_out:
@@ -295,6 +337,10 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
             "phases": phases_out,
             "annual_deficit_mm": annual_deficit_mm,
             "annual_deficit_low_mm": annual_deficit_low_mm,
+            "annual_deficit_by_year": by_year,
+            "annual_deficit_p50_mm": p50_mm,
+            "annual_deficit_p80_mm": p80_mm,
+            "driest_crop_year": driest,
             "water_months": water_months,
             "water_full_year": water_full_year,
             "partial": partial,
@@ -308,6 +354,9 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
             "risks": strat.get("risks", [])
         })
 
+    existing = next((s for s in reg_rot.get("strategies", []) if s.get("is_existing")), None)
+    existing_phases = existing.get("phases", []) if existing else []
+
     is_synthetic = bool(power_meta.get("is_synthetic", False)) or (
         bool(ndvi_meta.get("is_synthetic", False)) if ndvi_df is not None else False
     )
@@ -320,6 +369,9 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
         "display_rule": display_rule,
         "salinity_months": salinity_months,
         "salinity_months_source": reg_rot.get("salinity_months_source", ""),
+        "observed_sowing": observed_sowing_for_region(region_id, existing_phases),
+        "stress_years": reg_rot.get("stress_years", []),
+        "stress_years_source": reg_rot.get("stress_years_source"),
         "assumptions": reg_rot.get("assumptions", []),
         "ndvi_monthly": ndvi_monthly,
         "ndvi_years": ndvi_years,

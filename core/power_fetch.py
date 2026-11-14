@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 AERO-AGRI NASA POWER Live Fetcher
-Tải dữ liệu khí tượng bề mặt hàng ngày từ NASA POWER API và lưu định dạng CSV.
-Tuân thủ: đổi YYYYMMDD sang YYYY-MM-DD, lỗi mạng thì in lỗi và thoát, KHÔNG sinh data thay thế.
+Downloads daily surface weather data from the NASA POWER API and saves it as CSV.
+Rules: convert YYYYMMDD to YYYY-MM-DD; on a network error print the error and exit; NEVER generate substitute data.
 """
 import os
 import sys
@@ -22,7 +22,7 @@ from core.water_balance import load_config
 def fetch_power_for_region(region_id, start="20150101", end="20251231"):
     regions_cfg = load_config("regions")
     if region_id not in regions_cfg:
-        raise ValueError(f"Vùng không xác định: {region_id}")
+        raise ValueError(f"Unknown region: {region_id}")
 
     coords = regions_cfg[region_id]
     url = "https://power.larc.nasa.gov/api/temporal/daily/point"
@@ -36,7 +36,7 @@ def fetch_power_for_region(region_id, start="20150101", end="20251231"):
         "format": "JSON"
     }
 
-    print(f"[NASA POWER] Đang tải dữ liệu cho {coords.get('name', region_id)} ({coords['lat']}, {coords['lon']}) ({start} - {end})...")
+    print(f"[NASA POWER] Downloading data for {coords.get('name', region_id)} ({coords['lat']}, {coords['lon']}) ({start} - {end})...")
     try:
         resp = requests.get(url, params=params, timeout=60)
         resp.raise_for_status()
@@ -44,11 +44,11 @@ def fetch_power_for_region(region_id, start="20150101", end="20251231"):
         print(f"[NASA POWER] Geometry coordinates: {data.get('geometry', {}).get('coordinates')}")
         parameters = data["properties"]["parameter"]
     except Exception as e:
-        print(f"[ERROR] Lỗi khi kết nối hoặc tải NASA POWER API: {e}", file=sys.stderr)
+        print(f"[ERROR] Failed to connect to or download from the NASA POWER API: {e}", file=sys.stderr)
         return False
 
     df = pd.DataFrame(parameters)
-    # NASA POWER trả date dạng YYYYMMDD ở index -> chuyển sang YYYY-MM-DD
+    # NASA POWER returns dates as YYYYMMDD in the index -> convert to YYYY-MM-DD
     formatted_dates = []
     for d in df.index:
         d_str = str(d)
@@ -73,12 +73,12 @@ def fetch_power_for_region(region_id, start="20150101", end="20251231"):
         "is_synthetic": False,
         "point": [coords["lat"], coords["lon"]]
     })
-    print(f"[SUCCESS] Đã lưu {len(df)} dòng dữ liệu vào {out_path}")
+    print(f"[SUCCESS] Saved {len(df)} rows to {out_path}")
     return True
 
 def main():
     if "--help" in sys.argv or "-h" in sys.argv:
-        print("Sử dụng: python core/power_fetch.py — Tải dữ liệu NASA POWER hàng ngày cho Bến Tre và Đắk Lắk.")
+        print("Usage: python core/power_fetch.py — download daily NASA POWER data for Bến Tre and Đắk Lắk.")
         sys.exit(0)
     regions_cfg = load_config("regions")
     success = True

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 AERO-AGRI One-Command Runner
-1 lệnh duy nhất: kiểm tra trạng thái data -> start server :8050 -> mở trình duyệt.
+One command: check data status -> start the server on :8050 -> open the browser.
 """
 import os
 import sys
@@ -21,30 +21,30 @@ from server import create_server
 def open_browser():
     time.sleep(1.2)
     url = "http://127.0.0.1:8050"
-    print(f"[AERO-AGRI] Đang tự động mở trình duyệt tới {url} ...")
+    print(f"[AERO-AGRI] Opening the browser at {url} ...")
     webbrowser.open(url)
 
 def main():
     print("=" * 60)
-    print("🚀 KHỞI ĐỘNG HỆ THỐNG AERO-AGRI (NASA SPACE APPS 2026)")
+    print("STARTING AERO-AGRI (NASA SPACE APPS 2026)")
     print("=" * 60)
 
-    # 1. Kiểm tra trạng thái dữ liệu
-    print("\n[BƯỚC 1/2] Kiểm tra trạng thái nguồn dữ liệu hiện có:")
+    # 1. Check data status
+    print("\n[STEP 1/2] Checking the status of available data sources:")
     check_all_data()
 
-    # 2. Mở trình duyệt sau 1.2s trong luồng nền
+    # 2. Open the browser after 1.2 s in a background thread
     threading.Thread(target=open_browser, daemon=True).start()
 
-    # 3. Khởi động máy chủ cổng 8050
+    # 3. Start the server on port 8050
     port = 8050
-    print(f"\n[BƯỚC 2/2] Khởi động máy chủ HTTP tại http://127.0.0.1:{port}")
-    print("Nhấn Ctrl + C để dừng máy chủ.\n")
+    print(f"\n[STEP 2/2] Starting the HTTP server at http://127.0.0.1:{port}")
+    print("Press Ctrl + C to stop the server.\n")
     server = create_server("127.0.0.1", port)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\n[+] Đang tắt máy chủ AERO-AGRI...")
+        print("\n[+] Shutting down the AERO-AGRI server...")
         server.server_close()
 
 if __name__ == "__main__":

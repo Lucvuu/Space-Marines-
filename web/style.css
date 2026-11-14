@@ -1,4 +1,4 @@
-/* AERO-AGRI DESIGN SYSTEM — SWISS EDITORIAL & MODERN SAAS PRODUCT (Dưới 450 dòng) */
+/* AERO-AGRI DESIGN SYSTEM — SWISS EDITORIAL & MODERN DATA PRODUCT (keep under 500 lines) */
 :root {
   --bg: #f7f7f5;
   --surface: #ffffff;
@@ -85,7 +85,7 @@ input[type="range"] { width: 100%; accent-color: var(--primary); height: 16px; c
 .btn-reset { border: 0; background: none; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 0; font-size: 11.5px; }
 .btn-reset:hover { color: var(--text); }
 
-/* 3. LƯỚI PHƯƠNG ÁN CĂN HÀNG NGANG (SWISS SPEC-SHEET) */
+/* 3. STRATEGY GRID (SWISS SPEC-SHEET) */
 .section-header-compact { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
 .section-title { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
 .legend-compact { display: inline-flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--muted); }
@@ -112,14 +112,14 @@ input[type="range"] { width: 100%; accent-color: var(--primary); height: 16px; c
 .metric-sub-delta.up { color: var(--bad); }
 .metric-sub-delta.down { color: var(--good); }
 
-/* GANTT TIMELINE 12 THÁNG */
+/* 12-MONTH GANTT TIMELINE */
 .gantt-timeline { margin-bottom: 10px; }
 .gantt-months-head { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1px; font-size: 10px; color: var(--muted-light); text-align: center; margin-bottom: 2px; }
 .gantt-months-head span.sal { color: var(--sal); font-weight: 700; border-bottom: 2px solid var(--sal); }
 .gantt-bar { display: grid; grid-template-columns: repeat(12, 1fr); height: 24px; border-radius: 4px; overflow: hidden; background: var(--c-bare); border: 1px solid rgba(0,0,0,0.06); }
 .gantt-seg { position: relative; display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 3px; }
 .gantt-seg.crop-rice { background: var(--c-rice); }
-.gantt-seg.crop-shrimp { background: repeating-linear-gradient(45deg, var(--c-shrimp), var(--c-shrimp) 4px, #0284c7 4px, #0284c7 8px); }
+.gantt-seg.crop-shrimp { background: repeating-linear-gradient(45deg, var(--c-shrimp), var(--c-shrimp) 4px, #0369a1 4px, #0369a1 8px); }
 .gantt-seg.crop-soybean { background: var(--c-soybean); }
 .gantt-seg.crop-maize { background: var(--c-maize); }
 .gantt-seg.crop-coffee { background: var(--c-coffee); }
@@ -139,7 +139,7 @@ input[type="range"] { width: 100%; accent-color: var(--primary); height: 16px; c
 .more-content { font-size: 11.5px; color: var(--muted); margin-top: 6px; padding: 6px; background: var(--surface-subtle); border-radius: 5px; }
 .more-content ul { margin: 3px 0; padding-left: 14px; }
 
-/* 4. BÁO CÁO TƯ VẤN */
+/* 4. ADVISORY REPORT */
 .chat-output { margin-top: 12px; padding: 12px 14px; background: #fafaf9; border: 1px solid var(--border); border-radius: 7px; font-size: 13.5px; line-height: 1.55; color: var(--text); }
 .chat-output h3, .chat-output h4 { font-size: 14px; margin: 6px 0 3px; }
 .chat-output p { margin: 5px 0; }
@@ -196,7 +196,7 @@ footer { text-align: center; padding: 24px 0; color: var(--muted); font-size: 12
   .ndvi-strip-swiss { grid-template-columns: repeat(6, 1fr); }
 }
 
-/* FIX 10: so sánh nhanh, lịch, điện thoại */
+/* FIX 10: quick comparison, calendar, phone layout */
 :root { --water: #0369a1; --water-light: #bae6fd; --c-coffee_cover_crop: var(--c-cover); }
 .intro-grid > *, .strategy-grid-horizontal > *, .tech-grid-clean > * { min-width: 0; }
 .strategy-grid-horizontal { grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); }
@@ -239,7 +239,7 @@ footer { text-align: center; padding: 24px 0; color: var(--muted); font-size: 12
   .ndvi-strip-swiss { grid-template-columns: repeat(6, 1fr); }
 }
 
-/* FIX 11: dẫn đường 4 bước */
+/* FIX 11: 4-step guide */
 .howto { padding: 6px 0 18px; margin-bottom: 18px; border-bottom: 1px solid var(--border); }
 .howto-hook { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; line-height: 1.3; max-width: 46ch; }
 .howto-sub { color: var(--muted); font-size: 13.5px; margin-top: 4px; max-width: 88ch; }
@@ -264,14 +264,14 @@ footer { text-align: center; padding: 24px 0; color: var(--muted); font-size: 12
   .howto-steps a { width: 100%; }
 }
 
-/* FIX 12: lịch 12 tháng không đẩy chữ tràn ô, chân thẻ xếp dọc */
+/* FIX 12: 12-month calendar without overflow, stacked card footer */
 .gantt-months-head, .gantt-bar { grid-template-columns: repeat(12, minmax(0, 1fr)); }
 .gantt-seg { min-width: 0; }
 .rot-card-footer { flex-direction: column; align-items: flex-start; gap: 6px; }
 .rot-card-footer .card-report-btn { order: -1; font-size: 12.5px; }
 .rot-card-footer details { width: 100%; }
 
-/* FIX 13: lối vào theo vai, dòng nói gọn cho nông dân, tải CSV, in báo cáo, khối cách tính */
+/* FIX 13: role entry points, farmer summary box, CSV download, print report, method card */
 .howto-roles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
 .howto-roles .role { display: block; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); text-decoration: none; font-size: 12.5px; line-height: 1.45; }
 .howto-roles .role:hover { border-color: var(--primary); }
@@ -292,6 +292,36 @@ footer { text-align: center; padding: 24px 0; color: var(--muted); font-size: 12
 .method-card ol { margin: 6px 0 0; padding-left: 20px; font-size: 13px; line-height: 1.55; }
 .method-card li { margin-bottom: 4px; }
 .method-card code { font-size: 12px; }
+.metric-mm { font-size: 11px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+/* T2: year-to-year variability inside the metrics row (no extra box) */
+.yr-block { grid-column: 1 / -1; padding-top: 6px; border-top: 1px solid #f1f5f9; }
+.yr-line { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.yr-line b { color: var(--text); font-weight: 700; }
+.yr-strip { display: flex; align-items: flex-end; gap: 2px; height: 22px; margin-top: 4px; }
+.yr-bar { flex: 1; min-width: 0; background: var(--water-light); border-radius: 1px 1px 0 0; }
+.yr-bar.stress { background: var(--sal); }
+.yr-axis { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted-light); font-variant-numeric: tabular-nums; margin-top: 1px; }
+/* Satellite cross-checks: sowing dates, IMERG rain, SMAP, erosion line */
+.sowing-card { margin: -10px 0 24px; }
+.xc-list { margin: 4px 0 8px; padding-left: 18px; font-size: 13px; line-height: 1.5; }
+.xc-list b, .xc-note b, .xc-line b { font-variant-numeric: tabular-nums; }
+.xc-note { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.45; }
+.xc-line { font-size: 12px; line-height: 1.4; margin: 0 0 6px; }
+.xc-details { font-size: 12.5px; margin-top: 8px; }
+.xc-details summary { cursor: pointer; color: var(--muted); font-weight: 600; text-decoration: underline; }
+.xc-details p { margin-top: 6px; }
+.xc-table { font-size: 12.5px; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.xc-table .num { text-align: right; white-space: nowrap; }
+.xc-table tr.hl td { font-weight: 700; }
+.sow-years { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.sow-yr b { color: var(--text); }
+.sow-yr.low b { color: var(--warn); }
+.anom { position: relative; display: block; width: 90px; height: 10px; }
+.anom::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--muted-light); }
+.anom i { position: absolute; top: 1px; bottom: 1px; }
+.anom i.dry { background: var(--warn); }
+.anom i.wet { background: var(--water); }
+.smap-card { margin-bottom: 16px; }
 .ndvi-row-lbl { font-size: 11.5px; font-weight: 600; color: var(--muted); margin: 10px 0 4px; }
 #btnCsv { scroll-margin-top: 90px; }
 @media (max-width: 640px) {

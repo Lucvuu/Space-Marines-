@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 AERO-AGRI Data Loaders & Schema Validation
-Tuân thủ hợp đồng dữ liệu nghiêm ngặt theo mục 3 và ràng buộc 1.1, 1.2, 1.3
+Enforces the strict data contract (spec section 3, constraints 1.1, 1.2, 1.3)
 """
 import os
 import json
@@ -18,11 +18,11 @@ SCHEMAS = {
 }
 
 def get_data_dir():
-    """Lấy thư mục dữ liệu qua biến môi trường AERO_DATA_DIR, mặc định aero-agri/data."""
+    """Return the data directory from the AERO_DATA_DIR environment variable (default: <repo>/data)."""
     return os.environ.get("AERO_DATA_DIR", os.path.join(AERO_ROOT, "data"))
 
 def get_manifest():
-    """Đọc tệp manifest.json."""
+    """Read manifest.json."""
     data_dir = get_data_dir()
     manifest_path = os.path.join(data_dir, "manifest.json")
     if not os.path.isfile(manifest_path):
@@ -34,7 +34,7 @@ def get_manifest():
         return {}
 
 def update_manifest_entry(rel_path, metadata):
-    """Cập nhật 1 bản ghi vào manifest.json."""
+    """Update one entry in manifest.json."""
     data_dir = get_data_dir()
     manifest_path = os.path.join(data_dir, "manifest.json")
     manifest = get_manifest()
@@ -45,13 +45,13 @@ def update_manifest_entry(rel_path, metadata):
 
 def load_csv(source_type, region_id):
     """
-    Đọc và xác thực CSV theo schema hợp đồng dữ liệu.
-    Trả về (DataFrame, meta_dict) nếu có dữ liệu;
-    Trả về (None, meta_dict) nếu file không tồn tại.
-    Ném lỗi ValueError nêu rõ tên file và cột thiếu nếu không đúng schema.
+    Read and validate a CSV against the data-contract schema.
+    Returns (DataFrame, meta_dict) when the data exists;
+    returns (None, meta_dict) when the file does not exist.
+    Raises ValueError naming the file and the missing columns if the schema does not match.
     """
     if source_type not in SCHEMAS:
-        raise ValueError(f"Nguồn dữ liệu không xác định: {source_type}")
+        raise ValueError(f"Unknown data source: {source_type}")
 
     data_dir = get_data_dir()
     rel_path = f"{source_type}/{region_id}.csv"
@@ -60,7 +60,7 @@ def load_csv(source_type, region_id):
     manifest = get_manifest()
     manifest_entry = manifest.get(rel_path, {})
     is_synthetic = manifest_entry.get("is_synthetic", False)
-    source_name = manifest_entry.get("source", "nguồn: chưa khai báo")
+    source_name = manifest_entry.get("source", "source: not declared")
 
     if not os.path.isfile(file_path):
         return None, {
@@ -70,25 +70,25 @@ def load_csv(source_type, region_id):
             "file": rel_path
         }
 
-    # Đọc CSV
+    # Read the CSV
     df = pd.read_csv(file_path, encoding="utf-8")
 
-    # Kiểm tra cột bắt buộc
+    # Check required columns
     required_cols = SCHEMAS[source_type]
     missing_cols = [c for c in required_cols if c not in df.columns]
     if missing_cols:
-        raise ValueError(f"Tệp {file_path} thiếu các cột bắt buộc: {', '.join(missing_cols)}")
+        raise ValueError(f"File {file_path} is missing required columns: {', '.join(missing_cols)}")
 
-    # Ép kiểu dữ liệu date YYYY-MM-DD
+    # Parse the date column as YYYY-MM-DD
     try:
         df["date"] = pd.to_datetime(df["date"], format="%Y-%m-%d")
     except Exception as e:
-        raise ValueError(f"Tệp {file_path} có định dạng ngày không hợp lệ (yêu cầu YYYY-MM-DD): {e}")
+        raise ValueError(f"File {file_path} has an invalid date format (YYYY-MM-DD required): {e}")
 
-    # Sort theo ngày
+    # Sort by date
     df = df.sort_values("date").reset_index(drop=True)
 
-    # Ép kiểu số cho các cột còn lại và đổi -999 thành NaN
+    # Cast the other columns to numbers and turn -999 into NaN
     for col in required_cols:
         if col != "date":
             df[col] = pd.to_numeric(df[col], errors="coerce")
@@ -106,7 +106,7 @@ def load_csv(source_type, region_id):
     return df, meta
 
 def get_data_status(region_id):
-    """Lấy trạng thái của toàn bộ 4 nguồn dữ liệu cho 1 vùng."""
+    """Return the status of all 4 data sources for one region."""
     status = {}
     for stype in SCHEMAS.keys():
         df, meta = load_csv(stype, region_id)
@@ -117,7 +117,7 @@ def get_data_status(region_id):
                 "date_min": None,
                 "date_max": None,
                 "is_synthetic": meta.get("is_synthetic", False),
-                "source": meta.get("source", "nguồn: chưa khai báo")
+                "source": meta.get("source", "source: not declared")
             }
         else:
             status[stype] = meta
