@@ -1139,13 +1139,12 @@ class TestAeroAgriFix6(unittest.TestCase):
         self.assertNotIn(".;", md)
 
     def test_fix13_1_loi_vao_theo_vai(self):
-        """Fix 13: entry points for farmers, extension officers/researchers and scientists; CSV, print, method card."""
+        """Fix 13: side menu reaches every step plus the method card; CSV, print, method card."""
         def read(*p):
             with open(os.path.join(AERO_ROOT, *p), encoding="utf-8") as fh:
                 return fh.read()
         html, js, css = read("web", "index.html"), read("web", "app.js"), read("web", "style.css")
-        for s in ("howto-roles", "Farmers", "Extension officers &amp; researchers", "Scientists",
-                  'href="#btnCsv"', 'href="#methodCard"', 'id="btnCsv"', 'id="btnPrint"',
+        for s in ('class="sidenav"', 'href="#methodCard"', 'id="btnCsv"', 'id="btnPrint"', 'id="drawer"',
                   'id="methodCard"', 'id="ndviModelRow"', "FAO-56 Penman-Monteith", "0.8P − 25", "Not modeled yet:"):
             self.assertIn(s, html)
         for s in ("function plainLine", "function downloadCsv", "Per 1,000 m²", "fromCharCode(0xFEFF)",
