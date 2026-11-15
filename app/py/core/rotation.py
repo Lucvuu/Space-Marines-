@@ -268,6 +268,7 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0, current_
         phases_out = []
         phase_month_counts = []
         phase_yearly = []
+        phase_monthly = []
         crosses_year = False
 
         for ph in strat.get("phases", []):
@@ -310,6 +311,7 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0, current_
 
                 if wb.get("available"):
                     phase_yearly.append({r["year"]: r["deficit_mm"] for r in wb.get("yearly_deficit_mm", [])})
+                    phase_monthly.append(wb.get("mean_monthly_deficit_mm") or [0.0] * 12)
                     crosses_year = crosses_year or _phase_crosses_year(ph, reg_info, crops_cfg)
 
                 window = get_crop_season_window_info(reg_override, crop_id, c_info)
@@ -449,6 +451,8 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0, current_
             "annual_deficit_mm": annual_deficit_mm,
             "annual_deficit_low_mm": annual_deficit_low_mm,
             "annual_deficit_by_year": by_year,
+            # Fresh-water deficit by calendar month (mean over the years); lets the page sum the salty months
+            "monthly_deficit_mm": [round(float(sum(pm[k] for pm in phase_monthly)), 1) for k in range(12)] if phase_monthly else None,
             "annual_deficit_p50_mm": p50_mm,
             "annual_deficit_p80_mm": p80_mm,
             "driest_crop_year": driest,

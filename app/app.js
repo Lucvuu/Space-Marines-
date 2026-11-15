@@ -16,7 +16,9 @@ let reportReady = false;
 let fieldOptions = null;   // input_options from /api/rotations
 let customPhases = null;   // null = the region's usual calendar
 let lastOkPhases = null;   // last calendar the server accepted
-let climBase = null;       // { t, r }: mean annual temperature and rain 2015–2025
+let climBase = null;
+let salOverride = null;
+let lessonYear = null;     // crop year picked in "Lessons from the past 10 years"    // salty months chosen by the user (null = published months)       // { t, r }: mean annual temperature and rain 2015–2025
 let lang = "en";
 const prevNums = {};
 const REDUCED = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -53,6 +55,30 @@ const MONTHS_LONG = {
 const I18N = {
     en: {
         your_cal: "your calendar",
+        ls_h: "Lessons from the past 10 years",
+        ls_hint: "Not a weather forecast: what the NASA records of 2015–2025 say about planning this year and next.",
+        ls_pick: "If next year is like…",
+        ls_rank: "<b>{best}</b> needed less fresh water than <b>{base}</b> in <b>{n} of {m}</b> years.",
+        ls_rank_more: "<b>{best}</b> needed more fresh water than <b>{base}</b> in <b>{n} of {m}</b> years; what it gives back is soil cover.",
+        ls_dry: "Driest year: <b>{y}</b>{ev}. {base} needed {a} m³/ha ({p}% above average); {best} needed {b} m³/ha.",
+        ls_plan: "Plan for next year: secure fresh water for a dry year (1 in 5): <b>{a} m³/ha</b> for {base}, <b>{b} m³/ha</b> for {best}.",
+        ls_last: "Latest season in the data ({y}): {base} needed {a} m³/ha, {d} the average.",
+        ls_above: "{p}% above", ls_below: "{p}% below", ls_same: "about the same as",
+        ls_col_opt: "Option", ls_col_y: "That year (m³/ha)", ls_col_vs: "vs. its average",
+        ls_year_note: "Values computed from that year's NASA POWER weather; the stress-year label comes from a cited source.",
+        salt_h: "Which months is the canal water salty at your field?",
+        salt_src_doc: "Filled in: February–April from the NAEC dry-season handbook 2026–2027 (a published estimate, not a measurement). Tap the months to match what you see at your canal or in the provincial salinity bulletin.",
+        salt_src_user: "Using the months you chose. Tap again to change, or reset to the handbook months.",
+        salt_reset: "Back to handbook months",
+        salt_result: "Fresh water needed during the salty months ({m}), when canal water cannot be used: {list}.",
+        salt_none: "No salty months selected.",
+        salt_line: "Fresh water needed in salty months ({m}): {v} m³/ha",
+        prac_h: "How do you irrigate in the dry season?",
+        prac_l: "Litres per tree per round", prac_n: "Rounds in the dry season", prac_t: "Trees per hectare",
+        prac_src: "Filled in: NAEC 2026 guidance (350–420 litres per tree per round, every 30–35 days, so about 4 rounds in January–April) and a 3 × 3 m spacing (assumption). Change them to match your garden.",
+        prac_use: "Your irrigation: about {v} m³/ha per dry season ({p} m³ per 1,000 m²).",
+        prac_years: "Dry season by year (NASA POWER, compared with the 2015–2025 average): driest {y1} needed {a}% more, about {r1} extra round(s) at your rate; wettest {y2} needed {b}% less, about {r2} round(s) fewer.",
+        prac_model: "Full crop need by FAO-56 for comparison (upper bound, soil water not counted): {v} m³/ha. It is not an irrigation advice; your experience comes first.",
         role_farmers: "Farmers", role_farmers_t: "Enter what your field grows and when you sow. Read the answer, then print the report in Step 4.",
         role_ext: "Extension officers &amp; researchers", role_ext_t: "Compare options in Step 2, try the weather, download the season-by-season CSV in Step 4.",
         role_sci: "Scientists", role_sci_t: "Satellite checks in Step 3; formulas, sources and limits under Data &amp; method.",
@@ -158,6 +184,30 @@ const I18N = {
     },
     vi: {
         your_cal: "lịch bạn nhập",
+        ls_h: "Học từ 10 năm qua",
+        ls_hint: "Không phải dự báo thời tiết: số liệu NASA 2015–2025 cho thấy gì để chuẩn bị cho năm nay và năm sau.",
+        ls_pick: "Nếu năm tới giống năm…",
+        ls_rank: "<b>{best}</b> cần ít nước ngọt hơn <b>{base}</b> ở <b>{n}/{m}</b> năm.",
+        ls_rank_more: "<b>{best}</b> cần nhiều nước ngọt hơn <b>{base}</b> ở <b>{n}/{m}</b> năm; bù lại là che phủ đất.",
+        ls_dry: "Năm khô nhất: <b>{y}</b>{ev}. {base} cần {a} m³/ha (cao hơn trung bình {p}%); {best} cần {b} m³/ha.",
+        ls_plan: "Chuẩn bị cho năm tới: nên tính nguồn nước ngọt cho mức năm khô (cứ 5 năm gặp 1): <b>{a} m³/ha</b> nếu {base}, <b>{b} m³/ha</b> nếu {best}.",
+        ls_last: "Vụ gần nhất có số liệu ({y}): {base} cần {a} m³/ha, {d} trung bình.",
+        ls_above: "cao hơn {p}% so với", ls_below: "thấp hơn {p}% so với", ls_same: "gần bằng",
+        ls_col_opt: "Phương án", ls_col_y: "Năm đó (m³/ha)", ls_col_vs: "So với trung bình của chính nó",
+        ls_year_note: "Số tính từ thời tiết NASA POWER của đúng năm đó; nhãn năm hạn mặn lấy từ nguồn có trích dẫn.",
+        salt_h: "Tháng nào nước kênh ở ruộng bạn bị mặn?",
+        salt_src_doc: "Điền sẵn: tháng 2–4 theo sổ tay mùa khô 2026–2027 của Khuyến nông Quốc gia (ước tính đã công bố, không phải số đo). Bấm vào tháng để sửa theo nước kênh ở ruộng bạn hoặc bản tin mặn của tỉnh.",
+        salt_src_user: "Đang dùng các tháng bạn chọn. Bấm lại để đổi, hoặc quay về tháng theo sổ tay.",
+        salt_reset: "Về tháng theo sổ tay",
+        salt_result: "Nước ngọt cần trong các tháng mặn ({m}), khi không lấy được nước kênh: {list}.",
+        salt_none: "Chưa chọn tháng mặn nào.",
+        salt_line: "Nước ngọt cần trong tháng mặn ({m}): {v} m³/ha",
+        prac_h: "Bạn đang tưới thế nào trong mùa khô?",
+        prac_l: "Lít mỗi gốc mỗi lần", prac_n: "Số lần tưới mùa khô", prac_t: "Số cây mỗi héc-ta",
+        prac_src: "Điền sẵn theo Khuyến nông QG 2026 (350–420 lít/gốc/lần, 30–35 ngày một lần, tức khoảng 4 lần từ tháng 1–4) và mật độ 3 × 3 m (giả định). Sửa theo vườn của bạn.",
+        prac_use: "Cách tưới của bạn: khoảng {v} m³/ha mỗi mùa khô ({p} m³ trên 1.000 m²).",
+        prac_years: "Mùa khô từng năm (NASA POWER, so với trung bình 2015–2025): năm khô nhất {y1} cần nhiều hơn {a}%, tương đương thêm khoảng {r1} lần tưới theo cách của bạn; năm ẩm nhất {y2} cần ít hơn {b}%, tức bớt được khoảng {r2} lần.",
+        prac_model: "Để so sánh, nhu cầu đầy đủ của cây theo FAO-56 (cận trên, chưa tính nước trữ trong đất): {v} m³/ha. Đây không phải lời khuyên tưới; kinh nghiệm của bạn vẫn là chính.",
         role_farmers: "Nông dân", role_farmers_t: "Nhập ruộng đang trồng gì, gieo ngày nào. Đọc câu trả lời, rồi in báo cáo ở Bước 4.",
         role_ext: "Cán bộ khuyến nông, nhà nghiên cứu", role_ext_t: "So các phương án ở Bước 2, thử thời tiết, tải số liệu từng vụ (CSV) ở Bước 4.",
         role_sci: "Nhà khoa học", role_sci_t: "Kiểm chứng vệ tinh ở Bước 3; công thức, nguồn và giới hạn ở mục Dữ liệu và cách tính.",
@@ -471,6 +521,8 @@ function initControls() {
             customPhases = null;
             lastOkPhases = null;
             fieldOptions = null;
+            salOverride = null;
+            lessonYear = null;
             document.getElementById("fieldRows").innerHTML = "";
             showMsg("fieldError", "");
             loadRegionData();
@@ -510,6 +562,18 @@ function initControls() {
         baselineDeficits = {};
         debouncedEvaluate();
     });
+    document.getElementById("saltMonths").addEventListener("click", e => {
+        const b = e.target.closest("button[data-m]");
+        if (b && b.dataset.m === "reset") { salOverride = null; renderAll(); return; }
+        if (!b || !lastRotationData) return;
+        const cur = new Set(salMonthsOf(lastRotationData));
+        const m = Number(b.dataset.m);
+        if (cur.has(m)) cur.delete(m); else cur.add(m);
+        salOverride = [...cur].sort((a, c) => a - c);
+        renderAll();
+    });
+    document.getElementById("lessonYear").addEventListener("change", e => { lessonYear = Number(e.target.value); renderLessons(); });
+    ["pracL", "pracN", "pracT"].forEach(id => document.getElementById(id).addEventListener("input", renderLocalBoxes));
     document.getElementById("btnDefaultField").addEventListener("click", () => {
         if (!fieldOptions) return;
         customPhases = null;
@@ -778,6 +842,114 @@ function onWeatherInput() {
     debouncedEvaluate();
 }
 
+// ==========================================================================
+// LOCAL KNOWLEDGE: salty months at your canal (delta), your irrigation (coffee)
+// ==========================================================================
+function salMonthsOf(data) { return salOverride || ((data && data.salinity_months) || []).map(Number); }
+function saltSum(st, months) {
+    if (!st || !Array.isArray(st.monthly_deficit_mm)) return null;
+    return [...months].reduce((a, m) => a + (st.monthly_deficit_mm[m - 1] || 0), 0);
+}
+function saltLine(st, salMonths) {
+    if (!salMonths.size || !Array.isArray(st.monthly_deficit_mm)) return "";
+    const v = saltSum(st, salMonths);
+    return `<p class="salt-line">${ico("waves")}${t("salt_line", { m: monthSpans([...salMonths].sort((a, b) => a - b)), v: m3(v) })}</p>`;
+}
+function renderLocalBoxes() {
+    const data = lastRotationData, strategies = lastRotations;
+    const saltBox = document.getElementById("saltBox"), pracBox = document.getElementById("pracBox");
+    if (!data || !strategies) { saltBox.hidden = true; pracBox.hidden = true; return; }
+    const hasSalt = (data.salinity_months || []).length > 0;
+    saltBox.hidden = !hasSalt;
+    if (hasSalt) {
+        const sal = salMonthsOf(data);
+        let btns = "";
+        for (let m = 1; m <= 12; m++) {
+            const on = sal.includes(m);
+            btns += `<button type="button" data-m="${m}" class="${on ? "on" : ""}" aria-pressed="${on}" title="${MONTHS_LONG[lang][m - 1]}">${mShort(m)}</button>`;
+        }
+        if (salOverride) btns += `<button type="button" data-m="reset" class="reset">${t("salt_reset")}</button>`;
+        document.getElementById("saltMonths").innerHTML = btns;
+        document.getElementById("saltSrc").textContent = salOverride ? t("salt_src_user") : t("salt_src_doc");
+        const list = strategies.filter(s => Array.isArray(s.monthly_deficit_mm))
+            .map(s => ({ s, v: saltSum(s, sal) })).sort((a, b) => a.v - b.v)
+            .map(({ s, v }) => `${esc(s.id)} ${m3(v)} m³/ha`).join(" · ");
+        document.getElementById("saltResult").innerHTML = sal.length ? t("salt_result", { m: monthSpans(sal), list }) : t("salt_none");
+    }
+    const base = strategies.find(s => s.is_existing);
+    const perennial = fieldOptions && fieldOptions.crops && fieldOptions.crops.length && fieldOptions.crops.every(c => c.perennial);
+    pracBox.hidden = !perennial || !base;
+    if (pracBox.hidden) return;
+    const L = Number(document.getElementById("pracL").value), N = Number(document.getElementById("pracN").value), T = Number(document.getElementById("pracT").value);
+    const out = document.getElementById("pracResult");
+    if (!(L > 0 && N > 0 && T > 0)) { out.textContent = ""; return; }
+    const use = L * N * T / 1000;
+    const parts = [t("prac_use", { v: fmt(use), p: fmt(use / 10) })];
+    const yrs = (base.annual_deficit_by_year || []).filter(y => isNum(y.deficit_mm));
+    const mean = isNum(base.annual_deficit_mm) ? base.annual_deficit_mm : null;
+    if (yrs.length > 1 && mean) {
+        const hi = yrs.reduce((a, b) => (b.deficit_mm > a.deficit_mm ? b : a)), lo = yrs.reduce((a, b) => (b.deficit_mm < a.deficit_mm ? b : a));
+        const a = Math.round((hi.deficit_mm / mean - 1) * 100), b = Math.round((1 - lo.deficit_mm / mean) * 100);
+        parts.push(t("prac_years", { y1: hi.label, a, r1: fixed(N * a / 100, 1), y2: lo.label, b, r2: fixed(N * b / 100, 1) }));
+    }
+    if (mean) parts.push(t("prac_model", { v: m3(mean) }));
+    out.innerHTML = parts.map(p => `<span>${p}</span>`).join(" ");
+}
+
+// ==========================================================================
+// LESSONS FROM THE PAST 10 YEARS (no forecast: per-year results from NASA POWER)
+// ==========================================================================
+function stressLabel(data, cropYear) {
+    const s = (data.stress_years || []).find(x => Number(x.crop_year) === Number(cropYear));
+    if (!s) return "";
+    return " (" + (lang === "vi" && s.event_vi ? s.event_vi.split(":")[0] : String(s.event).split(":")[0]) + ")";
+}
+function renderLessons() {
+    const card = document.getElementById("lessonsCard");
+    const data = lastRotationData, strategies = lastRotations;
+    const base = strategies && strategies.find(s => s.is_existing);
+    const yrs = base ? (base.annual_deficit_by_year || []).filter(y => isNum(y.deficit_mm)) : [];
+    if (!data || !base || yrs.length < 3 || !isNum(base.annual_deficit_mm)) { card.hidden = true; return; }
+    card.hidden = false;
+    const alts = strategies.filter(s => !s.is_existing && !s.partial && isNum(s.annual_deficit_mm)).sort((a, b) => a.annual_deficit_mm - b.annual_deficit_mm);
+    const best = alts[0] || null;
+    const byYear = st => new Map((st.annual_deficit_by_year || []).map(y => [Number(y.crop_year), y]));
+    const baseName = stratName(base), bestName = best ? stratName(best) : "";
+    const items = [];
+    if (best) {
+        const bm = byYear(best); let less = 0, more = 0, m = 0;
+        yrs.forEach(y => { const o = bm.get(Number(y.crop_year)); if (o && isNum(o.deficit_mm)) { m += 1; if (o.deficit_mm < y.deficit_mm) less += 1; else if (o.deficit_mm > y.deficit_mm) more += 1; } });
+        const worse = best.annual_deficit_mm > base.annual_deficit_mm;
+        if (m) items.push(t(worse ? "ls_rank_more" : "ls_rank", { best: esc(bestName), base: esc(baseName), n: worse ? more : less, m }));
+    }
+    const dry = yrs.reduce((a, b) => (b.deficit_mm > a.deficit_mm ? b : a));
+    const pDry = Math.round((dry.deficit_mm / base.annual_deficit_mm - 1) * 100);
+    const bestDry = best ? byYear(best).get(Number(dry.crop_year)) : null;
+    items.push(t("ls_dry", { y: dry.label, ev: esc(stressLabel(data, dry.crop_year)), base: esc(baseName), a: m3(dry.deficit_mm), p: pDry,
+        best: esc(bestName), b: bestDry ? m3(bestDry.deficit_mm) : t("na") }));
+    if (isNum(base.annual_deficit_p80_mm)) {
+        items.push(t("ls_plan", { a: m3(base.annual_deficit_p80_mm), base: esc(baseName),
+            b: best && isNum(best.annual_deficit_p80_mm) ? m3(best.annual_deficit_p80_mm) : t("na"), best: esc(bestName) }));
+    }
+    const last = yrs.reduce((a, b) => (Number(b.crop_year) > Number(a.crop_year) ? b : a));
+    const pLast = Math.round((last.deficit_mm / base.annual_deficit_mm - 1) * 100);
+    const d = Math.abs(pLast) < 3 ? t("ls_same") : pLast > 0 ? t("ls_above", { p: pLast }) : t("ls_below", { p: -pLast });
+    items.push(t("ls_last", { y: last.label, base: esc(baseName), a: m3(last.deficit_mm), d }));
+    document.getElementById("lessonsList").innerHTML = items.map(x => `<li>${x}</li>`).join("");
+
+    const sel = document.getElementById("lessonYear");
+    if (lessonYear === null || !yrs.some(y => Number(y.crop_year) === lessonYear)) lessonYear = Number(dry.crop_year);
+    sel.innerHTML = yrs.slice().sort((a, b) => a.crop_year - b.crop_year).map(y =>
+        `<option value="${y.crop_year}"${Number(y.crop_year) === lessonYear ? " selected" : ""}>${esc(y.label + stressLabel(data, y.crop_year))}</option>`).join("");
+    const rows = strategies.map(st => {
+        const y = byYear(st).get(lessonYear);
+        if (!y || !isNum(y.deficit_mm) || !isNum(st.annual_deficit_mm)) return "";
+        const p = Math.round((y.deficit_mm / st.annual_deficit_mm - 1) * 100);
+        return `<tr><td>${esc(st.id)} · ${esc(stratName(st))}${st.partial ? ` <span class="muted">(${t("badge_shrimp")})</span>` : ""}</td><td class="num">${m3(y.deficit_mm)}</td><td class="num">${p > 0 ? "+" : p < 0 ? "−" : ""}${Math.abs(p)}%</td></tr>`;
+    }).join("");
+    document.getElementById("lessonTable").innerHTML = `<table class="table-clean lessons-table"><thead><tr><th>${t("ls_col_opt")}</th><th>${t("ls_col_y")}</th><th>${t("ls_col_vs")}</th></tr></thead><tbody>${rows}</tbody></table><p class="muted">${t("ls_year_note")}</p>`;
+}
+
 function syncPresetChipState() {
     const tv = parseFloat(document.getElementById("sliderTemp").value);
     const r = parseInt(document.getElementById("sliderRain").value, 10);
@@ -984,6 +1156,8 @@ function renderAll() {
     renderCrossChecks(data);
     renderNdviStrip(data, strategies);
     renderAssumptionsBox(data);
+    renderLocalBoxes();
+    renderLessons();
     updateReportContext();
     refreshDrawer();
 }
@@ -1044,7 +1218,7 @@ function renderHero(data, strategies) {
         const more = Math.round((best.annual_deficit_mm - baseDef) / baseDef * 100);
         tiles.push(tile("", "ic-heat", "up", t("tile_more"), `+${num("s-" + currentRegion, more)}%`, stratName(best)));
     }
-    const sal = (data.salinity_months || []).map(Number);
+    const sal = salMonthsOf(data);
     if (sal.length) {
         let dots = "";
         for (let m = 1; m <= 12; m++) dots += `<span class="${sal.includes(m) ? "on" : ""}" title="${MONTHS_LONG[lang][m - 1]}${sal.includes(m) ? t("sal_tip") : ""}"><i></i>${mInitial(m)}</span>`;
@@ -1165,7 +1339,7 @@ function erosionForCard(st, ero) {
 function renderStrategyCards(data, strategies) {
     const grid = document.getElementById("rotationCardsGrid");
     const base = strategies.find(s => s.is_existing);
-    const salMonths = new Set((data.salinity_months || []).map(Number));
+    const salMonths = new Set(salMonthsOf(data));
     const stressYears = Array.isArray(data.stress_years) ? data.stress_years : [];
     const erosion = (data.cross_checks && data.cross_checks.erosion) || null;
     const usedCrops = new Set();
@@ -1228,6 +1402,7 @@ function renderStrategyCards(data, strategies) {
             ${relLine}
             ${yearLine(st)}
             ${calLbl}
+            ${saltLine(st, salMonths)}
             ${renderGanttTimeline(st, salMonths, usedCrops)}
             ${top ? `<ul class="bullet-list top">${top}</ul>` : ""}
             <button type="button" class="more-btn" aria-haspopup="dialog">${t("details")}${ico("chev")}</button>
@@ -1426,7 +1601,7 @@ function renderNdviStrip(data, strategies) {
     document.getElementById("ndviNote").textContent = t("ndvi_note", { lat: p.lat, lon: p.lon, yrs });
     const base = (strategies || []).find(s => s.is_existing);
     document.getElementById("ndviModelRow").innerHTML = base
-        ? `<div class="ndvi-row-lbl">${t("ndvi_model")}</div>${renderGanttTimeline(base, new Set((data.salinity_months || []).map(Number)), new Set())}<div class="ndvi-row-lbl">${t("ndvi_meas")}</div>`
+        ? `<div class="ndvi-row-lbl">${t("ndvi_model")}</div>${renderGanttTimeline(base, new Set(salMonthsOf(data)), new Set())}<div class="ndvi-row-lbl">${t("ndvi_meas")}</div>`
         : "";
 }
 

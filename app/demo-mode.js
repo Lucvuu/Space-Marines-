@@ -55,18 +55,28 @@
               $('.preset-chip[data-temp="1.5"]').click(); await recompute();
               highlight([".scenario", "#heroCard"], "#heroCard");
           } },
+        { vi: "Bà con chọn tháng kênh bị mặn: mặn sớm từ tháng 12", en: "Farmers mark the salty months: early salinity from December",
+          run: async () => {
+              $('.preset-chip[data-temp="0"]').click(); await recompute();
+              ["12", "1"].forEach(m => { const b = $(`#saltMonths button[data-m="${m}"]`); if (b && !b.classList.contains("on")) b.click(); });
+              await sleep(300); highlight(["#saltBox"], "#saltBox");
+          } },
         { vi: "Bước 2 · So sánh các phương án", en: "Step 2 · Compare the options",
           run: async () => {
               $('.preset-chip[data-temp="0"]').click(); await recompute();
               goTo("#rotationsSection", true); await sleep(400);
-              highlight([".rot-card:nth-child(3)"]);
+              highlight([".rot-card:nth-child(3)"], ".rot-card:nth-child(3)");
           } },
+        { vi: "Học từ 10 năm qua: chuẩn bị cho năm tới", en: "Lessons from 10 years: planning for next year",
+          run: async () => { highlight(["#lessonsCard"], "#lessonsCard"); } },
         { vi: "Chi tiết phương án lúa + đậu tương", en: "Details of rice + soybean",
           run: async () => { const b = $(".rot-card:nth-child(3) .more-btn"); if (b) b.click(); await sleep(500); highlight(["#drawer .drawer-body"]); } },
         { vi: "Bước 3 · Vệ tinh kiểm tra mô hình (Bến Tre)", en: "Step 3 · Satellites check the model (Bến Tre)",
           run: async () => { closeDrawer(false); goTo("#evidenceSection", true); await sleep(400); highlight(["#sowingCheck", "#rainCheck"]); } },
         { vi: "Đắk Lắk · Độ ẩm đất SMAP, độ dốc và xói mòn", en: "Đắk Lắk · SMAP soil moisture, slope and erosion",
           run: async () => { await region("Dak_Lak_Tay_Nguyen"); goTo("#evidenceSection", true); await sleep(400); highlight(["#smapCard", "#erosionCheck"]); } },
+        { vi: "Đắk Lắk · Bà con nhập cách mình đang tưới", en: "Đắk Lắk · Farmers enter how they irrigate",
+          run: async () => { goTo("#step1", true); await sleep(400); highlight(["#pracBox"], "#pracBox"); } },
         { vi: "Bước 4 · Báo cáo, in, tải CSV", en: "Step 4 · Report, print, CSV",
           run: async () => {
               await region("Ben_Tre_DBSCL"); goTo("#reportSection", true); await sleep(300);
