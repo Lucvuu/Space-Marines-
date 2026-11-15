@@ -173,7 +173,9 @@ Results below were computed by the app on the committed real data (NASA POWER re
 - **SRTM:** NASA JPL (2013). *NASA Shuttle Radar Topography Mission Global 1 arc second* (SRTMGL1 v003). NASA EOSDIS Land Processes DAAC. `doi:10.5067/MEaSUREs/SRTM/SRTMGL1.003`.
 - **Google Earth Engine:** Gorelick, N., et al. (2017). Google Earth Engine: Planetary-scale geospatial analysis for everyone. *Remote Sensing of Environment* 202: 18–27. Used only to extract the NASA products above (accessed 2026-11-14).
 - **Methods:** Xiao, X., et al. (2005). Mapping paddy rice agriculture in southern China using multi-temporal MODIS images. *Remote Sensing of Environment* 95: 480–492. · Afandi, Manik, T. K., Rosadi, B., Utomo, M., Senge, M., Adachi, T., Oki, Y. (2003). An Evaluation of Coffee Crop Factor under Different Weed Managements Using USLE Method in Hilly Humid Tropical Area of Lampung, South Sumatra, Indonesia. *Journal of the Japanese Society of Soil Physics* 93: 21–33. · Ambio (2021), the 2016 and 2020 Mekong Delta droughts, https://pmc.ncbi.nlm.nih.gov/articles/PMC8800995.
-- **OpenStreetMap:** Online map tiles when network connectivity is available, *"© OpenStreetMap contributors"*, licensed under the Open Data Commons Open Database License (ODbL).
+- **NASA Worldview / GIBS:** MODIS Terra Corrected Reflectance (True Color) snapshots of the pilot sites (10 Feb 2024, 22 Mar 2024), used only as imagery in the slides (`https://worldview.earthdata.nasa.gov/`, accessed 2026-11-15).
+- **Pyodide** (MPL-2.0): runs the project's Python code in the browser for the public GitHub Pages demo (`https://pyodide.org/`).
+- **OpenStreetMap:** not used by the current interface. Earlier versions loaded online map tiles when network connectivity was available, *"© OpenStreetMap contributors"*, licensed under the Open Data Commons Open Database License (ODbL).
 
 ---
 
@@ -188,9 +190,10 @@ Results below were computed by the app on the committed real data (NASA POWER re
 | `requests` | $\ge 2.28.0$ | `2.34.2` | Apache-2.0 | HTTP client for NASA POWER and ORNL DAAC MODIS APIs |
 | `pytest` | $\ge 7.0.0$ | `9.2.0` | MIT | Automated unit and regression testing |
 | `earthengine-api` | optional, only for `scripts/gee_fetch.py` | `1.7.52` | Apache-2.0 | One-off extraction of MODIS MOD09A1, GPM IMERG, SMAP L4 and SRTM |
-| Leaflet | `1.9.4` (vendored offline) | `1.9.4` | BSD-2-Clause | Interactive map rendering (`L.circleMarker`) |
+| Leaflet | `1.9.4` (vendored offline) | `1.9.4` | BSD-2-Clause | Vendored; not used by the current interface |
+| Pyodide | `0.26.4` (CDN, public demo only) | `0.26.4` | MPL-2.0 | Runs `server.py` and `core/` in the browser on GitHub Pages |
 | Chart.js | `4.4.1` (vendored offline) | `4.4.1` | MIT | Monthly rainfall, $ET_o$, and MODIS NDVI visualization |
-| OpenStreetMap Tiles | Online when reachable | N/A | ODbL (`© OpenStreetMap contributors`) | Optional background basemap tiles |
+| OpenStreetMap Tiles | Not used by the current interface | N/A | ODbL (`© OpenStreetMap contributors`) | — |
 
 ### AI & Tooling Disclosure
 The problem framing, choice of pilot sites, strategies and the research plan behind each analysis were made by the team. AI coding assistants were used to write and review code and documentation under the team's direction: Google Antigravity (Gemini) for the initial scaffold, and Anthropic Claude (Claude Code) for the year-to-year analysis, the satellite sowing-date detection, the IMERG/SMAP/SRTM cross-checks, the English translation of the interface and documentation, and code review. All numbers shown in the app come from NASA data processed by the code in `core/` or from cited sources in `config/*.json`; no AI-generated data, images or video are used.

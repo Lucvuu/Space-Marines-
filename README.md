@@ -3,6 +3,14 @@
 
 > Vietnamese version: [README.vi.md](README.vi.md)
 
+**Team Space Marine** — Vũ Thế Lực · Nguyễn Thị Nam Phương · Đỗ Thị Thanh Loan · Lê Văn Tuấn · Đào Thị Hảo · Hoàng Tuấn Hưng
+
+## Try it
+- **Live app** (runs fully in your browser; first load about 20–40 s): https://lucvuu.github.io/Space-Marines-/app/?lang=en · Vietnamese: https://lucvuu.github.io/Space-Marines-/app/?lang=vi
+- **Guided demo of the main path:** https://lucvuu.github.io/Space-Marines-/app/?lang=en&demo=1 — press → (or Space) for each step: enter a field calendar, try a hot dry year, compare options, satellite checks, Đắk Lắk, report, method.
+- **Slides (7):** https://lucvuu.github.io/Space-Marines-/slides/ · PDF: https://lucvuu.github.io/Space-Marines-/slides/AERO-AGRI_SpaceApps2026.pdf
+- **Run locally:** `pip install -r requirements.txt` then `python run.py` (opens http://127.0.0.1:8050; add `?demo=1` for the guided demo).
+
 ---
 
 ## 1. What it is
@@ -65,6 +73,8 @@ Real NASA data CSVs are included in `data/raw/` (provenance in `data/manifest.js
 - Offline synthetic demo data (flagged `is_synthetic: true`, only for testing): `python scripts/make_demo_data.py`
 
 The data directory can be overridden with the `AERO_DATA_DIR` environment variable.
+
+Hosting: `server.py` reads `PORT` (and `HOST`) from the environment, so `render.yaml` (Render), `railway.json` (Railway) and `Procfile` deploy it as-is. The public demo on GitHub Pages runs the same `server.py` and `core/` code in the browser with Pyodide.
 
 ## 6. Tests
 ```bash

@@ -1,6 +1,14 @@
 # AERO-AGRI: Hệ Thống Hỗ Trợ Quyết Định Chuyển Đổi Cơ Cấu Cây Trồng Thích Ứng Khí Hậu
 *2026 NASA International Space Apps Challenge — Challenge: Field Shift: Adapting Farms with NASA Data*
 
+**Đội Space Marine** — Vũ Thế Lực · Nguyễn Thị Nam Phương · Đỗ Thị Thanh Loan · Lê Văn Tuấn · Đào Thị Hảo · Hoàng Tuấn Hưng
+
+**Dùng thử ngay:**
+- App chạy trực tiếp trên trình duyệt (lần đầu tải khoảng 20–40 giây): https://lucvuu.github.io/Space-Marines-/app/?lang=vi
+- Chế độ demo dẫn đường: https://lucvuu.github.io/Space-Marines-/app/?lang=vi&demo=1 (bấm → để sang từng bước)
+- Slide 7 trang: https://lucvuu.github.io/Space-Marines-/slides/ · PDF: https://lucvuu.github.io/Space-Marines-/slides/AERO-AGRI_SpaceApps2026.pdf
+- Chạy trên máy: `pip install -r requirements.txt` rồi `python run.py`
+
 ---
 
 ## 1. Giới thiệu
