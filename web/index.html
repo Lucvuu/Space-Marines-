@@ -72,10 +72,28 @@
                 <div class="intro">
                     <h1 data-i18n="h1">Which crop rotation needs less fresh water, keeps the soil covered and avoids salt water?</h1>
                     <p class="intro-sub" data-i18n="intro_sub">Built on NASA satellite and weather data (2015–2025) and verified Vietnamese sources. Pick your region at the top.</p>
+                    <div class="roles">
+                        <a class="role" href="#fieldCard"><b data-i18n="role_farmers">Farmers</b><span data-i18n="role_farmers_t">Enter what your field grows and when you sow. Read the answer, then print the report in Step 4.</span></a>
+                        <a class="role" href="#reportSection"><b data-i18n="role_ext">Extension officers &amp; researchers</b><span data-i18n="role_ext_t">Compare options in Step 2, try the weather, download the season-by-season CSV in Step 4.</span></a>
+                        <a class="role" href="#methodCard"><b data-i18n="role_sci">Scientists</b><span data-i18n="role_sci_t">Satellite checks in Step 3; formulas, sources and limits under Data &amp; method.</span></a>
+                    </div>
                 </div>
                 <div class="step-head">
                     <span class="step-ic"><svg class="ico"><use href="#i-pin"/></svg><b>1</b></span>
                     <div><h2 class="section-title" data-i18n="step1_t">Your field today</h2><p class="step-hint" data-i18n="step1_hint">The short answer first. Details are one tap away.</p></div>
+                </div>
+                <div class="card field-card" id="fieldCard">
+                    <div class="scenario-head">
+                        <span class="ic ic-good"><svg class="ico"><use href="#i-sprout"/></svg></span>
+                        <div><h3 class="card-heading" data-i18n="field_h">What does your field grow?</h3><p class="step-hint" data-i18n="field_hint">Pick the crop and sowing date of each season (day and month only). The harvest date follows the crop's season length in the model. Filled in: the usual calendar for this region.</p></div>
+                    </div>
+                    <div id="fieldRows" class="field-rows"></div>
+                    <div class="field-actions">
+                        <button type="button" id="btnAddPhase" class="btn-ghost" data-i18n="field_add">+ Add a season</button>
+                        <button type="button" id="btnApplyField" class="btn-primary" data-i18n="field_apply">Use my field</button>
+                        <button type="button" id="btnDefaultField" class="btn-link" data-i18n="field_default">Use the region's usual calendar</button>
+                    </div>
+                    <p class="field-error" id="fieldError" role="alert" hidden></p>
                 </div>
                 <div class="hero" id="heroCard" aria-live="polite">
                     <div class="hero-panel">
@@ -96,23 +114,26 @@
                         <button type="button" class="preset-chip" data-temp="1.5" data-rain="-20" title="Temperature +1.5 °C, rain −20%. A what-if scenario, not a forecast." data-i18n-title="preset_hot_t"><svg class="ico" aria-hidden="true"><use href="#i-thermo"/></svg><span data-i18n="preset_hot">Hot &amp; dry</span></button>
                         <button type="button" class="preset-chip" data-temp="2.5" data-rain="-35" title="Temperature +2.5 °C, rain −35%. A what-if scenario, not a forecast." data-i18n-title="preset_vhot_t"><svg class="ico" aria-hidden="true"><use href="#i-flame"/></svg><span data-i18n="preset_vhot">Very hot &amp; dry</span></button>
                     </div>
-                    <details class="adjust">
-                        <summary><svg class="ico chev" aria-hidden="true"><use href="#i-chev"/></svg><span data-i18n="adjust">Adjust temperature and rain</span></summary>
-                        <div class="adjust-body">
-                            <div class="slider-row">
-                                <label for="sliderTemp" data-i18n="temp">Temperature</label>
-                                <div class="slider-wrap"><input type="range" id="sliderTemp" min="-1.0" max="3.0" step="0.5" value="0.0"><span id="valTemp" class="slider-value">As today</span></div>
-                            </div>
-                            <div class="slider-row">
-                                <label for="sliderRain" data-i18n="rain">Rainfall</label>
-                                <div class="slider-wrap"><input type="range" id="sliderRain" min="-50" max="30" step="10" value="0"><span id="valRain" class="slider-value">As today</span></div>
-                            </div>
-                            <div class="scenario-foot">
-                                <span data-i18n="whatif">What-if scenario, not a forecast</span>
-                                <button type="button" id="btnReset" class="btn-link" data-i18n="reset">Reset to measured climate</button>
-                            </div>
+                    <div class="wx-grid">
+                        <div class="wx-field">
+                            <label for="inpTemp" data-i18n="wx_temp">Average temperature for the year</label>
+                            <div class="wx-input"><input type="number" id="inpTemp" step="0.1" inputmode="decimal"><span>°C</span></div>
+                            <span class="wx-base" id="baseTemp"></span>
                         </div>
-                    </details>
+                        <div class="wx-field">
+                            <label for="inpRain" data-i18n="wx_rain">Total rain for the year</label>
+                            <div class="wx-input"><input type="number" id="inpRain" step="10" inputmode="numeric"><span>mm</span></div>
+                            <span class="wx-base" id="baseRain"></span>
+                        </div>
+                    </div>
+                    <p class="wx-delta" id="wxDelta"></p>
+                    <p class="field-error" id="wxError" role="alert" hidden></p>
+                    <input type="hidden" id="sliderTemp" value="0">
+                    <input type="hidden" id="sliderRain" value="0">
+                    <div class="scenario-foot">
+                        <span data-i18n="wx_note">What-if scenario, not a forecast. The model adds the temperature change to every day and scales the rain of every day.</span>
+                        <button type="button" id="btnReset" class="btn-link" data-i18n="reset">Reset to measured climate</button>
+                    </div>
                 </div>
                 <a class="next-step" href="#rotationsSection"><span data-i18n="next">Next</span><b data-i18n="nav2">Compare options</b><svg class="ico" aria-hidden="true"><use href="#i-chev"/></svg></a>
             </section>

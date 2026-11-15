@@ -13,6 +13,10 @@ let lastRotationData = null;
 let lastCrops = null;
 let lastClimate = null;
 let reportReady = false;
+let fieldOptions = null;   // input_options from /api/rotations
+let customPhases = null;   // null = the region's usual calendar
+let lastOkPhases = null;   // last calendar the server accepted
+let climBase = null;       // { t, r }: mean annual temperature and rain 2015–2025
 let lang = "en";
 const prevNums = {};
 const REDUCED = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -21,12 +25,12 @@ const REDUCED = !!(window.matchMedia && window.matchMedia("(prefers-reduced-moti
 const REGIONS_DATA = {
     "Ben_Tre_DBSCL": {
         name: "Bến Tre",
-        place: { en: "Ba Tri, Mekong Delta · Winter–Spring rice sown 11-01, salinity Feb–Apr", vi: "Ba Tri, ĐBSCL · Đông Xuân gieo 11-01, mặn tháng 2–4" },
+        place: { en: "Ba Tri, Mekong Delta · salinity Feb–Apr", vi: "Ba Tri, ĐBSCL · mặn tháng 2–4" },
         ndvi_point: { lat: 10.0992, lon: 106.6040 }
     },
     "Dak_Lak_Tay_Nguyen": {
         name: "Đắk Lắk",
-        place: { en: "Cư M'gar, Central Highlands · Dry season 01-01 to 04-30", vi: "Cư M'gar, Tây Nguyên · Mùa khô 01-01 đến 04-30" },
+        place: { en: "Cư M'gar, Central Highlands · dry season Jan–Apr", vi: "Cư M'gar, Tây Nguyên · mùa khô tháng 1–4" },
         ndvi_point: { lat: 12.8314, lon: 108.1282 }
     }
 };
@@ -48,6 +52,25 @@ const MONTHS_LONG = {
 // ==========================================================================
 const I18N = {
     en: {
+        your_cal: "your calendar",
+        role_farmers: "Farmers", role_farmers_t: "Enter what your field grows and when you sow. Read the answer, then print the report in Step 4.",
+        role_ext: "Extension officers &amp; researchers", role_ext_t: "Compare options in Step 2, try the weather, download the season-by-season CSV in Step 4.",
+        role_sci: "Scientists", role_sci_t: "Satellite checks in Step 3; formulas, sources and limits under Data &amp; method.",
+        field_h: "What does your field grow?",
+        field_hint: "Pick the crop and sowing date of each season (day and month only). The harvest date follows the crop's season length in the model. Filled in: the usual calendar for this region.",
+        field_add: "+ Add a season", field_apply: "Use my field", field_default: "Use the region's usual calendar",
+        field_crop: "Crop", field_date: "Sowing date", field_del: "Remove this season",
+        field_end: "harvest about {d} ({n} days)", field_pick: "pick a sowing date", field_perennial: "Perennial: dry-season irrigation follows the regional calendar",
+        field_err_date: "Pick a sowing date for every season.", field_err_overlap: "Seasons {a} and {b} overlap in the field. Move a sowing date.",
+        field_err_server: "This calendar was not accepted: {m}",
+        wx_temp: "Average temperature for the year", wx_rain: "Total rain for the year",
+        wx_base_t: "2015–2025 average: {v} °C", wx_base_r: "2015–2025 average: {v} mm",
+        wx_same: "Same as the 2015–2025 average.", wx_delta: "Compared with the 2015–2025 average: {d}.",
+        wx_dt: "temperature {v} °C", wx_dr: "rain {v}%",
+        wx_err_empty: "Enter both temperature and rain.",
+        wx_err_t: "Enter a temperature between {a} and {b} °C (3 °C below to 5 °C above the average).",
+        wx_err_r: "Enter rain between {a} and {b} mm (up to 80% below or above the average).",
+        wx_note: "What-if scenario, not a forecast. The model adds the temperature change to every day and scales the rain of every day.",
         na: "n/a", as_today: "As today", months: "months", days: "days",
         crop_rice: "Rice", crop_shrimp: "Tiger shrimp", crop_soybean: "Soybean", crop_maize: "Maize", crop_coffee: "Robusta coffee",
         crop_coffee_cover_crop: "Coffee + cover crop", crop_other: "Other crop", bare: "Bare soil",
@@ -134,6 +157,25 @@ const I18N = {
         details_k: "Option {id}", see_data_k: "Satellite check"
     },
     vi: {
+        your_cal: "lịch bạn nhập",
+        role_farmers: "Nông dân", role_farmers_t: "Nhập ruộng đang trồng gì, gieo ngày nào. Đọc câu trả lời, rồi in báo cáo ở Bước 4.",
+        role_ext: "Cán bộ khuyến nông, nhà nghiên cứu", role_ext_t: "So các phương án ở Bước 2, thử thời tiết, tải số liệu từng vụ (CSV) ở Bước 4.",
+        role_sci: "Nhà khoa học", role_sci_t: "Kiểm chứng vệ tinh ở Bước 3; công thức, nguồn và giới hạn ở mục Dữ liệu và cách tính.",
+        field_h: "Ruộng của bạn đang trồng gì?",
+        field_hint: "Chọn cây và ngày gieo của từng vụ (chỉ dùng ngày và tháng). Ngày thu tự tính theo số ngày của giống trong mô hình. Điền sẵn là lịch phổ biến của vùng.",
+        field_add: "+ Thêm vụ", field_apply: "Tính theo ruộng của tôi", field_default: "Dùng lịch phổ biến của vùng",
+        field_crop: "Cây trồng", field_date: "Ngày gieo", field_del: "Bỏ vụ này",
+        field_end: "thu khoảng {d} ({n} ngày)", field_pick: "chọn ngày gieo", field_perennial: "Cây lâu năm: tưới mùa khô theo lịch vùng",
+        field_err_date: "Chọn ngày gieo cho mọi vụ.", field_err_overlap: "Vụ {a} và vụ {b} trùng ngày trên ruộng. Dời ngày gieo cho hai vụ không chồng lên nhau.",
+        field_err_server: "Lịch này chưa hợp lệ: {m}",
+        wx_temp: "Nhiệt độ trung bình năm", wx_rain: "Tổng lượng mưa năm",
+        wx_base_t: "Trung bình 2015–2025: {v} °C", wx_base_r: "Trung bình 2015–2025: {v} mm",
+        wx_same: "Bằng trung bình 2015–2025.", wx_delta: "So với trung bình 2015–2025: {d}.",
+        wx_dt: "nhiệt độ {v} °C", wx_dr: "mưa {v}%",
+        wx_err_empty: "Nhập đủ nhiệt độ và lượng mưa.",
+        wx_err_t: "Nhập nhiệt độ trong khoảng {a}–{b} °C (thấp hơn trung bình 3 °C đến cao hơn 5 °C).",
+        wx_err_r: "Nhập lượng mưa trong khoảng {a}–{b} mm (ít hơn hoặc nhiều hơn trung bình tối đa 80%).",
+        wx_note: "Kịch bản giả định, không phải dự báo. Mô hình cộng đều phần chênh nhiệt độ vào mọi ngày và nhân đều lượng mưa của mọi ngày.",
         na: "chưa có", as_today: "Như hiện nay", months: "tháng", days: "ngày",
         crop_rice: "Lúa", crop_shrimp: "Tôm sú", crop_soybean: "Đậu tương", crop_maize: "Ngô", crop_coffee: "Cà phê vối",
         crop_coffee_cover_crop: "Cà phê + cây che phủ", crop_other: "Cây khác", bare: "Đất trống",
@@ -334,6 +376,8 @@ function stratName(st) {
     if (st && st.is_existing && i > 0 && i < 30) s = s.slice(i + 2);
     return s.charAt(0).toUpperCase() + s.slice(1);
 }
+// Mid-sentence name of the baseline: the entered calendar reads "your calendar"
+function baseName(st) { return st && st.custom ? t("your_cal") : stratName(st); }
 function sText(st, f) { const v = viOf(st); return v && v[f] !== undefined && v[f] !== null ? v[f] : st[f]; }
 function evText(st, i) { const v = viOf(st); return (v && v.evidence_text && v.evidence_text[i]) || (st.evidence[i] || {}).text || ""; }
 function phLabel(ph) { return (lang === "vi" && ph.label_vi) || ph.label; }
@@ -398,6 +442,8 @@ function setLang(l, rerender = true) {
     applyStaticText();
     document.getElementById("heroPlace").textContent = `${regionName()} · ${REGIONS_DATA[currentRegion].place[lang]}`;
     updateSliderLabels();
+    renderWxBase();
+    if (fieldOptions) renderFieldRows(rowsAsPhases());
     renderStatusChips();
     const note = document.getElementById("reportLangNote");
     note.textContent = t("report_lang");
@@ -422,19 +468,55 @@ function initControls() {
             closeDrawer(false);
             document.querySelectorAll(".region-tab").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
             baselineDeficits = {};
+            customPhases = null;
+            lastOkPhases = null;
+            fieldOptions = null;
+            document.getElementById("fieldRows").innerHTML = "";
+            showMsg("fieldError", "");
             loadRegionData();
         });
     });
     document.querySelectorAll("#langToggle button").forEach(b => b.addEventListener("click", () => setLang(b.dataset.lang)));
 
-    const sTemp = document.getElementById("sliderTemp");
-    const sRain = document.getElementById("sliderRain");
-    const onChange = () => { updateSliderLabels(); syncPresetChipState(); debouncedEvaluate(); };
-    sTemp.addEventListener("input", onChange);
-    sRain.addEventListener("input", onChange);
-    document.getElementById("btnReset").addEventListener("click", () => { sTemp.value = "0"; sRain.value = "0"; onChange(); });
+    // Weather: typed values, quick presets, reset
+    document.getElementById("inpTemp").addEventListener("change", onWeatherInput);
+    document.getElementById("inpRain").addEventListener("change", onWeatherInput);
+    document.getElementById("btnReset").addEventListener("click", () => { setWeatherFromDelta(0, 0); debouncedEvaluate(); });
     document.querySelectorAll(".preset-chip").forEach(chip => {
-        chip.addEventListener("click", () => { sTemp.value = chip.dataset.temp; sRain.value = chip.dataset.rain; onChange(); });
+        chip.addEventListener("click", () => { setWeatherFromDelta(parseFloat(chip.dataset.temp), parseInt(chip.dataset.rain, 10)); debouncedEvaluate(); });
+    });
+
+    // Your field: add or remove seasons, use the entered calendar, or go back to the usual one
+    const rows = document.getElementById("fieldRows");
+    rows.addEventListener("change", e => { const row = e.target.closest(".field-row"); if (row) syncFieldRow(row); });
+    rows.addEventListener("click", e => {
+        const b = e.target.closest(".field-del");
+        if (!b || b.disabled) return;
+        b.closest(".field-row").remove();
+        syncFieldButtons();
+    });
+    document.getElementById("btnAddPhase").addEventListener("click", () => {
+        if (!fieldOptions) return;
+        rows.insertAdjacentHTML("beforeend", fieldRowHtml({ crop: fieldOptions.crops[0].id, start: "" }));
+        syncFieldRow(rows.lastElementChild);
+        syncFieldButtons();
+    });
+    document.getElementById("btnApplyField").addEventListener("click", () => {
+        if (!fieldOptions) return;
+        const err = checkFieldRows();
+        if (err) { showMsg("fieldError", err); return; }
+        customPhases = rowsAsPhases();
+        showMsg("fieldError", "");
+        baselineDeficits = {};
+        debouncedEvaluate();
+    });
+    document.getElementById("btnDefaultField").addEventListener("click", () => {
+        if (!fieldOptions) return;
+        customPhases = null;
+        showMsg("fieldError", "");
+        renderFieldRows(fieldOptions.default_phases);
+        baselineDeficits = {};
+        debouncedEvaluate();
     });
 
     document.getElementById("btnCsv").addEventListener("click", downloadCsv);
@@ -572,13 +654,128 @@ function refreshDrawer() {
 function updateSliderLabels() {
     const tv = parseFloat(document.getElementById("sliderTemp").value);
     const r = parseInt(document.getElementById("sliderRain").value, 10);
-    document.getElementById("valTemp").textContent = tv === 0 ? t("as_today") : `${tv > 0 ? "+" : ""}${fmt(tv, 1)} °C`;
-    document.getElementById("valRain").textContent = r === 0 ? t("as_today") : `${r > 0 ? "+" : ""}${r}%`;
-    document.querySelectorAll(".slider-wrap input").forEach(inp => {
-        const p = (Number(inp.value) - Number(inp.min)) / (Number(inp.max) - Number(inp.min));
-        inp.parentElement.style.setProperty("--p", p.toFixed(3));
-    });
+    const parts = [];
+    if (tv !== 0) parts.push(t("wx_dt", { v: `${tv > 0 ? "+" : "−"}${fmt(Math.abs(tv), 1)}` }));
+    if (r !== 0) parts.push(t("wx_dr", { v: `${r > 0 ? "+" : "−"}${Math.abs(r)}` }));
+    document.getElementById("wxDelta").textContent = parts.length ? t("wx_delta", { d: parts.join(", ") }) : t("wx_same");
     updateReportContext();
+}
+
+// ==========================================================================
+// YOUR FIELD AND THE WEATHER YOU WANT TO TRY
+// ==========================================================================
+const WX_LIMITS = { t: [-3, 5], r: [-80, 80] };
+
+function showMsg(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg || "";
+    el.hidden = !msg;
+}
+function mmddToDate(mmdd) { return mmdd ? `2026-${mmdd}` : ""; }
+function dateToMmdd(v) { return v ? v.slice(5) : ""; }
+function addDaysMmdd(mmdd, n) {
+    const d = new Date(Date.UTC(2025, Number(mmdd.slice(0, 2)) - 1, Number(mmdd.slice(3))));
+    d.setUTCDate(d.getUTCDate() + n);
+    return `${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+}
+function cropOpt(id) { return (fieldOptions.crops || []).find(c => c.id === id); }
+function cropShort(c) { return lang === "vi" ? c.short_vi : c.short; }
+
+function fieldRowHtml(ph) {
+    const opts = fieldOptions.crops.map(c =>
+        `<option value="${esc(c.id)}"${c.id === ph.crop ? " selected" : ""}>${esc(cropShort(c))}</option>`).join("");
+    return `<div class="field-row">
+        <select class="field-crop" aria-label="${esc(t("field_crop"))}">${opts}</select>
+        <input type="date" class="field-date" aria-label="${esc(t("field_date"))}" value="${mmddToDate(ph.start)}">
+        <span class="field-end"></span>
+        <button type="button" class="field-del" aria-label="${esc(t("field_del"))}">${ico("close")}</button>
+    </div>`;
+}
+function syncFieldRow(row) {
+    const c = cropOpt(row.querySelector(".field-crop").value);
+    const date = row.querySelector(".field-date");
+    const end = row.querySelector(".field-end");
+    date.disabled = !!(c && c.perennial);
+    if (!c) { end.textContent = ""; return; }
+    if (c.perennial) { end.textContent = t("field_perennial"); return; }
+    end.textContent = date.value
+        ? t("field_end", { d: dayMonth(addDaysMmdd(dateToMmdd(date.value), c.season_days - 1)), n: c.season_days })
+        : t("field_pick");
+}
+function syncFieldButtons() {
+    const n = document.querySelectorAll("#fieldRows .field-row").length;
+    const add = document.getElementById("btnAddPhase");
+    add.hidden = fieldOptions.crops.every(c => c.perennial);
+    add.disabled = n >= 3;
+    document.querySelectorAll("#fieldRows .field-del").forEach(b => { b.disabled = n <= 1; });
+}
+function renderFieldRows(phases) {
+    const box = document.getElementById("fieldRows");
+    box.innerHTML = phases.map(fieldRowHtml).join("");
+    box.querySelectorAll(".field-row").forEach(syncFieldRow);
+    syncFieldButtons();
+}
+function rowsAsPhases() {
+    return [...document.querySelectorAll("#fieldRows .field-row")].map(row => {
+        const crop = row.querySelector(".field-crop").value;
+        const c = cropOpt(crop);
+        return c && c.perennial ? { crop } : { crop, start: dateToMmdd(row.querySelector(".field-date").value) };
+    });
+}
+// Same checks as the server, so most mistakes get a message in the page language
+function checkFieldRows() {
+    const phases = rowsAsPhases();
+    const spans = [];
+    for (let i = 0; i < phases.length; i++) {
+        const c = cropOpt(phases[i].crop);
+        if (!c || c.perennial) continue;
+        if (!phases[i].start) return t("field_err_date");
+        const days = new Set();
+        for (let k = 0; k < c.season_days; k++) days.add(addDaysMmdd(phases[i].start, k));
+        for (const [j, other] of spans) {
+            for (const d of days) { if (other.has(d)) return t("field_err_overlap", { a: j + 1, b: i + 1 }); }
+        }
+        spans.push([i, days]);
+    }
+    return "";
+}
+
+function renderWxBase() {
+    document.getElementById("baseTemp").textContent = climBase ? t("wx_base_t", { v: fixed(climBase.t, 1) }) : "";
+    document.getElementById("baseRain").textContent = climBase ? t("wx_base_r", { v: fmt(climBase.r) }) : "";
+}
+function setWeatherFromDelta(tv, r) {
+    document.getElementById("sliderTemp").value = String(tv);
+    document.getElementById("sliderRain").value = String(r);
+    if (climBase) {
+        document.getElementById("inpTemp").value = (climBase.t + tv).toFixed(1);
+        document.getElementById("inpRain").value = String(Math.round(climBase.r * (1 + r / 100)));
+    }
+    showMsg("wxError", "");
+    updateSliderLabels();
+    syncPresetChipState();
+}
+function onWeatherInput() {
+    if (!climBase) return;
+    const T = parseFloat(document.getElementById("inpTemp").value);
+    const R = parseFloat(document.getElementById("inpRain").value);
+    if (!Number.isFinite(T) || !Number.isFinite(R)) { showMsg("wxError", t("wx_err_empty")); return; }
+    const tv = Math.round((T - climBase.t) * 10) / 10;
+    const r = Math.round((R / climBase.r - 1) * 100);
+    if (tv < WX_LIMITS.t[0] || tv > WX_LIMITS.t[1]) {
+        showMsg("wxError", t("wx_err_t", { a: fixed(climBase.t + WX_LIMITS.t[0], 1), b: fixed(climBase.t + WX_LIMITS.t[1], 1) }));
+        return;
+    }
+    if (r < WX_LIMITS.r[0] || r > WX_LIMITS.r[1]) {
+        showMsg("wxError", t("wx_err_r", { a: fmt(climBase.r * 0.2), b: fmt(climBase.r * 1.8) }));
+        return;
+    }
+    showMsg("wxError", "");
+    document.getElementById("sliderTemp").value = String(tv);
+    document.getElementById("sliderRain").value = String(r);
+    updateSliderLabels();
+    syncPresetChipState();
+    debouncedEvaluate();
 }
 
 function syncPresetChipState() {
@@ -595,7 +792,8 @@ function scenarioBody() {
     return JSON.stringify({
         region: currentRegion,
         delta_temp_c: parseFloat(document.getElementById("sliderTemp").value),
-        delta_rain_pct: parseFloat(document.getElementById("sliderRain").value)
+        delta_rain_pct: parseFloat(document.getElementById("sliderRain").value),
+        current_phases: customPhases
     });
 }
 
@@ -701,6 +899,12 @@ async function loadClimateChart() {
         const res = await fetch(`/api/climate?region=${encodeURIComponent(currentRegion)}`);
         const data = res.ok ? await res.json() : {};
         lastClimate = (data.climatology || []).length === 12 ? data.climatology : null;
+        const ms = (data.monthly_series || []).filter(m => isNum(m.tmax_mean) && isNum(m.tmin_mean));
+        climBase = ms.length && lastClimate
+            ? { t: ms.reduce((a, m) => a + (m.tmax_mean + m.tmin_mean) / 2, 0) / ms.length, r: lastClimate.reduce((a, c) => a + (c.rain_mm || 0), 0) }
+            : null;
+        renderWxBase();
+        setWeatherFromDelta(parseFloat(document.getElementById("sliderTemp").value), parseInt(document.getElementById("sliderRain").value, 10));
         renderClimateChart();
     } catch (e) {
         lastClimate = null;
@@ -743,8 +947,19 @@ function renderClimateChart() {
 async function loadRotations() {
     try {
         const res = await fetch("/api/rotations", { method: "POST", headers: { "Content-Type": "application/json" }, body: scenarioBody() });
-        if (!res.ok) { show("rotationsContent", false); show("rotationsEmpty", true); return; }
+        if (!res.ok) {
+            if (res.status === 400 && customPhases) {
+                const err = await res.json().catch(() => ({}));
+                showMsg("fieldError", t("field_err_server", { m: err.error || "" }));
+                customPhases = lastOkPhases;
+                return;
+            }
+            show("rotationsContent", false); show("rotationsEmpty", true); return;
+        }
         const data = await res.json();
+        lastOkPhases = customPhases;
+        fieldOptions = data.input_options || null;
+        if (fieldOptions && !document.querySelector("#fieldRows .field-row")) renderFieldRows(customPhases || fieldOptions.default_phases);
         show("rotationsContent", true); show("rotationsEmpty", false);
         const strategies = (data.strategies || []).slice().sort((a, b) => (b.is_existing ? 1 : 0) - (a.is_existing ? 1 : 0));
         const tv = parseFloat(document.getElementById("sliderTemp").value);
@@ -805,11 +1020,11 @@ function renderHero(data, strategies) {
     let answer = "", saving = null;
     if (best && best.annual_deficit_mm < baseDef) {
         saving = Math.round((baseDef - best.annual_deficit_mm) / baseDef * 100);
-        answer = t("ans_better", { region: regionName(), best: stratName(best), pct: saving, base: stratName(base), years: yearsCompare(best, base, true) });
+        answer = t("ans_better", { region: regionName(), best: stratName(best), pct: saving, base: baseName(base), years: yearsCompare(best, base, true) });
     } else if (best) {
         const more = Math.round((best.annual_deficit_mm - baseDef) / baseDef * 100);
         const eroTxt = ero && ero.available && ero.compared_strategy === best.id ? t("ans_ero", { pct: fmt(ero.reduction_pct, 0) }) : "";
-        answer = t("ans_none", { region: regionName(), base: stratName(base), alt: stratName(best), pct: more,
+        answer = t("ans_none", { region: regionName(), base: baseName(base), alt: stratName(best), pct: more,
             months: base.water_full_year === false && (base.water_months || []).length ? t("ans_months", { m: monthSpans(base.water_months) }) : "",
             years: yearsCompare(best, base, false), ero: eroTxt });
     }

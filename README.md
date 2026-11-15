@@ -13,6 +13,8 @@
 
 For each strategy the app shows the supplemental fresh water (irrigation need) for a typical year and for a dry year (1 in 5), each year 2015–2025, bare-soil months, a 12-month crop calendar against the salinity months, and cited evidence, benefits, information gaps and risks. It does not merge strategies into a single weighted score.
 
+Users can also type in their own field: the crop and sowing date of each season, plus an annual mean temperature and total rainfall for a what-if year. The entered calendar replaces the current practice as the baseline, and every card, the report and the CSV are recomputed against it.
+
 ### Key findings (computed by the app from NASA data, 2015–2025)
 - **Bến Tre:** replacing Winter–Spring rice with soybean or maize cuts supplemental fresh water by about 41% (≈ 15,300 → 9,000 m³/ha per year), and the ranking holds in **every** year 2015/16–2024/25. The 2016 drought year (crop year 2015/16) comes out as the driest year from NASA POWER weather alone.
 - **Sowing dates seen from space:** MODIS EVI/LSWI flooding signals show Winter–Spring rice sown about 16 days later than the 1 Nov date usually assumed (median of 6 detected seasons); for 2023 the satellite date (17 Nov) is 5 days from the date reported in the local press (~22 Nov).

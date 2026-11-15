@@ -1144,7 +1144,7 @@ class TestAeroAgriFix6(unittest.TestCase):
             with open(os.path.join(AERO_ROOT, *p), encoding="utf-8") as fh:
                 return fh.read()
         html, js, css = read("web", "index.html"), read("web", "app.js"), read("web", "style.css")
-        for s in ('class="sidenav"', 'href="#methodCard"', 'id="btnCsv"', 'id="btnPrint"', 'id="drawer"',
+        for s in ('class="sidenav"', 'class="roles"', "Farmers", "Extension officers &amp; researchers", "Scientists", 'href="#methodCard"', 'id="btnCsv"', 'id="btnPrint"', 'id="drawer"',
                   'id="methodCard"', 'id="ndviModelRow"', "FAO-56 Penman-Monteith", "0.8P − 25", "Not modeled yet:"):
             self.assertIn(s, html)
         for s in ("function plainLine", "function downloadCsv", "Per 1,000 m²", "fromCharCode(0xFEFF)",
@@ -1333,6 +1333,20 @@ class TestVietnameseContent(unittest.TestCase):
         self.assertEqual(c["S2"]["annual_deficit_mm"], s["S2"]["annual_deficit_mm"])
         same = evaluate_rotations("Ben_Tre_DBSCL", 0.0, 0.0, current_phases=opts["default_phases"])
         self.assertEqual({x["id"]: x for x in same["strategies"]}["S0"]["annual_deficit_mm"], s["S0"]["annual_deficit_mm"])
+
+    def test_user_calendar_form_in_step1(self):
+        """Step 1 has the field form (crop, sowing date) and typed temperature/rain instead of sliders."""
+        def read(*p):
+            with open(os.path.join(AERO_ROOT, *p), encoding="utf-8") as fh:
+                return fh.read()
+        html, js = read("web", "index.html"), read("web", "app.js")
+        for s in ('id="fieldCard"', 'id="fieldRows"', 'id="btnAddPhase"', 'id="btnApplyField"', 'id="btnDefaultField"',
+                  'id="fieldError"', 'id="inpTemp"', 'id="inpRain"', 'id="baseTemp"', 'id="baseRain"', 'id="wxDelta"'):
+            self.assertIn(s, html)
+        self.assertNotIn('type="range"', html)
+        for s in ("current_phases: customPhases", 'type="date"', "function checkFieldRows", "function onWeatherInput",
+                  'field_h: "Ruộng của bạn đang trồng gì?"'):
+            self.assertIn(s, js)
 
     def test_user_calendar_rejects_bad_input(self):
         """Overlapping seasons, crops from another region and impossible dates are rejected."""

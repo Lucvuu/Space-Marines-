@@ -372,3 +372,34 @@ footer a { font-weight: 700; color: var(--primary-ink); }
   body { background: #fff; }
   .report-card { border: 0; box-shadow: none; padding: 0; }
 }
+
+/* Roles, your field, typed weather (see DESIGN.md) */
+.roles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+.role { display: block; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text); text-decoration: none; font-size: 13px; line-height: 1.45; transition: border-color .15s; }
+.role:hover { border-color: var(--primary); }
+.role b { display: block; font-size: 14px; color: var(--primary-ink); margin-bottom: 2px; }
+.role span { color: var(--muted); }
+.field-card { margin-bottom: 18px; }
+.field-rows { margin-top: 14px; }
+.field-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.3fr) 44px; gap: 10px; align-items: center; margin-bottom: 10px; }
+.field-row select, .field-row input, .wx-input input { font: inherit; font-size: 15px; min-height: 44px; padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--surface); color: var(--text); min-width: 0; width: 100%; }
+.field-row input:disabled { background: var(--surface-subtle); color: var(--muted-light); }
+.field-end { font-size: 13px; color: var(--muted); }
+.field-del { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--muted); cursor: pointer; }
+.field-del:hover:not(:disabled) { border-color: var(--bad); color: var(--bad); }
+.field-del:disabled { opacity: .35; cursor: default; }
+.field-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 6px; }
+.field-error { margin-top: 10px; font-size: 13px; font-weight: 700; color: var(--bad); }
+.wx-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
+.wx-field label { display: block; font-size: 14px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+.wx-input { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); max-width: 220px; }
+.wx-input input { font-variant-numeric: tabular-nums; text-align: right; font-weight: 700; }
+.wx-base { display: block; font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+.wx-delta { margin-top: 12px; font-size: 14px; font-weight: 700; color: var(--primary-ink); }
+@media (max-width: 860px) {
+  .roles, .wx-grid { grid-template-columns: 1fr; }
+  .field-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px; }
+  .field-row .field-del { order: 3; }
+  .field-row .field-end { order: 4; grid-column: 1 / -1; margin-top: -4px; }
+}
+@media print { .roles, .field-card { display: none !important; } }
