@@ -1312,6 +1312,46 @@ class TestVietnameseContent(unittest.TestCase):
         self.assertEqual([p["label_vi"] for p in s0["phases"]], s0["vi"]["phase_labels"])
         self.assertTrue(all(y.get("event_vi") for y in bt["stress_years"]))
 
+    def test_user_calendar_replaces_current_practice(self):
+        """An entered calendar replaces the current practice; entering S2's calendar gives S2's numbers."""
+        from core.rotation import evaluate_rotations
+        rot = evaluate_rotations("Ben_Tre_DBSCL", 0.0, 0.0)
+        if not rot.get("available"):
+            self.skipTest("No POWER data")
+        opts = rot["input_options"]
+        self.assertEqual([c["id"] for c in opts["crops"]], ["rice", "soybean", "maize"])
+        self.assertEqual(opts["default_phases"], [{"crop": "rice", "start": "05-25"}, {"crop": "rice", "start": "11-01"}])
+        s = {x["id"]: x for x in rot["strategies"]}
+        self.assertFalse(s["S0"]["custom"])
+        cus = evaluate_rotations("Ben_Tre_DBSCL", 0.0, 0.0,
+                                 current_phases=[{"crop": "rice", "start": "05-25"}, {"crop": "soybean", "start": "11-01"}])
+        c = {x["id"]: x for x in cus["strategies"]}
+        self.assertTrue(c["S0"]["custom"])
+        self.assertTrue(c["S0"]["name_vi"].startswith("Current practice: your calendar (Summer–Autumn rice + "))
+        self.assertTrue(c["S0"]["vi"]["name"].startswith("Hiện trạng: lịch bạn nhập ("))
+        self.assertEqual(c["S0"]["annual_deficit_mm"], s["S2"]["annual_deficit_mm"])
+        self.assertEqual(c["S2"]["annual_deficit_mm"], s["S2"]["annual_deficit_mm"])
+        same = evaluate_rotations("Ben_Tre_DBSCL", 0.0, 0.0, current_phases=opts["default_phases"])
+        self.assertEqual({x["id"]: x for x in same["strategies"]}["S0"]["annual_deficit_mm"], s["S0"]["annual_deficit_mm"])
+
+    def test_user_calendar_rejects_bad_input(self):
+        """Overlapping seasons, crops from another region and impossible dates are rejected."""
+        from core.rotation import evaluate_rotations
+        rot = evaluate_rotations("Ben_Tre_DBSCL", 0.0, 0.0)
+        if not rot.get("available"):
+            self.skipTest("No POWER data")
+        bad = [
+            [{"crop": "rice", "start": "05-25"}, {"crop": "maize", "start": "07-01"}],
+            [{"crop": "coffee"}],
+            [{"crop": "rice", "start": "02-30"}],
+            [{"crop": "rice", "start": "5-25"}],
+            [],
+            [{"crop": "rice", "start": "01-01"}] * 4,
+        ]
+        for phases in bad:
+            with self.assertRaises(ValueError):
+                evaluate_rotations("Ben_Tre_DBSCL", 0.0, 0.0, current_phases=phases)
+
 
 class TestT3SowingDetection(unittest.TestCase):
     """T3: rice sowing dates from the MODIS flooding signal (LSWI + 0.05 >= EVI, then EVI green-up)."""
@@ -1569,7 +1609,6 @@ class TestT4T5Validation(unittest.TestCase):
         from core.validation import rainfall_power_vs_imerg, smap_dry_season_anomaly
         self.assertFalse(rainfall_power_vs_imerg("Ben_Tre_DBSCL")["available"])
         self.assertFalse(smap_dry_season_anomaly("Ben_Tre_DBSCL", [1, 2, 3, 4], [])["available"])
-
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

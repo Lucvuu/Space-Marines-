@@ -200,7 +200,7 @@ class AeroAgriAPIHandler(SimpleHTTPRequestHandler):
                     return
 
                 try:
-                    res = evaluate_rotations(reg_id, delta_temp_c=d_temp, delta_rain_pct=d_rain)
+                    res = evaluate_rotations(reg_id, delta_temp_c=d_temp, delta_rain_pct=d_rain, current_phases=body.get("current_phases"))
                 except ValueError as ve:
                     self.send_error_json(400, str(ve))
                     return
@@ -226,7 +226,11 @@ class AeroAgriAPIHandler(SimpleHTTPRequestHandler):
                 question = body.get("question", "")
                 strategy_id = body.get("strategy_id")
                 eval_res = evaluate_crop_suitability(reg_id, delta_temp_c=d_temp, delta_rain_pct=d_rain)
-                rot_res = evaluate_rotations(reg_id, delta_temp_c=d_temp, delta_rain_pct=d_rain)
+                try:
+                    rot_res = evaluate_rotations(reg_id, delta_temp_c=d_temp, delta_rain_pct=d_rain, current_phases=body.get("current_phases"))
+                except ValueError as ve:
+                    self.send_error_json(400, str(ve))
+                    return
                 advice = build_advice(reg_id, eval_res, question=question, rotations=rot_res, strategy_id=strategy_id)
                 self.send_json(200, advice)
                 return

@@ -1,6 +1,7 @@
 {
   "rice": {
     "name_vi": "Intensive rice",
+    "short": "Rice",
     "perennial": false,
     "season_days": 105,
     "stages": {
@@ -36,11 +37,13 @@
       "heat"
     ],
     "vi": {
-      "name": "Lúa thâm canh"
+      "name": "Lúa thâm canh",
+      "short": "Lúa"
     }
   },
   "soybean": {
     "name_vi": "Soybean",
+    "short": "Soybean",
     "perennial": false,
     "season_days": 100,
     "stages": {
@@ -70,11 +73,13 @@
       "salinity"
     ],
     "vi": {
-      "name": "Đậu tương"
+      "name": "Đậu tương",
+      "short": "Đậu tương"
     }
   },
   "maize": {
     "name_vi": "Maize (silage / grain)",
+    "short": "Maize",
     "perennial": false,
     "season_days": 100,
     "stages": {
@@ -104,11 +109,13 @@
       "salinity"
     ],
     "vi": {
-      "name": "Ngô sinh khối / ngô hạt"
+      "name": "Ngô sinh khối / ngô hạt",
+      "short": "Ngô"
     }
   },
   "rice_shrimp": {
     "name_vi": "Rice–shrimp ecological system",
+    "short": "Rice–shrimp",
     "perennial": false,
     "season_days": 120,
     "stages": null,
@@ -129,11 +136,13 @@
     "verified": false,
     "verified_params": [],
     "vi": {
-      "name": "Mô hình sinh thái Lúa - Tôm"
+      "name": "Mô hình sinh thái Lúa - Tôm",
+      "short": "Lúa – tôm"
     }
   },
   "coffee": {
     "name_vi": "Robusta coffee monoculture (bare soil)",
+    "short": "Coffee, bare soil",
     "perennial": true,
     "season_days": 120,
     "stages": {
@@ -162,11 +171,13 @@
       "kc"
     ],
     "vi": {
-      "name": "Cà phê Robusta độc canh (đất trần)"
+      "name": "Cà phê Robusta độc canh (đất trần)",
+      "short": "Cà phê đất trần"
     }
   },
   "coffee_cover_crop": {
     "name_vi": "Robusta coffee with cover crop / grass",
+    "short": "Coffee with cover crop",
     "perennial": true,
     "season_days": 120,
     "stages": {
@@ -195,7 +206,8 @@
       "kc"
     ],
     "vi": {
-      "name": "Cà phê có cây phủ đất / cỏ"
+      "name": "Cà phê có cây phủ đất / cỏ",
+      "short": "Cà phê có cây phủ"
     }
   }
 }

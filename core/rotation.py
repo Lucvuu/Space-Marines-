@@ -8,6 +8,7 @@ Evaluates whole-year rotation strategies from config/rotations.json:
 - Aggregates annual_deficit_mm, per-crop-year deficits (P50/P80), partial, bare_months and 12-month mean NDVI
 - Never invents weights or a composite score for strategies
 """
+import re
 import pandas as pd
 from core.loaders import load_csv
 from core.phenology import observed_sowing_for_region
@@ -131,7 +132,103 @@ def _summarize_crop_years(phase_yearly, crosses_year):
     return by_year, round(float(vals.quantile(0.5)), 1), round(float(vals.quantile(0.8)), 1), dict(driest)
 
 
-def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
+MONTH_ABBR_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+
+def _modeled_crops(reg_rot, crops_cfg):
+    """Crops that have a modeled phase in this region's strategies, in order of first appearance."""
+    out = []
+    for s in reg_rot.get("strategies", []):
+        for p in s.get("phases", []):
+            c = p.get("crop")
+            if c is not None and c in crops_cfg and c not in out:
+                out.append(c)
+    return out
+
+
+def _custom_existing(reg_rot, crops_cfg, current_phases):
+    """
+    Replace the phases of the current-practice strategy with a calendar entered by the user.
+    current_phases: [{"crop": "rice", "start": "05-25"}, ...]; perennial crops need no "start".
+    Raises ValueError when the calendar is not valid.
+    A phase with the same crop and sowing date as the configured current practice keeps its
+    label and its `presaturated` flag, so re-entering the usual calendar gives the same numbers.
+    """
+    existing = next((s for s in reg_rot.get("strategies", []) if s.get("is_existing")), None)
+    if existing is None:
+        raise ValueError("This region has no current-practice strategy to replace.")
+    if not isinstance(current_phases, list) or not 1 <= len(current_phases) <= 3:
+        raise ValueError("Enter between 1 and 3 seasons.")
+    allowed = _modeled_crops(reg_rot, crops_cfg)
+    known = {}
+    for idx, p in enumerate(existing.get("phases", [])):
+        known[(p.get("crop"), p.get("start"))] = (p, _phase_label_vi(existing, idx))
+    phases, labels_vi, taken = [], [], {}
+    for i, ph in enumerate(current_phases, 1):
+        ph = ph if isinstance(ph, dict) else {}
+        crop = ph.get("crop")
+        if crop not in allowed:
+            raise ValueError(f"Season {i}: crop '{crop}' is not modeled for this region.")
+        c_info = crops_cfg[crop]
+        en = c_info.get("short") or c_info.get("name_vi", crop)
+        vi = (c_info.get("vi") or {}).get("short") or en
+        if c_info.get("perennial"):
+            if len(current_phases) > 1:
+                raise ValueError("A perennial crop takes a single row.")
+            start = None
+        else:
+            start = str(ph.get("start") or "")
+            if not re.fullmatch(r"\d{2}-\d{2}", start):
+                raise ValueError(f"Season {i}: the sowing date must look like MM-DD, for example 05-25.")
+            try:
+                pd.Timestamp(year=2025, month=int(start[:2]), day=int(start[3:]))
+            except ValueError:
+                raise ValueError(f"Season {i}: {start} is not a real date.")
+            s_dt, e_dt = get_annual_season_bounds(2025, start, int(c_info.get("season_days") or 100))
+            days = set(pd.date_range(s_dt, e_dt, freq="D").strftime("%m-%d"))
+            for j, other in taken.items():
+                if days & other:
+                    raise ValueError(f"Seasons {j} and {i} overlap in the field. Move a sowing date so they do not overlap.")
+            taken[i] = days
+        base, base_vi = known.get((crop, start), (None, None))
+        if base is not None:
+            label, label_vi = base.get("label", en), base_vi or vi
+        elif start is None:
+            label, label_vi = en, vi
+        else:
+            m, d = int(start[:2]), int(start[3:])
+            label, label_vi = f"{en} sown {MONTH_ABBR_EN[m - 1]} {d}", f"{vi} gieo {d}/{m}"
+        new_ph = {"crop": crop, "label": label}
+        if start is not None:
+            new_ph["start"] = start
+            if base is not None and base.get("presaturated"):
+                new_ph["presaturated"] = True
+        phases.append(new_ph)
+        labels_vi.append(label_vi)
+    return {
+        **existing,
+        "phases": phases,
+        "custom": True,
+        "name_vi": "Current practice: your calendar (" + " + ".join(p["label"] for p in phases) + ")",
+        "why": "The calendar you entered, used as the baseline for the other options.",
+        "note": None,
+        "evidence": [],
+        "benefits": [],
+        "risks": [],
+        "info_gaps": ["Calendar entered by the user. Each season's length comes from the model's crop settings."],
+        "vi": {
+            "name": "Hiện trạng: lịch bạn nhập (" + " + ".join(labels_vi) + ")",
+            "why": "Lịch do bạn nhập, dùng làm mốc để so với các phương án khác.",
+            "phase_labels": labels_vi,
+            "benefits": [],
+            "risks": [],
+            "info_gaps": ["Lịch do người dùng nhập. Độ dài mỗi vụ lấy theo cấu hình cây trồng của mô hình."],
+            "evidence_text": []
+        }
+    }
+
+
+def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0, current_phases=None):
     """
     Evaluate the whole-year rotation strategies for `region_id`.
     """
@@ -158,11 +255,16 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
     ndvi_df, ndvi_meta = load_csv("ndvi", region_id)
     ndvi_monthly, ndvi_years = _ndvi_monthly(ndvi_df, reg_rot.get("ndvi_years"))
 
+    strategies_cfg = reg_rot.get("strategies", [])
+    if current_phases is not None:
+        custom = _custom_existing(reg_rot, crops_cfg, current_phases)
+        strategies_cfg = [custom if s.get("is_existing") else s for s in strategies_cfg]
+
     salinity_months = reg_rot.get("salinity_months", [])
     salinity_set = set(int(m) for m in salinity_months)
 
     strategies_out = []
-    for strat in reg_rot.get("strategies", []):
+    for strat in strategies_cfg:
         phases_out = []
         phase_month_counts = []
         phase_yearly = []
@@ -341,6 +443,7 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
         strategies_out.append({
             "id": strat.get("id"),
             "is_existing": bool(strat.get("is_existing", False)),
+            "custom": bool(strat.get("custom", False)),
             "name_vi": strat.get("name_vi", ""),
             "phases": phases_out,
             "annual_deficit_mm": annual_deficit_mm,
@@ -386,5 +489,22 @@ def evaluate_rotations(region_id, delta_temp_c=0.0, delta_rain_pct=0.0):
         "ndvi_monthly": ndvi_monthly,
         "ndvi_years": ndvi_years,
         "ndvi_years_source": reg_rot.get("ndvi_years_source"),
-        "strategies": strategies_out
+        "strategies": strategies_out,
+        "input_options": {
+            "crops": [
+                {
+                    "id": c,
+                    "short": crops_cfg[c].get("short") or crops_cfg[c].get("name_vi", c),
+                    "short_vi": (crops_cfg[c].get("vi") or {}).get("short") or crops_cfg[c].get("short") or c,
+                    "season_days": int(crops_cfg[c].get("season_days") or 100),
+                    "perennial": bool(crops_cfg[c].get("perennial", False))
+                }
+                for c in _modeled_crops(reg_rot, crops_cfg)
+            ],
+            "default_phases": [
+                {"crop": p.get("crop"), "start": p.get("start")}
+                for s in reg_rot.get("strategies", []) if s.get("is_existing")
+                for p in s.get("phases", []) if p.get("crop") is not None
+            ]
+        }
     }
