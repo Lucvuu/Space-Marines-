@@ -539,7 +539,7 @@
 <!-- ======================================================================= -->
 <!-- SLIDE 1: COVER (Dark full-bleed Southern Vietnam MODIS panorama)        -->
 <!-- ======================================================================= -->
-<section class="slide theme-dark active" id="s1" style="padding:0;" data-title="01 · AERO-AGRI Cover" data-notes="<strong>[0:00–0:45 · Cover &amp; Hook]</strong> Good morning judges. We are Team Space Marine presenting AERO-AGRI for Field Shift. Across Vietnam's coastal Mekong Delta and Central Highlands, farms face opposite extremes — dry-season saltwater intrusion in Bến Tre and monsoon soil erosion in Đắk Lắk. Using six NASA Earth-observation datasets from 2015 to 2025, AERO-AGRI helps farmers choose the crop rotation that pumps less fresh water, keeps soil covered, and avoids salt water — with zero AI-invented numbers.">
+<section class="slide theme-dark active" id="s1" style="padding:0;" data-title="01 · AERO-AGRI Cover" data-notes="<strong>[0:00–0:40 · Cover &amp; Hook]</strong> Good morning judges. In Bến Tre, salinity closes canals during the months when farms need fresh water. In Đắk Lắk, cover crops protect soil but add dry-season demand. AERO-AGRI combines six NASA datasets with a transparent FAO-56 water balance to compare whole-year crop rotations across two pilot sites from 2015 to 2025.">
   <!-- Full-height exact-aspect (2800x2700 -> 1120x1080) MODIS panorama so pilot coordinates stay exact -->
   <div style="position:absolute;left:0;top:0;width:1120px;height:1080px;overflow:hidden;">
     <div class="sat-img-layer sat-zoom">
@@ -570,11 +570,11 @@
     </div>
 
     <div style="margin-left:auto;width:850px;display:flex;flex-direction:column;gap:26px;">
-      <div class="mission-label anim d1" style="color:var(--accent);">EARTH-SCIENCE BRIEFING · BBOX lat 8.8–14.2, lon 104.4–110.0</div>
+      <div class="mission-label anim d1" style="color:var(--accent);">NASA EARTH DATA + TRANSPARENT FAO-56 WATER BALANCE</div>
       <h1 class="anim d2" style="font-size:132px;font-weight:900;line-height:0.95;letter-spacing:-2px;color:var(--ink);">AERO-AGRI</h1>
       <p class="anim d3" style="font-size:34px;line-height:1.3;font-weight:600;color:var(--ink);">
-        <span class="t-en">Which crop rotation needs less fresh water, keeps the soil covered and avoids salt water?</span>
-        <span class="t-vi">Cách luân canh nào ít tốn nước ngọt, giữ đất được che phủ và tránh được nước mặn?</span>
+        <span class="t-en">Fresh-water planning for crop rotations in Bến Tre and Đắk Lắk</span>
+        <span class="t-vi">Lập kế hoạch nước ngọt cho luân canh tại Bến Tre và Đắk Lắk</span>
       </p>
       <div class="anim d4" style="display:flex;gap:18px;flex-wrap:wrap;padding-top:8px;">
         <span style="background:rgba(13,23,38,0.88);border:1px solid var(--line);border-radius:999px;padding:10px 22px;font-size:20px;font-weight:700;color:var(--water);">6 NASA datasets</span>
@@ -593,15 +593,15 @@
 <!-- ======================================================================= -->
 <!-- SLIDE 2: PROBLEM (Dark, two real MODIS pilot site panels side by side)  -->
 <!-- ======================================================================= -->
-<section class="slide theme-dark" id="s2" data-title="02 · Dual Climate Squeeze" data-notes="<strong>[0:45–1:30 · Problem]</strong> Two opposite dry-season bottlenecks across Vietnam. Left: in Ba Tri, Bến Tre, farmers pump 15,329 m³/ha of fresh water every year for two rice crops while February–April river salinity peaks force dry land fallow. Right: on sloped basalt farms in Cư M'gar, Đắk Lắk, coffee irrigation from groundwater runs January–April; cover crops cut erosion but add dry-season water demand.">
+<section class="slide theme-dark" id="s2" data-title="02 · Dry-Season Water Pressure" data-notes="<strong>[0:40–1:25 · Problem]</strong> The two pilot sites face different dry-season constraints. In Ba Tri, Bến Tre, the modeled two-rice rotation requires 15,329 m³/ha of fresh water each year while river salinity peaks from February to April. In Cư M'gar, Đắk Lắk, coffee relies on groundwater from January to April, and farmers need to understand how much additional water a protective cover crop requires.">
   <div class="s-header">
     <div class="s-meta-bar">
       <span>AERO-AGRI · FIELD SHIFT</span>
       <span class="s-pg">02 / 07</span>
     </div>
     <h1 class="s-title anim d1">
-      <span class="t-en">Salt water arrives exactly when farms need fresh water</span>
-      <span class="t-vi">Nước mặn xâm nhập đúng lúc đồng ruộng cần nước ngọt nhất</span>
+      <span class="t-en">Dry-season water pressure in two farming systems</span>
+      <span class="t-vi">Áp lực nước mùa khô trong hai hệ canh tác</span>
     </h1>
   </div>
 
@@ -629,8 +629,8 @@
             <div class="num" style="font-size:88px;font-weight:900;line-height:0.95;color:var(--accent);">15,329</div>
             <div style="font-size:24px;font-weight:700;color:var(--dim);">m³/ha <span style="font-size:18px;font-weight:500;">(≈ 1,533 m³ per 1,000 m²)</span></div>
             <p style="font-size:23px;line-height:1.35;color:var(--ink);">
-              <span class="t-en">fresh water pumped every year for two rice crops</span>
-              <span class="t-vi">nước ngọt bơm mỗi năm cho 2 vụ lúa hiện tại</span>
+              <span class="t-en">modeled fresh-water deficit each year for two rice crops</span>
+              <span class="t-vi">thiếu hụt nước ngọt theo mô hình cho 2 vụ lúa mỗi năm</span>
             </p>
           </div>
         </div>
@@ -719,15 +719,15 @@
 <!-- ======================================================================= -->
 <!-- SLIDE 3: METHOD (Light paper background, SVG 4-stage pipeline + browser)-->
 <!-- ======================================================================= -->
-<section class="slide theme-light" id="s3" data-title="03 · Method & Multi-Scale NASA Fusion" data-notes="<strong>[1:30–2:15 · Architecture &amp; Method]</strong> Notice what we did NOT do: we never ask an AI model to guess crop water figures. Daily NASA POWER meteorology drives FAO-56 Penman–Monteith reference evapotranspiration (ETo), crop stage coefficients (Kc), and effective rainfall across all 10 crop years. Then four independent NASA datasets — MODIS MOD13Q1, MODIS MOD09A1, GPM IMERG, SMAP L4, plus SRTM slope — audit the water model.">
+<section class="slide theme-light" id="s3" data-title="03 · Transparent Method" data-notes="<strong>[1:25–2:10 · Method]</strong> NASA POWER daily weather drives a transparent FAO-56 water balance: reference evapotranspiration, crop coefficients, effective rainfall, and monthly fresh-water deficit. The model compares whole-year rotations, not isolated crops. Five additional NASA datasets provide crop timing, rainfall, soil-moisture, vegetation, and terrain context. The app exposes every formula, source, and limitation.">
   <div class="s-header">
     <div class="s-meta-bar">
       <span>AERO-AGRI · FIELD SHIFT</span>
       <span class="s-pg">03 / 07</span>
     </div>
     <h1 class="s-title anim d1">
-      <span class="t-en">From orbit to field: six NASA datasets audit one transparent water model</span>
-      <span class="t-vi">Từ quỹ đạo tới đồng ruộng: 6 bộ dữ liệu NASA kiểm chứng một mô hình nước minh bạch</span>
+      <span class="t-en">A transparent water model, audited with NASA observations</span>
+      <span class="t-vi">Mô hình nước minh bạch, được đối chiếu bằng quan sát NASA</span>
     </h1>
   </div>
 
@@ -835,15 +835,15 @@
 <!-- ======================================================================= -->
 <!-- SLIDE 4: KEY RESULT (Light paper background, -41% hero + 10-yr bar SVG) -->
 <!-- ======================================================================= -->
-<section class="slide theme-light" id="s4" data-title="04 · Key Result: 41% Less Fresh Water" data-notes="<strong>[2:15–3:15 · Key Result]</strong> In Bến Tre, replacing the Winter–Spring rice crop with soybean (S2) reduces fresh-water deficit from 15,329 to 8,978 m³/ha per year — 41% less water in EVERY single crop year since 2015, including the severe 2016 drought year (2015/16: 18,740 down to 12,020 m³/ha). Even under a Hot &amp; dry +1.5 °C, −20% rain test, S2 still cuts pumping by 39%. Notice Rice–shrimp (S1: 6,613 m³/ha) is reported separately without a saving percentage because brackish shrimp pond water is not modeled.">
+<section class="slide theme-light" id="s4" data-title="04 · Key Result: Modeled Water Deficit" data-notes="<strong>[2:10–3:00 · Key Result]</strong> In Bến Tre, replacing the Winter–Spring rice crop with soybean reduces the modeled annual fresh-water deficit from 15,329 to 8,978 m³/ha, a 41% reduction. The ranking holds in all 10 crop years, including 2015/16, and remains 39% lower in the hotter, drier stress test. Rice–shrimp is shown separately because the model does not yet represent brackish water in the shrimp phase.">
   <div class="s-header">
     <div class="s-meta-bar">
       <span>AERO-AGRI · FIELD SHIFT</span>
       <span class="s-pg">04 / 07</span>
     </div>
     <h1 class="s-title anim d1">
-      <span class="t-en">41% less fresh water — in every crop year since 2015</span>
-      <span class="t-vi">Ít hơn 41% nước ngọt — đúng ở cả 10 vụ năm kể từ 2015</span>
+      <span class="t-en">Soybean rotation cuts modeled fresh-water deficit by 41%</span>
+      <span class="t-vi">Luân canh đậu tương giảm 41% thiếu hụt nước ngọt theo mô hình</span>
     </h1>
   </div>
 
@@ -975,15 +975,15 @@
 <!-- ======================================================================= -->
 <!-- SLIDE 5: SATELLITE SELF-AUDITS (Dark + 3 giant numbers + Dak Lak strip) -->
 <!-- ======================================================================= -->
-<section class="slide theme-dark" id="s5" data-title="05 · Independent Satellites Check the Model" data-notes="<strong>[3:15–4:30 · Validity &amp; Audits]</strong> Instead of assuming our model is right, we cross-check it with three independent NASA sensors. First, MODIS MOD09A1 flooding detection spots 2023 rice sowing on 17 Nov vs ~22 Nov reported locally — 5 days apart (against a 16-day median offset across 6 seasons). Second, GPM IMERG agrees with NASA POWER within 1.2% annually (r = 0.90 in Bến Tre, 0.89 in Đắk Lắk). Third, SMAP L4 root-zone moisture tracks Đắk Lắk coffee water deficit at r = −0.94 across 10 dry seasons. Bottom strip shows the honest Đắk Lắk trade-off: +19% water for about 87% less soil loss, with Indonesian C-factors flagged as unverified locally.">
+<section class="slide theme-dark" id="s5" data-title="05 · Independent Cross-Checks" data-notes="<strong>[3:00–4:05 · Cross-Checks]</strong> Three independent comparisons test whether the model follows observed timing and patterns. MODIS detects 2023 rice sowing five days from a local report. GPM IMERG and NASA POWER differ by 1.2% in annual rainfall, with strong monthly agreement at both sites. SMAP soil moisture moves opposite to the modeled coffee water deficit, with r = −0.94 across 10 dry seasons. In Đắk Lắk, the model also makes the trade-off visible: a cover crop adds 19% dry-season water and may reduce relative soil loss by about 87%. That erosion factor still needs local validation.">
   <div class="s-header">
     <div class="s-meta-bar">
       <span>AERO-AGRI · FIELD SHIFT</span>
       <span class="s-pg">05 / 07</span>
     </div>
     <h1 class="s-title anim d1">
-      <span class="t-en">Independent satellites check the model</span>
-      <span class="t-vi">Các vệ tinh độc lập kiểm tra chéo mô hình</span>
+      <span class="t-en">NASA cross-checks align with modeled timing and trends</span>
+      <span class="t-vi">Đối chiếu NASA phù hợp với thời điểm và xu hướng theo mô hình</span>
     </h1>
   </div>
 
@@ -1059,15 +1059,15 @@
 <!-- ======================================================================= -->
 <!-- SLIDE 6: PRODUCT (Light paper background, 4 browser-framed steps)       -->
 <!-- ======================================================================= -->
-<section class="slide theme-light" id="s6" data-title="06 · Product: 4 Steps in the Browser" data-notes="<strong>[4:30–5:30 · Product Walkthrough]</strong> All of this ships in one bilingual EN/VI web app running right in the browser with no external CDN and no AI-generated numbers. Step 1: farmers pick their crop, sowing date, and test weather scenarios. Step 2: compare rotations across water, bare-soil months, and salt-water months. Step 3: inspect the independent NASA satellite cross-checks. Step 4: print a clean cooperative report or download CSV.">
+<section class="slide theme-light" id="s6" data-title="06 · Product Workflow" data-notes="<strong>[4:05–4:50 · Product]</strong> The bilingual web app turns the method into four steps. Users enter a field calendar and weather scenario, compare whole-year rotations, inspect the NASA cross-checks, and print a report or export CSV. Farmers see water per 1,000 m². Advisers can test scenarios. Researchers can inspect formulas, sources, and limitations.">
   <div class="s-header">
     <div class="s-meta-bar">
       <span>AERO-AGRI · FIELD SHIFT</span>
       <span class="s-pg">06 / 07</span>
     </div>
     <h1 class="s-title anim d1">
-      <span class="t-en">One page from field to decision — for farmers, advisers and scientists</span>
-      <span class="t-vi">Một trang từ ruộng tới quyết định — cho nông dân, khuyến nông và nhà khoa học</span>
+      <span class="t-en">One workflow from field calendar to a printable plan</span>
+      <span class="t-vi">Một quy trình từ lịch thời vụ tới kế hoạch có thể in</span>
     </h1>
   </div>
 
@@ -1171,15 +1171,15 @@
 <!-- ======================================================================= -->
 <!-- SLIDE 7: HONESTY, NEXT STEPS, TEAM & DISCLOSURES (Dark)                 -->
 <!-- ======================================================================= -->
-<section class="slide theme-dark" id="s7" data-title="07 · Limits, Roadmap & Team Space Marine" data-notes="<strong>[5:30–6:15 · Honesty &amp; Close]</strong> Judges, good science starts by stating what we did NOT prove yet. Every modeled output relies on a 50 km NASA POWER weather grid, Ba Tri's clay soil percolation rate (4 vs 2 mm/day shifts S0 by 393 mm), and excludes brackish shrimp water, salinity station time series, crop yields, and costs. Next: partner with local extension officers for Ba Tri soil/salinity measurements, model the shrimp phase, and expand to more Mekong provinces. Thank you!">
+<section class="slide theme-dark" id="s7" data-title="07 · Field Validation & Partnership" data-notes="<strong>[4:50–5:30 · Close]</strong> AERO-AGRI is ready for its next milestone: field validation. The current prototype uses a 50 km weather grid, has not verified Ba Tri soil parameters locally, and does not yet model the shrimp phase, salinity dynamics, yields, or costs. We are seeking extension and research partners to measure soil and salinity in Ba Tri, test the recommendations with farmers, and expand the evidence base. Thank you.">
   <div class="s-header">
     <div class="s-meta-bar">
       <span>AERO-AGRI · FIELD SHIFT</span>
       <span class="s-pg">07 / 07</span>
     </div>
     <h1 class="s-title anim d1">
-      <span class="t-en">Honest about the gaps — ready to test in the field</span>
-      <span class="t-vi">Thẳng thắn về giới hạn — sẵn sàng kiểm chứng ngoài đồng ruộng</span>
+      <span class="t-en">Field validation is the next milestone</span>
+      <span class="t-vi">Kiểm chứng thực địa là cột mốc tiếp theo</span>
     </h1>
   </div>
 
@@ -1187,7 +1187,7 @@
     <!-- 2 columns: Known limits vs Next -->
     <div class="grid-12">
       <div class="col-6 panel-dark anim d2" style="padding:38px 40px;">
-        <div class="mission-label" style="color:var(--salt);margin-bottom:22px;"><span class="t-en">KNOWN LIMITS</span><span class="t-vi">GIỚI HẠN HIỆN TẠI</span></div>
+        <div class="mission-label" style="color:var(--salt);margin-bottom:22px;"><span class="t-en">CURRENT BOUNDARIES</span><span class="t-vi">PHẠM VI HIỆN TẠI</span></div>
         <ul class="brief-list" style="gap:22px;">
           <li style="font-size:25px;"><span class="t-en">50 km weather grid</span><span class="t-vi">Lưới thời tiết 50 km</span></li>
           <li style="font-size:25px;"><span class="t-en">Soil type at Ba Tri not yet verified</span><span class="t-vi">Loại đất tại Ba Tri chưa đo kiểm thực địa</span></li>
@@ -1196,7 +1196,7 @@
       </div>
 
       <div class="col-6 panel-dark anim d3" style="padding:38px 40px;border-color:rgba(74,222,128,0.35);">
-        <div class="mission-label" style="color:var(--veg);margin-bottom:22px;"><span class="t-en">NEXT</span><span class="t-vi">BƯỚC TIẾP THEO</span></div>
+        <div class="mission-label" style="color:var(--veg);margin-bottom:22px;"><span class="t-en">FIELD VALIDATION PLAN</span><span class="t-vi">KẾ HOẠCH KIỂM CHỨNG</span></div>
         <div style="display:flex;flex-direction:column;gap:22px;font-size:25px;line-height:1.35;font-weight:500;">
           <div><strong style="color:var(--veg);">1.</strong> <span class="t-en">Field soil and salinity measurements in Ba Tri</span><span class="t-vi">Đo đất và độ mặn thực địa tại Ba Tri</span></div>
           <div><strong style="color:var(--veg);">2.</strong> <span class="t-en">Model the shrimp phase</span><span class="t-vi">Mô phỏng pha nuôi tôm trong luân canh lúa–tôm</span></div>
@@ -1214,10 +1214,9 @@
         </div>
       </div>
 
-      <div class="col-5 panel-dark" style="padding:28px 34px;display:flex;flex-direction:column;justify-content:center;gap:12px;">
-        <div class="mission-label" style="color:var(--water);"><span class="t-en">LINKS</span><span class="t-vi">LIÊN KẾT</span></div>
-        <div style="font-size:19px;"><strong>App &amp; slides:</strong> <span style="font-family:var(--mono);color:var(--accent);">https://lucvuu.github.io/Space-Marines-/</span></div>
-        <div style="font-size:19px;"><strong>Code:</strong> <span style="font-family:var(--mono);color:var(--water);">https://github.com/Lucvuu/Space-Marines-/tree/final</span></div>
+      <div class="col-5 panel-dark" style="padding:28px 34px;display:flex;flex-direction:column;justify-content:center;gap:12px;border-color:rgba(74,222,128,0.35);">
+        <div class="mission-label" style="color:var(--veg);"><span class="t-en">PARTNERSHIP ASK</span><span class="t-vi">LỜI MỜI HỢP TÁC</span></div>
+        <div style="font-size:22px;font-weight:700;line-height:1.35;"><span class="t-en">Extension and research partners for soil and salinity measurements in Ba Tri</span><span class="t-vi">Đối tác khuyến nông và nghiên cứu để đo đất, độ mặn tại Ba Tri</span></div>
       </div>
     </div>
 
@@ -1228,8 +1227,8 @@
   </div>
 
   <div class="s-foot">
-    <span>Team Space Marine · Open Source · 81 automated tests</span>
-    <span>2015–2025 · Thank you</span>
+    <span>App: lucvuu.github.io/Space-Marines-/ · Open source · 81 automated tests</span>
+    <span>Team Space Marine · Thank you</span>
   </div>
 </section>
 
