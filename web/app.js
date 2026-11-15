@@ -118,7 +118,7 @@ const I18N = {
         smap_for: " for {name}", th_year: "Year", th_anom: "Soil moisture anomaly (m³/m³)", th_dw: "drier · wetter", th_model: "Model: water to pump (m³/ha)",
         ev_ero_k: "SRTM + GPM IMERG", ev_ero_t: "Slope and erosion",
         ero_take: "With grass cover, soil loss is about <b>{p}% lower</b> (C-factor, plot study in Indonesia{v}).",
-        ero_take2: "Slope: median {a}°, 10% steeper than {b}° · {s}% of rain falls {m}.",
+        ero_take2: "Slope: median {a}°, 10% of the land steeper than {b}° · {s}% of rain falls {m}.",
         chip_checking: "checking...", not_used: "not used here", not_avail: "not available", demo: "demo data", measured: "measured ({n} {u})",
         u_days: "days", u_images: "images", u_rows: "rows", u_months: "months", u_seasons: "dry seasons", slope30: "30 m slope",
         chip_sal: "Salinity (ground stations)", chip_sm_label: "SMAP L4",
