@@ -106,6 +106,7 @@
   }
   .deck-viewport {
     position: relative;
+    flex: 0 0 auto; /* keep 1920x1080 and let fit() scale it; without this flexbox shrinks it on small screens */
     width: 1920px;
     height: 1080px;
     transform-origin: center center;
