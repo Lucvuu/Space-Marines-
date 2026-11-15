@@ -1,0 +1,20 @@
+{
+  "_about": "Relative soil-loss comparison for Robusta coffee: bare (clean-weeded) inter-rows (D0) vs cover crop (D1), task T7. RUSLE: A = R * K * LS * C * P. D0 and D1 share the same field, rain and slope, so R, K, LS and P cancel and the ratio depends on C only.",
+  "Dak_Lak_Tay_Nguyen": {
+    "strategy_c": {"D0": "clean_weeded", "D1": "paspalum_cover"},
+    "c_factors": {
+      "clean_weeded": {"value": 0.045, "label": "Coffee, clean-weeded (bare inter-rows)"},
+      "paspalum_cover": {"value": 0.006, "label": "Coffee with Paspalum conjugatum cover"},
+      "natural_weeds": {"value": 0.004, "label": "Coffee with natural weed cover"}
+    },
+    "c_source": "Afandi, Manik, Rosadi, Utomo, Senge, Adachi, Oki (2003). An Evaluation of Coffee Crop Factor under Different Weed Managements Using USLE Method in Hilly Humid Tropical Area of Lampung, South Sumatra, Indonesia. Journal of the Japanese Society of Soil Physics 93: 21-33 (abstract read)",
+    "verified": false,
+    "wet_season_months": [5, 6, 7, 8, 9, 10],
+    "caveats": [
+      "C-factors were measured on plots in Lampung, Indonesia (humid tropical hills), not in Đắk Lắk; cover species and management differ.",
+      "WASI recommends strip weeding rather than a full cover on slopes, so a real D1 farm has partial cover: the reduction shown is an upper bound.",
+      "RUSLE is better for comparing practices than for absolute soil loss; no absolute tonnes are reported.",
+      "MODIS NDVI at 250 m mostly sees the coffee canopy, not the inter-row soil, so the satellite C-factor (van der Knijff) cannot tell D0 from D1 here and is not used."
+    ]
+  }
+}

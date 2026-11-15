@@ -1,0 +1,27 @@
+{
+  "weights": {
+    "w_water": 0.5,
+    "w_salinity": 0.3,
+    "w_heat": 0.2
+  },
+  "risk_thresholds": {
+    "LOW": 80.0,
+    "MODERATE": 60.0,
+    "SEVERE": 40.0,
+    "CRITICAL": 0.0
+  },
+  "risk_thresholds_exceed_ratio": {
+    "LOW": 0.10,
+    "MODERATE": 0.25,
+    "SEVERE": 0.50,
+    "CRITICAL": 1.00
+  },
+  "u2_min_ms": 0.5,
+  "eto_u2_min": {
+    "u2_min_ms": 0.5,
+    "source": "FAO-56 ch.3, p.63: u2 should be limited to about u2 >= 0.5 m/s when used in Eq. 6",
+    "verified": true
+  },
+  "source": "AERO-AGRI default scoring specification",
+  "verified": false
+}

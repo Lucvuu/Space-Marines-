@@ -1,0 +1,213 @@
+{
+  "rice": {
+    "name_vi": "Intensive rice",
+    "short": "Rice",
+    "perennial": false,
+    "season_days": 105,
+    "stages": {
+      "ini": 20,
+      "dev": 30,
+      "mid": 40,
+      "late": 15
+    },
+    "kc_ini": 1.05,
+    "kc_mid": 1.2,
+    "kc_end": 0.75,
+    "land_prep_mm": 300,
+    "percolation_mm_day": 4,
+    "percolation_mm_day_low": 2,
+    "sat_mm": 200,
+    "peff_method": "fao_tm3",
+    "salinity_threshold_ece_dsm": 3.0,
+    "salinity_basis": "soil_water_submerged",
+    "heat_threshold_c": 35.0,
+    "source": {
+      "kc": "FAO-56 Table 12 p.111 (Kc end range 0.90-0.60, 0.75 chosen)",
+      "salinity": "FAO-56 Table 23 p.179, footnote 6",
+      "heat": "Jagadish et al. 2007, J. Exp. Bot. 58(7):1627, abstract: spikelet sterility at >=33.7 °C tissue temperature at anthesis (chamber air setpoint 35 °C; tissue 0.4-1.8 °C below air).",
+      "water_extra": "FAO Training Manual 3 (Brouwer & Heibloem 1986), Part II Sec. 4.4: SAT 200 mm + WL 100 mm (land_prep_mm = 300); PERC 4 mm/day for heavy clay (range 4-8 mm/day). Soil type at the Ba Tri point is assumed heavy clay, not verified.",
+      "peff": "FAO Training Manual 3 (Brouwer & Heibloem 1986), Part II §4.2 and §4.4: Pe = 0.8P - 25 if P > 75 mm/month; Pe = 0.6P - 10 if P < 75 mm/month.",
+      "sat": "FAO TM3 §4.4: SAT 200 mm is part of land_prep_mm (300 = SAT 200 + WL 100). The §4.4 example sets SAT = 0 when the root zone was saturated in the previous month.",
+      "perc_low": "2 mm/day: Nguyen Trung Nam, VGU/TU Darmstadt master thesis on Ben Tre, p.29, citing TCVN 9168:2012 (standard not read). Used only as a sensitivity bound."
+    },
+    "verified": false,
+    "verified_params": [
+      "kc",
+      "salinity",
+      "heat"
+    ],
+    "vi": {
+      "name": "Lúa thâm canh",
+      "short": "Lúa"
+    }
+  },
+  "soybean": {
+    "name_vi": "Soybean",
+    "short": "Soybean",
+    "perennial": false,
+    "season_days": 100,
+    "stages": {
+      "ini": 20,
+      "dev": 25,
+      "mid": 35,
+      "late": 20
+    },
+    "kc_ini": 0.4,
+    "kc_mid": 1.15,
+    "kc_end": 0.5,
+    "land_prep_mm": null,
+    "percolation_mm_day": null,
+    "peff_method": "usda_scs",
+    "salinity_threshold_ece_dsm": 5.0,
+    "salinity_basis": "ece",
+    "heat_threshold_c": 35.0,
+    "source": {
+      "kc": "FAO-56 Table 12 p.111 (Kc ini = Legumes group value 0.4)",
+      "salinity": "FAO-56 Table 23 p.178",
+      "heat": "VHD35 (Tmax >= 35 °C) is a climate-index definition (Plants 2026), not a measured damage threshold: low confidence.",
+      "water_extra": "N/A (upland crop, null)"
+    },
+    "verified": false,
+    "verified_params": [
+      "kc",
+      "salinity"
+    ],
+    "vi": {
+      "name": "Đậu tương",
+      "short": "Đậu tương"
+    }
+  },
+  "maize": {
+    "name_vi": "Maize (silage / grain)",
+    "short": "Maize",
+    "perennial": false,
+    "season_days": 100,
+    "stages": {
+      "ini": 20,
+      "dev": 30,
+      "mid": 35,
+      "late": 15
+    },
+    "kc_ini": 0.3,
+    "kc_mid": 1.2,
+    "kc_end": 0.35,
+    "land_prep_mm": null,
+    "percolation_mm_day": null,
+    "peff_method": "usda_scs",
+    "salinity_threshold_ece_dsm": 1.7,
+    "salinity_basis": "ece",
+    "heat_threshold_c": 35.0,
+    "source": {
+      "kc": "FAO-56 Table 12 p.111 (Kc ini = Cereals group 0.3; Kc end 0.35 = dry harvest, footnote 11)",
+      "salinity": "FAO-56 Table 23 p.179",
+      "heat": "~35 °C air temperature for tropical maize pollination (Maydica 2016 heat-stress study; Lizaso et al. 2018 cited secondarily). Primary source not read: low confidence.",
+      "water_extra": "N/A (upland crop, null)"
+    },
+    "verified": false,
+    "verified_params": [
+      "kc",
+      "salinity"
+    ],
+    "vi": {
+      "name": "Ngô sinh khối / ngô hạt",
+      "short": "Ngô"
+    }
+  },
+  "rice_shrimp": {
+    "name_vi": "Rice–shrimp ecological system",
+    "short": "Rice–shrimp",
+    "perennial": false,
+    "season_days": 120,
+    "stages": null,
+    "kc_ini": null,
+    "kc_mid": null,
+    "kc_end": null,
+    "land_prep_mm": null,
+    "percolation_mm_day": null,
+    "salinity_threshold_ece_dsm": null,
+    "salinity_basis": null,
+    "heat_threshold_c": 35.0,
+    "source": {
+      "kc": "TODO: shrimp has no plant Kc; local experts needed",
+      "salinity": "TODO: shrimp has no plant ECe; local experts needed",
+      "heat": "TODO: source needed",
+      "water_extra": "TODO: local experts needed"
+    },
+    "verified": false,
+    "verified_params": [],
+    "vi": {
+      "name": "Mô hình sinh thái Lúa - Tôm",
+      "short": "Lúa – tôm"
+    }
+  },
+  "coffee": {
+    "name_vi": "Robusta coffee monoculture (bare soil)",
+    "short": "Coffee, bare soil",
+    "perennial": true,
+    "season_days": 120,
+    "stages": {
+      "ini": 30,
+      "dev": 30,
+      "mid": 30,
+      "late": 30
+    },
+    "kc_ini": 0.9,
+    "kc_mid": 0.95,
+    "kc_end": 0.95,
+    "land_prep_mm": null,
+    "percolation_mm_day": null,
+    "peff_method": "usda_scs",
+    "salinity_threshold_ece_dsm": null,
+    "salinity_basis": null,
+    "heat_threshold_c": null,
+    "source": {
+      "kc": "FAO-56 Table 12 p.112, Coffee - bare ground cover / - with weeds",
+      "salinity": "N/A (highland region, no salinity)",
+      "heat": "No sourced daily-Tmax damage threshold for Coffea canephora. Kath et al. 2020 (Global Change Biology 26:3677) give a growing-season mean optimum (mean Tmax <= 24.1 °C), not a daily threshold, so heat is not scored for coffee.",
+      "water_extra": "N/A (upland crop, null)"
+    },
+    "verified": false,
+    "verified_params": [
+      "kc"
+    ],
+    "vi": {
+      "name": "Cà phê Robusta độc canh (đất trần)",
+      "short": "Cà phê đất trần"
+    }
+  },
+  "coffee_cover_crop": {
+    "name_vi": "Robusta coffee with cover crop / grass",
+    "short": "Coffee with cover crop",
+    "perennial": true,
+    "season_days": 120,
+    "stages": {
+      "ini": 30,
+      "dev": 30,
+      "mid": 30,
+      "late": 30
+    },
+    "kc_ini": 1.05,
+    "kc_mid": 1.1,
+    "kc_end": 1.1,
+    "land_prep_mm": null,
+    "percolation_mm_day": null,
+    "peff_method": "usda_scs",
+    "salinity_threshold_ece_dsm": null,
+    "salinity_basis": null,
+    "heat_threshold_c": null,
+    "source": {
+      "kc": "FAO-56 Table 12 p.112, Coffee - bare ground cover / - with weeds",
+      "salinity": "N/A (highland region, no salinity)",
+      "heat": "No sourced daily-Tmax damage threshold for Coffea canephora. Kath et al. 2020 (Global Change Biology 26:3677) give a growing-season mean optimum (mean Tmax <= 24.1 °C), not a daily threshold, so heat is not scored for coffee.",
+      "water_extra": "N/A (upland crop, null)"
+    },
+    "verified": false,
+    "verified_params": [
+      "kc"
+    ],
+    "vi": {
+      "name": "Cà phê có cây phủ đất / cỏ",
+      "short": "Cà phê có cây phủ"
+    }
+  }
+}
