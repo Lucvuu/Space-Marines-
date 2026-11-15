@@ -247,9 +247,12 @@ def create_server(host="127.0.0.1", port=8050):
     return ThreadingHTTPServer((host, port), AeroAgriAPIHandler)
 
 if __name__ == "__main__":
-    port = 8050
-    server = create_server("127.0.0.1", port)
-    print(f"[AERO-AGRI] Server running at http://127.0.0.1:{port}")
+    # Local default: 127.0.0.1:8050. Hosting platforms (Render, Railway, Heroku-style) set PORT,
+    # and then the server listens on all interfaces so the platform can reach it.
+    port = int(os.environ.get("PORT", 8050))
+    host = os.environ.get("HOST", "0.0.0.0" if "PORT" in os.environ else "127.0.0.1")
+    server = create_server(host, port)
+    print(f"[AERO-AGRI] Server running at http://{host}:{port}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
