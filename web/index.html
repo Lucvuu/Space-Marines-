@@ -94,6 +94,22 @@
                         <button type="button" id="btnDefaultField" class="btn-link" data-i18n="field_default">Use the region's usual calendar</button>
                     </div>
                     <p class="field-error" id="fieldError" role="alert" hidden></p>
+                    <div class="local-box" id="saltBox" hidden>
+                        <div class="local-h" data-i18n="salt_h">Which months is the canal water salty at your field?</div>
+                        <div class="salt-months" id="saltMonths" role="group" data-i18n-aria="salt_h" aria-label="Which months is the canal water salty at your field?"></div>
+                        <p class="local-src" id="saltSrc"></p>
+                        <p class="local-result" id="saltResult" aria-live="polite"></p>
+                    </div>
+                    <div class="local-box" id="pracBox" hidden>
+                        <div class="local-h" data-i18n="prac_h">How do you irrigate in the dry season?</div>
+                        <div class="prac-grid">
+                            <label><span data-i18n="prac_l">Litres per tree per round</span><input type="number" id="pracL" min="50" max="2000" step="10" value="400" inputmode="numeric"></label>
+                            <label><span data-i18n="prac_n">Rounds in the dry season</span><input type="number" id="pracN" min="1" max="12" step="1" value="4" inputmode="numeric"></label>
+                            <label><span data-i18n="prac_t">Trees per hectare</span><input type="number" id="pracT" min="200" max="3000" step="10" value="1111" inputmode="numeric"></label>
+                        </div>
+                        <p class="local-src" data-i18n="prac_src">Filled in: NAEC 2026 guidance (350–420 litres per tree per round, every 30–35 days, so about 4 rounds in January–April) and a 3 × 3 m spacing (assumption). Change them to match your garden.</p>
+                        <p class="local-result" id="pracResult" aria-live="polite"></p>
+                    </div>
                 </div>
                 <div class="hero" id="heroCard" aria-live="polite">
                     <div class="hero-panel">
@@ -146,6 +162,19 @@
                 </div>
                 <div class="legend-compact" id="rotationLegend"></div>
                 <div id="rotationsContent">
+                    <section class="card lessons" id="lessonsCard" aria-labelledby="lessonsTitle">
+                        <div class="lessons-head">
+                            <span class="ic ic-good"><svg class="ico"><use href="#i-layers"/></svg></span>
+                            <div><h3 class="card-heading" id="lessonsTitle" data-i18n="ls_h">Lessons from the past 10 years</h3>
+                            <p class="step-hint" data-i18n="ls_hint">Not a weather forecast: what the NASA records of 2015–2025 say about planning this year and next.</p></div>
+                        </div>
+                        <ul class="lessons-list" id="lessonsList"></ul>
+                        <div class="lessons-year">
+                            <label for="lessonYear" data-i18n="ls_pick">If next year is like…</label>
+                            <select id="lessonYear"></select>
+                        </div>
+                        <div id="lessonTable" class="table-scroll"></div>
+                    </section>
                     <div id="rotationCardsGrid" class="cards-grid">
                         <div class="rot-card skel-card"><span class="skel skel-line"></span><span class="skel skel-num"></span><span class="skel skel-bar"></span></div>
                         <div class="rot-card skel-card"><span class="skel skel-line"></span><span class="skel skel-num"></span><span class="skel skel-bar"></span></div>

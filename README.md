@@ -21,6 +21,8 @@
 
 For each strategy the app shows the supplemental fresh water (irrigation need) for a typical year and for a dry year (1 in 5), each year 2015–2025, bare-soil months, a 12-month crop calendar against the salinity months, and cited evidence, benefits, information gaps and risks. It does not merge strategies into a single weighted score.
 
+Local knowledge comes in, not out: farmers can mark the months their canal water turns salty (the app then shows the fresh water each option needs in exactly those months), coffee growers can enter how they irrigate (litres per tree, rounds, trees per hectare) and see how dry each past season was against their own practice, and a "Lessons from the past 10 years" panel turns the 2015–2025 record into planning figures for next year (dry-year need, latest season, any past year as an analogue). None of this is a weather forecast.
+
 Users can also type in their own field: the crop and sowing date of each season, plus an annual mean temperature and total rainfall for a what-if year. The entered calendar replaces the current practice as the baseline, and every card, the report and the CSV are recomputed against it.
 
 ### Key findings (computed by the app from NASA data, 2015–2025)

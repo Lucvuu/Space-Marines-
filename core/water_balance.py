@@ -281,6 +281,7 @@ def calculate_water_balance(power_df, region_id, crop_id, delta_temp_c=0.0, delt
         # Sum deficits month by month: a wet month does not offset a dry one
         ym = df_season["date"].dt.strftime("%Y-%m")
         total_etc = total_req = total_peff = deficit = 0.0
+        month_def = [0.0] * 12  # deficit by calendar month (1..12 -> index 0..11)
         for i, m in enumerate(ym.unique()):
             days = df_season[ym == m]
             frac = len(days) / float(days["date"].dt.days_in_month.iloc[0])
@@ -290,7 +291,9 @@ def calculate_water_balance(power_df, region_id, crop_id, delta_temp_c=0.0, delt
             total_etc += etc_m
             total_req += req_m
             total_peff += pe_m
-            deficit += max(req_m - pe_m, 0.0)
+            d_m = max(req_m - pe_m, 0.0)
+            deficit += d_m
+            month_def[int(m[5:7]) - 1] += d_m
 
         water_stress = np.clip(deficit / max(total_req, 1.0), 0.0, 1.0)
         yearly_results.append({
@@ -299,7 +302,8 @@ def calculate_water_balance(power_df, region_id, crop_id, delta_temp_c=0.0, delt
             "water_req_mm": total_req,
             "peff_mm": total_peff,
             "deficit_mm": deficit,
-            "water_stress": water_stress
+            "water_stress": water_stress,
+            "monthly": month_def
         })
 
     if not yearly_results:
@@ -341,6 +345,10 @@ def calculate_water_balance(power_df, region_id, crop_id, delta_temp_c=0.0, delt
         "yearly_deficit_mm": [
             {"year": int(y), "deficit_mm": round(float(d), 1)}
             for y, d in zip(df_y["year"], df_y["deficit_mm"])
+        ],
+        # Mean deficit per calendar month over all seasons; the 12 values add up to mean_deficit_mm
+        "mean_monthly_deficit_mm": [
+            round(float(np.mean([r["monthly"][k] for r in yearly_results])), 1) for k in range(12)
         ],
         "mean_water_stress": round(mean_stress, 3),
         "mean_irrigation_share": round(mean_stress, 3),

@@ -1348,6 +1348,24 @@ class TestVietnameseContent(unittest.TestCase):
                   'field_h: "Ruộng của bạn đang trồng gì?"'):
             self.assertIn(s, js)
 
+    def test_monthly_deficit_adds_up_and_local_inputs_exist(self):
+        """Monthly fresh-water deficits add up to the annual figure; the page asks for salty months and irrigation practice."""
+        from core.rotation import evaluate_rotations
+        for reg in ("Ben_Tre_DBSCL", "Dak_Lak_Tay_Nguyen"):
+            rot = evaluate_rotations(reg, 0.0, 0.0)
+            if not rot.get("available"):
+                self.skipTest("No POWER data")
+            for s in rot["strategies"]:
+                if s["annual_deficit_mm"] is None:
+                    continue
+                self.assertEqual(len(s["monthly_deficit_mm"]), 12)
+                self.assertAlmostEqual(sum(s["monthly_deficit_mm"]), s["annual_deficit_mm"], delta=1.0)
+        with open(os.path.join(AERO_ROOT, "web", "index.html"), encoding="utf-8") as fh:
+            html = fh.read()
+        for s in ('id="saltBox"', 'id="saltMonths"', 'id="pracBox"', 'id="pracL"', 'id="pracN"', 'id="pracT"',
+                  'id="lessonsCard"', 'id="lessonsList"', 'id="lessonYear"'):
+            self.assertIn(s, html)
+
     def test_user_calendar_rejects_bad_input(self):
         """Overlapping seasons, crops from another region and impossible dates are rejected."""
         from core.rotation import evaluate_rotations

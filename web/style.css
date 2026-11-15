@@ -403,3 +403,30 @@ footer a { font-weight: 700; color: var(--primary-ink); }
   .field-row .field-end { order: 4; grid-column: 1 / -1; margin-top: -4px; }
 }
 @media print { .roles, .field-card { display: none !important; } }
+
+/* Local knowledge: salty months at your canal, your irrigation */
+.local-box { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--border-strong); }
+.local-h { font-size: 15px; font-weight: 800; color: var(--primary-ink); margin-bottom: 8px; }
+.salt-months { display: flex; flex-wrap: wrap; gap: 6px; }
+.salt-months button { min-width: 50px; min-height: 40px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--surface); color: var(--text); font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+.salt-months button.on { background: var(--sal); border-color: var(--sal); color: #fff; }
+.salt-months button.reset { border-style: dashed; color: var(--primary-ink); padding: 0 12px; }
+.local-src { margin-top: 8px; font-size: 12.5px; color: var(--muted); }
+.local-result { margin-top: 8px; font-size: 14px; font-weight: 600; color: var(--text); }
+.local-result span { display: block; margin-top: 4px; }
+.prac-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.prac-grid label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.prac-grid input { font: inherit; font-size: 15px; font-weight: 700; min-height: 44px; padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--surface); color: var(--text); text-align: right; font-variant-numeric: tabular-nums; }
+.salt-line { display: flex; align-items: center; gap: 6px; margin: 6px 0; font-size: 13px; font-weight: 700; color: var(--sal); }
+.salt-line .ico { width: 16px; height: 16px; }
+@media (max-width: 860px) { .prac-grid { grid-template-columns: 1fr; } }
+
+/* Lessons from the past 10 years */
+.lessons { margin-bottom: 18px; }
+.lessons-head { display: flex; gap: 12px; align-items: flex-start; }
+.lessons-list { margin: 12px 0 0; padding-left: 20px; font-size: 14.5px; line-height: 1.55; }
+.lessons-list li { margin-bottom: 6px; }
+.lessons-year { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; font-weight: 700; font-size: 14px; color: var(--primary-ink); }
+.lessons-year select { font: inherit; font-size: 14.5px; min-height: 44px; padding: 6px 10px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--surface); }
+.lessons-table { margin-top: 10px; width: 100%; }
+.lessons-table td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
